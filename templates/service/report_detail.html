@@ -1,0 +1,62 @@
+<html>
+<head>
+    <title>Акт передачі №{{ report.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .actions { margin-bottom: 20px; text-align: center; }
+        @media print { .actions { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none;">🖨️ Друкувати</button>
+        <a href="/service/reports/" style="margin-left: 20px; color: #333;">⬅ До історії</a>
+        <a href="/service/" style="margin-left: 20px; color: #333;">⬅ На головну</a>
+    </div>
+
+    <div class="header">
+        <h2>Акт прийому-передачі обладнання в сервісний центр</h2>
+        <p>Дата формування: <b>{{ report.created_at|date:"d.m.Y" }}</b></p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>№</th>
+                <th>Назва / Модель</th>
+                <th>Відділ / Власник</th>
+                <th>Дата прийому</th>
+                <th>Тип робіт</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in report.tasks.all %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ task.device_name }}</td>
+                <td>{{ task.department }} ({{ task.requester_name }})</td>
+                <td>{{ task.date_received|date:"d.m.Y" }}</td>
+                <td>{{ task.get_task_type_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br><br><br>
+    <div style="display: flex; justify-content: space-between; padding: 0 50px;">
+        <div>
+            <p><b>Здав (Замовник):</b></p>
+            <br>
+            <p>_______________________</p>
+        </div>
+        <div>
+            <p><b>Прийняв (Виконавець):</b></p>
+            <br>
+            <p>_______________________</p>
+        </div>
+    </div>
+</body>
+</html>

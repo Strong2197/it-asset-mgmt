@@ -31,3 +31,19 @@ class ServiceTask(models.Model):
 
     def __str__(self):
         return f"{self.device_name} ({self.requester_name})"
+
+    # ... ваші існуючі імпорти та модель ServiceTask ...
+
+class ServiceReport(models.Model):
+    """Модель збереженого звіту (Акту передачі)"""
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата створення")
+    # Зв'язок ManyToMany: один звіт може містити багато картриджів
+    tasks = models.ManyToManyField(ServiceTask, related_name='reports', verbose_name="Картриджі у звіті")
+
+    class Meta:
+        verbose_name = "Збережений акт"
+        verbose_name_plural = "Історія роздруківок"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Акт від {self.created_at.strftime('%d.%m.%Y %H:%M')}"

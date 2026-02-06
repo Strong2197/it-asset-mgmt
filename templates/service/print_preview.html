@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container text-center">
+    <h2 class="mb-3">Перевірка Акту</h2>
+    <p class="lead">Нижче наведено список обладнання, яке <b>ще не має дати відправки</b>.</p>
+
+    {% if tasks %}
+        <div class="alert alert-info">
+            Всього позицій: <strong>{{ tasks.count }}</strong>
+        </div>
+
+        <ul class="list-group text-start mb-4 d-inline-block" style="max-width: 600px; width: 100%;">
+            {% for task in tasks %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ task.device_name }}</strong>
+                        <br><small class="text-muted">{{ task.department }} ({{ task.requester_name }})</small>
+                    </div>
+                    <span class="badge bg-primary rounded-pill">{{ task.date_received|date:"d.m.Y" }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <div class="alert alert-warning">
+            ⚠️ При натисканні "Зберегти" всім цим записам буде встановлено <b>сьогоднішню дату відправки</b>.
+        </div>
+
+        <form action="{% url 'save_report' %}" method="post">
+            {% csrf_token %}
+            <a href="{% url 'service_list' %}" class="btn btn-secondary btn-lg me-3">Скасувати</a>
+            <button type="submit" class="btn btn-success btn-lg">💾 Зберегти та Друкувати</button>
+        </form>
+    {% else %}
+        <div class="alert alert-success">
+            Всі прийняті картриджі вже мають дату відправки. Формувати нічого.
+        </div>
+        <a href="{% url 'service_list' %}" class="btn btn-primary">Повернутися назад</a>
+    {% endif %}
+</div>
+{% endblock %}

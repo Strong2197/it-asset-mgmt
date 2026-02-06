@@ -1,22 +1,26 @@
 from django.contrib import admin
-from django.urls import path
-
-# Додаємо ці два імпорти:
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from service.views import print_service_view
+from django.shortcuts import render
+
+
+# Функція для головної сторінки
+def home_view(request):
+    return render(request, 'index.html')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', home_view, name='home'),
 
-    # 2. Додаємо адресу для друку
-    path('print-service/', print_service_view, name='print_service'),
+    # Підключаємо наші додатки
+    path('inventory/', include('inventory.urls')),
+    path('service/', include('service.urls')),
+    path('docs/', include('docs.urls')),
+
 ]
 
-# Додаємо цю конструкцію в кінець файлу:
+# Налаштування медіа-файлів (для картинок/документів)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-admin.site.site_header = "IT Відділ | Система Обліку"
-admin.site.site_title = "IT Inventory"
-admin.site.index_title = "Панель керування майном"

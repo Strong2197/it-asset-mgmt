@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📂 База знань</h2>
+    <a href="{% url 'doc_create' %}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Додати посилання</a>
+</div>
+
+<div class="card p-3 bg-light mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <select name="type" class="form-select" onchange="this.form.submit()">
+                <option value="" {% if not selected_type %}selected{% endif %}>Всі типи</option>
+                <option value="driver" {% if selected_type == 'driver' %}selected{% endif %}>💿 Драйвери</option>
+                <option value="instruction" {% if selected_type == 'instruction' %}selected{% endif %}>📄 Інструкції</option>
+                <option value="template" {% if selected_type == 'template' %}selected{% endif %}>📝 Шаблони</option>
+                <option value="other" {% if selected_type == 'other' %}selected{% endif %}>📁 Інше</option>
+            </select>
+        </div>
+        <div class="col-md-8">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Пошук..." value="{{ query }}">
+                <button class="btn btn-primary" type="submit">Шукати</button>
+                {% if query or selected_type %}
+                    <a href="{% url 'doc_list' %}" class="btn btn-secondary">Скинути</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for doc in documents %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="fs-1">
+                        {% if doc.doc_type == 'driver' %}
+                            <i class="bi bi-disc text-primary"></i>
+                        {% elif doc.doc_type == 'instruction' %}
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                        {% elif doc.doc_type == 'template' %}
+                            <i class="bi bi-file-earmark-word text-primary"></i>
+                        {% else %}
+                            <i class="bi bi-folder2 text-warning"></i>
+                        {% endif %}
+                    </div>
+                    <a href="{% url 'doc_update' doc.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                </div>
+
+                <h5 class="card-title">{{ doc.title }}</h5>
+                <p class="card-text text-muted small">
+                    {{ doc.description|default:"Опису немає"|truncatechars:100 }}
+                </p>
+                <p class="card-text"><small class="text-muted">Додано: {{ doc.created_at|date:"d.m.Y" }}</small></p>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <a href="{{ doc.google_drive_link }}" target="_blank" class="btn btn-outline-success w-100">
+                    <i class="bi bi-box-arrow-up-right"></i> Відкрити
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <p class="text-muted fs-4">Файлів не знайдено 🕵️‍♂️</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

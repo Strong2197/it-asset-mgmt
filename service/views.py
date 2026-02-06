@@ -1,89 +1,90 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from .models import ServiceTask
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from .models import ServiceTask, ServiceReport
+from .forms import ServiceTaskForm
 
 
-def print_service_view(request):
-    ids_param = request.GET.get('ids', '')
-    if not ids_param:
-        return HttpResponse("Не вибрано жодного запису", status=400)
+# --- 1. Список (Головна сторінка сервісу) ---
+def service_list(request):
+    tasks = ServiceTask.objects.all().order_by('-date_received')
+    return render(request, 'service/service_list.html', {'tasks': tasks})
 
-    ids = [int(x) for x in ids_param.split(',') if x.isdigit()]
 
-    # --- ГОЛОВНА ЗМІНА ТУТ ---
-    # Фільтруємо: ID є в списку AND дата відправки пуста (ще не відправлено)
-    queryset = ServiceTask.objects.filter(id__in=ids, date_sent__isnull=True)
+# --- 2. Створення та Редагування ---
+def service_create(request):
+    if request.method == 'POST':
+        form = ServiceTaskForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('service_list')
+    else:
+        form = ServiceTaskForm()
+    return render(request, 'service/service_form.html', {'form': form, 'title': 'Нова заявка'})
 
-    if not queryset.exists():
-        return HttpResponse("""
-            <h2 style='font-family: Arial; text-align: center; margin-top: 50px;'>
-                Увага! Всі вибрані картриджі вже мають дату відправки.<br>
-                У звіт нічого друкувати.
-            </h2>
-        """)
 
-    # --- HTML код ---
-    html = f"""
-    <html>
-    <head>
-        <title>Звіт на заправку</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-            th, td {{ border: 1px solid black; padding: 5px; text-align: left; }}
-            h2 {{ text-align: center; }}
-            .no-print {{ margin-bottom: 20px; }}
-            @media print {{ .no-print {{ display: none; }} }}
-        </style>
-    </head>
-    <body>
-        <div class="no-print">
-            <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">🖨️ Друкувати</button>
-        </div>
+def service_update(request, pk):
+    task = get_object_or_404(ServiceTask, pk=pk)
+    if request.method == 'POST':
+        form = ServiceTaskForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            return redirect('service_list')
+    else:
+        form = ServiceTaskForm(instance=task)
+    return render(request, 'service/service_form.html', {'form': form, 'title': 'Редагувати заявку'})
 
-        <h2>Акт передачі на сервіс від {timezone.now().strftime('%d.%m.%Y')}</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>№</th>
-                    <th>Назва / Модель</th>
-                    <th>Відділ / Власник</th>
-                    <th>Дата прийому</th>
-                    <th>Тип робіт</th>
-                </tr>
-            </thead>
-            <tbody>
-    """
 
-    for index, task in enumerate(queryset, 1):
-        html += f"""
-            <tr>
-                <td>{index}</td>
-                <td>{task.device_name}</td>
-                <td>{task.department} ({task.requester_name})</td>
-                <td>{task.date_received.strftime('%d.%m.%Y')}</td>
-                <td>{task.get_task_type_display()}</td>
-            </tr>
-        """
+# --- 3. ШВИДКЕ ПОВЕРНЕННЯ ---
+def service_quick_return(request, pk):
+    """Ставить сьогоднішню дату повернення і статус 'Завершено'"""
+    task = get_object_or_404(ServiceTask, pk=pk)
+    task.date_returned = timezone.now().date()
+    task.is_completed = True
+    task.save()
+    return redirect('service_list')
 
-    html += """
-            </tbody>
-        </table>
-        <br><br>
-        <div style="display: flex; justify-content: space-between; padding: 0 50px;">
-            <div>
-                <p><b>Здав (Замовник):</b></p>
-                <br>
-                <p>_______________________</p>
-            </div>
-            <div>
-                <p><b>Прийняв (Виконавець):</b></p>
-                <br>
-                <p>_______________________</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HttpResponse(html)
+
+# --- 4. ЛОГІКА ДРУКУ ТА ЗБЕРЕЖЕННЯ ---
+
+def print_preview(request):
+    """Показує список картриджів, готових до відправки (без дати відправки)"""
+    # Знаходимо всі записи, які ще не відправлені (date_sent is Null) і не завершені
+    tasks_to_print = ServiceTask.objects.filter(date_sent__isnull=True, is_completed=False)
+
+    return render(request, 'service/print_preview.html', {'tasks': tasks_to_print})
+
+
+def save_report(request):
+    """Зберігає звіт у базу і проставляє дату відправки"""
+    if request.method == 'POST':
+        # 1. Знаходимо ті самі таски (не відправлені)
+        tasks_to_save = ServiceTask.objects.filter(date_sent__isnull=True, is_completed=False)
+
+        if not tasks_to_save.exists():
+            return redirect('service_list')
+
+        # 2. Створюємо запис в історії
+        report = ServiceReport.objects.create()
+        report.tasks.set(tasks_to_save)
+
+        # 3. Оновлюємо картриджі: ставимо сьогоднішню дату відправки
+        tasks_to_save.update(date_sent=timezone.now().date())
+
+        # 4. Переходимо на сторінку перегляду вже збереженого звіту (для друку)
+        return redirect('report_detail', pk=report.pk)
+
+    return redirect('service_list')
+
+
+# --- 5. ІСТОРІЯ ---
+
+def report_list(request):
+    """Список всіх збережених актів"""
+    reports = ServiceReport.objects.all()
+    return render(request, 'service/report_list.html', {'reports': reports})
+
+
+def report_detail(request, pk):
+    """Сторінка для друку конкретного збереженого акту"""
+    report = get_object_or_404(ServiceReport, pk=pk)
+    return render(request, 'service/report_detail.html', {'report': report})

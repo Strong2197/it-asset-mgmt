@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 mb-3">Вітаємо в системі обліку</h1>
+    <p class="lead text-muted">Оберіть необхідний розділ для роботи</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    <div class="col">
+        <div class="card h-100 text-center p-4">
+            <div class="card-body">
+                <i class="bi bi-pc-display text-primary" style="font-size: 3rem;"></i>
+                <h3 class="card-title mt-3">Майно</h3>
+                <p class="card-text">Облік ПК, моніторів, принтерів. Пошук по інвентарних номерах.</p>
+                <a href="/inventory/" class="btn btn-outline-primary stretched-link">Відкрити список</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 text-center p-4">
+            <div class="card-body">
+                <i class="bi bi-tools text-warning" style="font-size: 3rem;"></i>
+                <h3 class="card-title mt-3">Сервіс</h3>
+                <p class="card-text">Журнал заправки картриджів та ремонтів техніки. Друк актів.</p>
+                <a href="/service/" class="btn btn-outline-warning stretched-link">Журнал робіт</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card h-100 text-center p-4">
+            <div class="card-body">
+                <i class="bi bi-folder2-open text-success" style="font-size: 3rem;"></i>
+                <h3 class="card-title mt-3">База знань</h3>
+                <p class="card-text">Інструкції, драйвери та шаблони документів.</p>
+                <a href="/docs/" class="btn btn-outline-success stretched-link">Файли</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
