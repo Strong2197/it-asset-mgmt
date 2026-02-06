@@ -1,10 +1,14 @@
 from django import forms
-from .models import ServiceTask
+from .models import ServiceTask, ServiceReport
+from django.db.models import Q
 
+
+# --- Форма 1: Для створення/редагування заявки на ремонт ---
 class ServiceTaskForm(forms.ModelForm):
     class Meta:
         model = ServiceTask
-        fields = ['task_type', 'device_name', 'requester_name', 'department', 'date_received', 'date_sent', 'date_returned', 'description', 'is_completed']
+        fields = ['task_type', 'device_name', 'requester_name', 'department', 'date_received', 'date_sent',
+                  'date_returned', 'description', 'is_completed']
         widgets = {
             'date_received': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'date_sent': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -15,7 +19,31 @@ class ServiceTaskForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ServiceTaskForm, self).__init__(*args, **kwargs)
-        # Додаємо стилі до всіх полів, крім чекбокса (він має свій клас вище)
+        # Додаємо стилі до всіх полів, крім чекбокса
         for field_name, field in self.fields.items():
             if field_name != 'is_completed':
                 field.widget.attrs['class'] = 'form-control'
+
+
+# --- Форма 2: Для редагування складу звіту (Акту) ---
+class ServiceReportForm(forms.ModelForm):
+    class Meta:
+        model = ServiceReport
+        fields = ['tasks']
+        widgets = {
+            'tasks': forms.CheckboxSelectMultiple()
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(ServiceReportForm, self).__init__(*args, **kwargs)
+
+        # Логіка фільтрації: показуємо тільки (Ті, що вже в цьому звіті) АБО (Ті, що нікуди не відправлені)
+        if self.instance.pk:
+            self.fields['tasks'].queryset = ServiceTask.objects.filter(
+                Q(id__in=self.instance.tasks.values_list('id', flat=True)) |
+                Q(date_sent__isnull=True)
+            )
+        else:
+            self.fields['tasks'].queryset = ServiceTask.objects.filter(date_sent__isnull=True)
+
+        self.fields['tasks'].label = "Оберіть картриджі для цього акту"

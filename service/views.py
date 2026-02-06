@@ -88,3 +88,44 @@ def report_detail(request, pk):
     """Сторінка для друку конкретного збереженого акту"""
     report = get_object_or_404(ServiceReport, pk=pk)
     return render(request, 'service/report_detail.html', {'report': report})
+
+
+from .forms import ServiceReportForm  # <--- Не забудьте імпортувати нову форму зверху!
+
+
+def report_edit(request, pk):
+    report = get_object_or_404(ServiceReport, pk=pk)
+
+    if request.method == 'POST':
+        # Запам'ятовуємо список картриджів ДО зміни
+        old_tasks = list(report.tasks.all())
+
+        form = ServiceReportForm(request.POST, instance=report)
+        if form.is_valid():
+            saved_report = form.save()
+
+            # 1. Отримуємо новий список після збереження
+            new_tasks = saved_report.tasks.all()
+
+            # 2. Знаходимо ті, що БУЛИ, але ми їх ПРИБРАЛИ
+            # (їм треба очистити дату відправки)
+            for task in old_tasks:
+                if task not in new_tasks:
+                    task.date_sent = None
+                    task.save()
+
+            # 3. Знаходимо ті, що ми ДОДАЛИ
+            # (їм треба поставити дату відправки, таку ж як у звіту)
+            for task in new_tasks:
+                if not task.date_sent:
+                    task.date_sent = saved_report.created_at.date()
+                    task.save()
+
+            return redirect('report_detail', pk=report.pk)
+    else:
+        form = ServiceReportForm(instance=report)
+
+    return render(request, 'service/report_form.html', {
+        'form': form,
+        'title': f'Редагування акту №{report.id}'
+    })

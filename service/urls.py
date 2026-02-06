@@ -14,4 +14,5 @@ urlpatterns = [
 
     path('reports/', views.report_list, name='report_list'),  # Історія
     path('reports/<int:pk>/', views.report_detail, name='report_detail'),  # Друк старого звіту
+path('reports/<int:pk>/edit/', views.report_edit, name='report_edit'),
 ]
