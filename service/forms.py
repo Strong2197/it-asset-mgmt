@@ -7,9 +7,13 @@ from django.db.models import Q
 class ServiceTaskForm(forms.ModelForm):
     class Meta:
         model = ServiceTask
-        fields = ['task_type', 'device_name', 'requester_name', 'department', 'date_received', 'date_sent',
-                  'date_returned', 'description', 'is_completed']
+        fields = ['task_type', 'device_name', 'requester_name', 'department',
+                  'date_received', 'date_sent', 'date_back_from_service', 'date_returned',
+                  'description', 'is_completed']
         widgets = {
+            # Важливо: department тепер звичайний TextInput
+            'department': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}),
+            'date_back_from_service': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'date_received': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'date_sent': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'date_returned': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -37,7 +41,6 @@ class ServiceReportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ServiceReportForm, self).__init__(*args, **kwargs)
 
-        # Логіка фільтрації: показуємо тільки (Ті, що вже в цьому звіті) АБО (Ті, що нікуди не відправлені)
         if self.instance.pk:
             self.fields['tasks'].queryset = ServiceTask.objects.filter(
                 Q(id__in=self.instance.tasks.values_list('id', flat=True)) |

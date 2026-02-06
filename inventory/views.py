@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Asset
+from .models import Asset, Category
 from .forms import AssetForm
 from django.db.models import Q
 
@@ -8,6 +8,7 @@ from django.db.models import Q
 def asset_list(request):
     query = request.GET.get('q', '')  # Отримуємо пошуковий запит
     assets = Asset.objects.all()
+    categories = Category.objects.all()
 
     if query:
         assets = assets.filter(
@@ -17,7 +18,10 @@ def asset_list(request):
             Q(responsible_person__icontains=query)
         )
 
-    return render(request, 'inventory/asset_list.html', {'assets': assets, 'query': query})
+    return render(request, 'inventory/asset_list.html', {
+        'assets': assets,
+        'categories': categories  # <--- Додали це
+    })
 
 
 # --- 2. Створення майна ---

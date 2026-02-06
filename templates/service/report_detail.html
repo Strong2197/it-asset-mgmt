@@ -2,61 +2,104 @@
 <head>
     <title>Акт передачі №{{ report.id }}</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: left; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .actions { margin-bottom: 20px; text-align: center; }
-        @media print { .actions { display: none; } }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h2 { text-align: center; margin-bottom: 5px; }
+        p.date { text-align: center; margin-bottom: 30px; color: #555; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Стилі для кнопок (не друкуються) */
+        .actions {
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .btn {
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            margin: 0 10px;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .btn-print { background-color: #4CAF50; color: white; border: none; }
+        .btn-back { background-color: #6c757d; color: white; }
+
+        /* Загальна кількість внизу */
+        .total-count {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* Прибираємо зайве при друці */
+        @media print {
+            .actions { display: none; }
+            body { padding: 0; }
+        }
     </style>
 </head>
 <body>
     <div class="actions">
-        <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none;">🖨️ Друкувати</button>
-        <a href="/service/reports/" style="margin-left: 20px; color: #333;">⬅ До історії</a>
-        <a href="/service/" style="margin-left: 20px; color: #333;">⬅ На головну</a>
+        <button onclick="window.print()" class="btn btn-print">🖨️ Друкувати</button>
+        <a href="/service/reports/" class="btn btn-back">⬅ До історії</a>
+        <a href="/service/" class="btn btn-back">🏠 На головну</a>
     </div>
 
-    <div class="header">
-        <h2>Акт прийому-передачі обладнання в сервісний центр</h2>
-        <p>Дата формування: <b>{{ report.created_at|date:"d.m.Y" }}</b></p>
-    </div>
+    <h2>Акт прийому-передачі обладнання</h2>
+    <p class="date">від {{ report.created_at|date:"d.m.Y" }}</p>
 
     <table>
         <thead>
             <tr>
-                <th>№</th>
+                <th style="width: 40px; text-align: center;">№</th>
                 <th>Назва / Модель</th>
                 <th>Відділ / Власник</th>
-                <th>Дата прийому</th>
-                <th>Тип робіт</th>
+                <th style="width: 200px;">Примітка</th>
             </tr>
         </thead>
         <tbody>
             {% for task in report.tasks.all %}
             <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ task.device_name }}</td>
-                <td>{{ task.department }} ({{ task.requester_name }})</td>
-                <td>{{ task.date_received|date:"d.m.Y" }}</td>
-                <td>{{ task.get_task_type_display }}</td>
+                <td style="text-align: center;">{{ forloop.counter }}</td>
+                <td style="font-weight: bold;">{{ task.device_name }}</td>
+                <td>
+                    {{ task.department }}
+                    <br><span style="font-size: 0.9em; color: #555;">({{ task.requester_name }})</span>
+                </td>
+                <td></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <br><br><br>
-    <div style="display: flex; justify-content: space-between; padding: 0 50px;">
-        <div>
-            <p><b>Здав (Замовник):</b></p>
-            <br>
-            <p>_______________________</p>
-        </div>
-        <div>
-            <p><b>Прийняв (Виконавець):</b></p>
-            <br>
-            <p>_______________________</p>
-        </div>
+    <div class="total-count">
+        Всього позицій: {{ report.tasks.count }}
     </div>
+
 </body>
 </html>

@@ -32,45 +32,87 @@
                     <th class="text-end">Дії</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for task in tasks %}
-                <tr>
-                    <td>
-                        {% if task.is_completed %}
-                            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Готово</span>
-                        {% elif task.date_sent %}
-                            <span class="badge bg-secondary"><i class="bi bi-truck"></i> В сервісі</span>
-                        {% else %}
-                            <span class="badge bg-danger">Прийнято</span>
-                        {% endif %}
-                    </td>
-                    <td class="fw-bold">{{ task.device_name }}</td>
-                    <td>
-                        {{ task.department }}<br>
-                        <small class="text-muted">{{ task.requester_name }}</small>
-                    </td>
-                    <td style="font-size: 0.9em;">
-                        📥 {{ task.date_received|date:"d.m" }}<br>
-                        🚚 {{ task.date_sent|date:"d.m"|default:"-" }}<br>
-                        🏁 {{ task.date_returned|date:"d.m"|default:"-" }}
-                    </td>
-                    <td class="text-end">
-                        {% if not task.is_completed %}
-                            <a href="{% url 'service_quick_return' task.pk %}" class="btn btn-sm btn-success me-1" title="Повернути сьогодні">
-                                <i class="bi bi-box-arrow-in-down"></i> Повернути
-                            </a>
-                        {% endif %}
+           <tbody>
+    {% for task in tasks %}
+    <tr>
+        <td>
+            {% if task.is_completed %}
+                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Видано</span>
+            {% elif task.date_back_from_service %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam"></i> На складі</span>
+            {% elif task.date_sent %}
+                <span class="badge bg-primary"><i class="bi bi-tools"></i> В ремонті</span>
+            {% else %}
+                <span class="badge bg-danger">Очікує</span>
+            {% endif %}
+        </td>
+        <td class="fw-bold">{{ task.device_name }}</td>
+        <td>
+            {{ task.department }}<br>
+            <small class="text-muted">{{ task.requester_name }}</small>
+        </td>
+        <td style="font-size: 0.9em;">
+            📥 {{ task.date_received|date:"d.m" }}<br>
+            🚚 {{ task.date_sent|date:"d.m"|default:"-" }}<br>
+            🔙 {{ task.date_back_from_service|date:"d.m"|default:"-" }} </td>
+        <td class="text-end">
+            {% if not task.is_completed %}
 
-                        <a href="{% url 'service_update' task.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-4">Журнал пустий</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+                {% if task.date_sent and not task.date_back_from_service %}
+                    <a href="{% url 'service_receive_from_repair' task.pk %}" class="btn btn-sm btn-info me-1" title="Прийшло з ремонту">
+                        📦 Отримати
+                    </a>
+                {% endif %}
+
+                {% if task.date_back_from_service %}
+                    <a href="{% url 'service_quick_return' task.pk %}" class="btn btn-sm btn-success me-1" title="Віддати клієнту">
+                        ✅ Віддати
+                    </a>
+                {% endif %}
+
+            {% endif %}
+
+            <a href="{% url 'service_update' task.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center py-4">Журнал пустий</td>
+    </tr>
+    {% endfor %}
+</tbody>
         </table>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Створюємо поле пошуку динамічно, або використовуємо існуюче якщо є
+    // Давайте додамо поле пошуку прямо над таблицею
+    const tableCard = document.querySelector('.table-responsive').parentNode;
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = '🔍 Швидкий пошук по сторінці...';
+    searchInput.className = 'form-control mb-3';
+    searchInput.style.maxWidth = '300px';
+
+    // Вставляємо поле перед таблицею
+    tableCard.insertBefore(searchInput, tableCard.firstChild);
+
+    // 2. Логіка фільтрації
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

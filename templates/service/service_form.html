@@ -13,11 +13,30 @@
 
                     {% for field in form %}
                     <div class="mb-3">
+
                         {% if field.name == 'is_completed' %}
                             <div class="form-check">
                                 {{ field }}
                                 <label class="form-check-label fw-bold">{{ field.label }}</label>
                             </div>
+
+                        {% elif field.name == 'department' %}
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+
+                            <input type="text"
+                                   name="{{ field.name }}"
+                                   value="{{ field.value|default:'' }}"
+                                   class="form-control"
+                                   list="dept-list"
+                                   placeholder="Почніть вводити назву відділу..."
+                                   autocomplete="off">
+
+                            <datalist id="dept-list">
+                                {% for dept in departments %}
+                                    <option value="{{ dept }}">
+                                {% endfor %}
+                            </datalist>
+
                         {% else %}
                             <label class="form-label fw-bold">{{ field.label }}</label>
                             {{ field }}

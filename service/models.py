@@ -6,10 +6,11 @@ class ServiceTask(models.Model):
     TASK_TYPES = [
         ('refill', 'Заправка картриджа'),
         ('repair', 'Ремонт техніки'),
+        ('drum_clean', 'Чистка драм-юніта'),
     ]
 
     # Поле asset видалено. Тепер пишемо назву тільки вручну.
-    task_type = models.CharField(max_length=20, choices=TASK_TYPES, default='refill', verbose_name="Тип роботи")
+    task_type = models.CharField(max_length=20, choices=TASK_TYPES, default='refill', verbose_name="Тип робіт")
     device_name = models.CharField(max_length=200, verbose_name="Назва картриджа/принтера")
 
     requester_name = models.CharField(max_length=100, verbose_name="ПІБ (хто дав)")
@@ -23,6 +24,14 @@ class ServiceTask(models.Model):
     is_completed = models.BooleanField(default=False, verbose_name="Завершено")
 
     created_at = models.DateTimeField(auto_now_add=True)
+    date_sent = models.DateField(null=True, blank=True, verbose_name="Дата відправки")
+
+    # --- НОВЕ ПОЛЕ ---
+    date_back_from_service = models.DateField(null=True, blank=True, verbose_name="Повернуто з сервісу")
+
+    date_returned = models.DateField(null=True, blank=True, verbose_name="Дата повернення клієнту")
+
+    # ...
 
     class Meta:
         verbose_name = "Заявка в сервіс"

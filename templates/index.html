@@ -2,17 +2,21 @@
 
 {% block content %}
 <div class="text-center py-5">
-    <h1 class="display-4 mb-3">Вітаємо в системі обліку</h1>
-    <p class="lead text-muted">Оберіть необхідний розділ для роботи</p>
+    <h1 class="display-4 mb-3">Система обліку IT</h1>
 </div>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
     <div class="col">
-        <div class="card h-100 text-center p-4">
+        <div class="card h-100 text-center p-4 position-relative">
             <div class="card-body">
                 <i class="bi bi-pc-display text-primary" style="font-size: 3rem;"></i>
                 <h3 class="card-title mt-3">Майно</h3>
-                <p class="card-text">Облік ПК, моніторів, принтерів. Пошук по інвентарних номерах.</p>
+
+                <div class="mt-3 mb-3">
+                    <span class="badge bg-primary fs-5">{{ assets_count }} шт.</span>
+                    <p class="text-muted small mt-1">на обліку</p>
+                </div>
+
                 <a href="/inventory/" class="btn btn-outline-primary stretched-link">Відкрити список</a>
             </div>
         </div>
@@ -23,7 +27,25 @@
             <div class="card-body">
                 <i class="bi bi-tools text-warning" style="font-size: 3rem;"></i>
                 <h3 class="card-title mt-3">Сервіс</h3>
-                <p class="card-text">Журнал заправки картриджів та ремонтів техніки. Друк актів.</p>
+
+                <div class="mt-3 mb-3 d-flex justify-content-center gap-3 border py-2 rounded bg-light">
+
+                    <div class="{% if waiting_for_repair > 0 %}text-danger{% else %}text-muted{% endif %}">
+                        <span class="fs-4 fw-bold">{{ waiting_for_repair }}</span><br>
+                        <small style="font-size: 0.7em;">очікують</small>
+                    </div>
+
+                    <div class="vr"></div> <div class="{% if in_repair_process > 0 %}text-primary{% else %}text-muted{% endif %}">
+                        <span class="fs-4 fw-bold">{{ in_repair_process }}</span><br>
+                        <small style="font-size: 0.7em;">в ремонті</small>
+                    </div>
+
+                    <div class="vr"></div> <div class="{% if ready_on_stock > 0 %}text-success{% else %}text-muted{% endif %}">
+                        <span class="fs-4 fw-bold">{{ ready_on_stock }}</span><br>
+                        <small style="font-size: 0.7em;">готові</small>
+                    </div>
+                </div>
+
                 <a href="/service/" class="btn btn-outline-warning stretched-link">Журнал робіт</a>
             </div>
         </div>
@@ -34,7 +56,10 @@
             <div class="card-body">
                 <i class="bi bi-folder2-open text-success" style="font-size: 3rem;"></i>
                 <h3 class="card-title mt-3">База знань</h3>
-                <p class="card-text">Інструкції, драйвери та шаблони документів.</p>
+                <div class="mt-3 mb-3">
+                    <span class="badge bg-success fs-5">Документи</span>
+                    <p class="text-muted small mt-1">інструкції та драйвери</p>
+                </div>
                 <a href="/docs/" class="btn btn-outline-success stretched-link">Файли</a>
             </div>
         </div>
