@@ -1,39 +1,27 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.utils import timezone
 from .models import ServiceTask, ServiceReport
 from .forms import ServiceTaskForm, ServiceReportForm
-from django.utils import timezone
 from django.db.models import Q
 
-def service_receive_from_repair(request, pk):
-    task = get_object_or_404(ServiceTask, pk=pk)
-    task.date_back_from_service = timezone.now().date()
-    task.save()
-    return redirect('service_list')
-# Допоміжна функція для отримання списку відділів
+
+# Допоміжна функція для списку відділів
 def get_all_departments():
-    # 1. Ваші стандартні відділи
     defaults = ['Бухгалтерія', 'Кадри', 'Івано-Франківський відділ']
-
-    # 2. Відділи, які вже є в базі (щоб не втратити інші)
     db_depts = list(ServiceTask.objects.values_list('department', flat=True).distinct())
-
-    # 3. Об'єднуємо, прибираємо дублікати і сортуємо
-    # filter(None, ...) прибирає пусті значення
     all_depts = sorted(list(set(defaults + db_depts)))
     return list(filter(None, all_depts))
 
 
-# --- 1. Список ремонтів ---
+# --- СПИСОК ЗАЯВОК ---
 def service_list(request):
     tasks = ServiceTask.objects.all().order_by('-date_received')
     return render(request, 'service/service_list.html', {'tasks': tasks})
 
 
-# --- 2. Створення та Редагування ---
+# --- СТВОРЕННЯ ЗАЯВКИ ---
 def service_create(request):
-    departments = get_all_departments()  # <--- Отримуємо список
-
+    departments = get_all_departments()
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST)
         if form.is_valid():
@@ -41,18 +29,15 @@ def service_create(request):
             return redirect('service_list')
     else:
         form = ServiceTaskForm()
-
     return render(request, 'service/service_form.html', {
-        'form': form,
-        'title': 'Нова заявка',
-        'departments': departments  # <--- Передаємо в шаблон
+        'form': form, 'title': 'Нова заявка', 'departments': departments
     })
 
 
+# --- РЕДАГУВАННЯ ЗАЯВКИ ---
 def service_update(request, pk):
     task = get_object_or_404(ServiceTask, pk=pk)
-    departments = get_all_departments()  # <--- Отримуємо список
-
+    departments = get_all_departments()
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST, instance=task)
         if form.is_valid():
@@ -60,15 +45,20 @@ def service_update(request, pk):
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
-
     return render(request, 'service/service_form.html', {
-        'form': form,
-        'title': 'Редагування заявки',
-        'departments': departments  # <--- Передаємо в шаблон
+        'form': form, 'title': 'Редагування заявки', 'departments': departments
     })
 
 
-# --- 3. ШВИДКЕ ПОВЕРНЕННЯ ---
+# --- ОТРИМАТИ З СЕРВІСУ (НА СКЛАД) ---
+def service_receive_from_repair(request, pk):
+    task = get_object_or_404(ServiceTask, pk=pk)
+    task.date_back_from_service = timezone.now().date()
+    task.save()
+    return redirect('service_list')
+
+
+# --- ВІДДАТИ КЛІЄНТУ (ФІНАЛ) ---
 def service_quick_return(request, pk):
     task = get_object_or_404(ServiceTask, pk=pk)
     task.date_returned = timezone.now().date()
@@ -77,12 +67,13 @@ def service_quick_return(request, pk):
     return redirect('service_list')
 
 
-# --- 4. ЛОГІКА ДРУКУ ТА ЗБЕРЕЖЕННЯ ---
+# --- ПОПЕРЕДНІЙ ПЕРЕГЛЯД ДРУКУ ---
 def print_preview(request):
     tasks_to_print = ServiceTask.objects.filter(date_sent__isnull=True, is_completed=False)
     return render(request, 'service/print_preview.html', {'tasks': tasks_to_print})
 
 
+# --- ЗБЕРЕЖЕННЯ АКТУ ---
 def save_report(request):
     if request.method == 'POST':
         tasks_to_save = ServiceTask.objects.filter(date_sent__isnull=True, is_completed=False)
@@ -97,19 +88,24 @@ def save_report(request):
     return redirect('service_list')
 
 
-# --- 5. ІСТОРІЯ ТА РЕДАГУВАННЯ ЗВІТУ ---
+# --- СПИСОК АКТІВ ---
 def report_list(request):
-    reports = ServiceReport.objects.all()
+    reports = ServiceReport.objects.all().order_by('-created_at')
     return render(request, 'service/report_list.html', {'reports': reports})
 
 
+# --- ДЕТАЛІ АКТУ (ДРУК) ---
 def report_detail(request, pk):
     report = get_object_or_404(ServiceReport, pk=pk)
     return render(request, 'service/report_detail.html', {'report': report})
 
 
+# --- РЕДАГУВАННЯ АКТУ ---
 def report_edit(request, pk):
     report = get_object_or_404(ServiceReport, pk=pk)
+    if report.is_archived:
+        return redirect('report_detail', pk=pk)
+    # Прибрали блокування if not report.is_editable
 
     if request.method == 'POST':
         old_tasks = list(report.tasks.all())
@@ -121,7 +117,7 @@ def report_edit(request, pk):
             # Логіка оновлення дат
             for task in old_tasks:
                 if task not in new_tasks:
-                    task.date_sent = None
+                    task.date_sent = None  # Якщо прибрали з акту - прибираємо дату відправки
                     task.save()
 
             for task in new_tasks:

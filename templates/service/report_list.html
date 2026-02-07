@@ -1,30 +1,73 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>📜 Історія актів передачі</h2>
-<a href="{% url 'service_list' %}" class="btn btn-outline-secondary mb-3">⬅ Назад до журналу</a>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="mb-0 text-primary">
+                    <i class="bi bi-files"></i> Історія актів передачі
+                </h4>
+            </div>
 
-<div class="list-group">
-    {% for report in reports %}
-        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-            <a href="{% url 'report_detail' report.pk %}" class="text-decoration-none text-dark w-100">
-                <div>
-                    <h5 class="mb-1">Акт від {{ report.created_at|date:"d.m.Y H:i" }}</h5>
-                    <small class="text-muted">Кількість позицій: {{ report.tasks.count }}</small>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary">
+                            <tr>
+                                <th class="ps-4">Номер акту</th>
+                                <th>Дата створення</th>
+                                <th>Кількість позицій</th>
+                                <th class="text-end pe-4">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr {% if report.is_archived %}class="table-light text-muted"{% endif %}>
+                                <td class="ps-4">
+                                    <strong>Акт №{{ report.id }}</strong>
+
+                                    {% if report.is_archived %}
+                                        <span class="badge bg-secondary bg-opacity-50 text-dark ms-2" style="font-size: 0.7em;">
+                                            <i class="bi bi-archive"></i> Архівний
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+
+                                <td>
+                                    <span class="badge bg-primary rounded-pill">{{ report.tasks.count }} шт.</span>
+                                </td>
+
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'report_detail' report.pk %}" class="btn btn-sm btn-outline-info me-1" title="Переглянути">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    {% if report.is_archived %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Редагування заборонено (є повернуті позиції)">
+                                            <i class="bi bi-lock"></i>
+                                        </button>
+                                    {% else %}
+                                        <a href="{% url 'report_edit' report.pk %}" class="btn btn-sm btn-outline-primary" title="Редагувати">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    Історія актів порожня.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            </a>
-
-            <div class="d-flex gap-2">
-                <a href="{% url 'report_edit' report.pk %}" class="btn btn-outline-primary btn-sm" title="Редагувати список">
-                    <i class="bi bi-pencil"></i>
-                </a>
-                <a href="{% url 'report_detail' report.pk %}" class="btn btn-primary btn-sm">
-                    Відкрити
-                </a>
             </div>
         </div>
-    {% empty %}
-        <div class="alert alert-info">Історія поки пуста.</div>
-    {% endfor %}
+    </div>
 </div>
 {% endblock %}

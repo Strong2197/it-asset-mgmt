@@ -7,4 +7,5 @@ urlpatterns = [
     path('edit/<int:pk>/', views.asset_update, name='asset_update'),
     path('export/', views.export_assets_xlsx, name='export_assets_xlsx'),
     path('<int:pk>/clone/', views.asset_clone, name='asset_clone'),
+    path('<int:pk>/archive/', views.asset_archive, name='asset_archive'),
 ]

@@ -1,71 +1,179 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>📂 База знань</h2>
-    <a href="{% url 'doc_create' %}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Додати посилання</a>
-</div>
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card shadow-sm">
 
-<div class="card p-3 bg-light mb-4">
-    <form method="get" class="row g-3">
-        <div class="col-md-4">
-            <select name="type" class="form-select" onchange="this.form.submit()">
-                <option value="" {% if not selected_type %}selected{% endif %}>Всі типи</option>
-                <option value="driver" {% if selected_type == 'driver' %}selected{% endif %}>💿 Драйвери</option>
-                <option value="instruction" {% if selected_type == 'instruction' %}selected{% endif %}>📄 Інструкції</option>
-                <option value="template" {% if selected_type == 'template' %}selected{% endif %}>📝 Шаблони</option>
-                <option value="other" {% if selected_type == 'other' %}selected{% endif %}>📁 Інше</option>
-            </select>
-        </div>
-        <div class="col-md-8">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Пошук..." value="{{ query }}">
-                <button class="btn btn-primary" type="submit">Шукати</button>
-                {% if query or selected_type %}
-                    <a href="{% url 'doc_list' %}" class="btn btn-secondary">Скинути</a>
-                {% endif %}
-            </div>
-        </div>
-    </form>
-</div>
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="mb-0 text-success">
+                    <i class="bi bi-folder2-open"></i> Файлове сховище
+                </h4>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    {% for doc in documents %}
-    <div class="col">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div class="fs-1">
-                        {% if doc.doc_type == 'driver' %}
-                            <i class="bi bi-disc text-primary"></i>
-                        {% elif doc.doc_type == 'instruction' %}
-                            <i class="bi bi-file-earmark-pdf text-danger"></i>
-                        {% elif doc.doc_type == 'template' %}
-                            <i class="bi bi-file-earmark-word text-primary"></i>
-                        {% else %}
-                            <i class="bi bi-folder2 text-warning"></i>
-                        {% endif %}
+                <div class="d-flex gap-2 align-items-center">
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text"
+                               id="doc-search"
+                               class="form-control border-start-0 bg-light"
+                               placeholder="Пошук..."
+                               autocomplete="off">
                     </div>
-                    <a href="{% url 'doc_update' doc.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
-                </div>
 
-                <h5 class="card-title">{{ doc.title }}</h5>
-                <p class="card-text text-muted small">
-                    {{ doc.description|default:"Опису немає"|truncatechars:100 }}
-                </p>
-                <p class="card-text"><small class="text-muted">Додано: {{ doc.created_at|date:"d.m.Y" }}</small></p>
+                    <a href="{% url 'doc_create' %}" class="btn btn-success">
+                        <i class="bi bi-plus-lg"></i> Додати
+                    </a>
+                </div>
             </div>
-            <div class="card-footer bg-white border-top-0">
-                <a href="{{ doc.google_drive_link }}" target="_blank" class="btn btn-outline-success w-100">
-                    <i class="bi bi-box-arrow-up-right"></i> Відкрити
-                </a>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary">
+                            <tr>
+                                <th class="ps-4">Назва / Посилання</th>
+                                <th>Тип</th>
+                                <th>Опис</th>
+                                <th>Дата</th>
+                                <th class="text-end pe-4">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if doc.doc_type == 'driver' %}
+                                            <i class="bi bi-hdd-network fs-4 text-primary me-2"></i>
+                                        {% elif doc.doc_type == 'instruction' %}
+                                            <i class="bi bi-book fs-4 text-warning me-2"></i>
+                                        {% elif doc.doc_type == 'template' %}
+                                            <i class="bi bi-file-earmark-text fs-4 text-info me-2"></i>
+                                        {% else %}
+                                            <i class="bi bi-link-45deg fs-4 text-secondary me-2"></i>
+                                        {% endif %}
+
+                                        <a href="{{ doc.google_drive_link }}" target="_blank" class="text-decoration-none fw-bold text-dark">
+                                            {{ doc.title }}
+                                            <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.7em;"></i>
+                                        </a>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ doc.get_doc_type_display }}</span>
+                                </td>
+
+                                <td class="text-muted small">
+                                    {{ doc.description|default:"-"|truncatechars:40 }}
+                                </td>
+
+                                <td>{{ doc.created_at|date:"d.m.Y" }}</td>
+
+                                <td class="text-end pe-4">
+                                    <a href="{{ doc.google_drive_link }}" target="_blank" class="btn btn-sm btn-outline-success me-1" title="Відкрити">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+
+                                    <a href="{% url 'doc_update' doc.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Редагувати">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            onclick="openDeleteModal('{{ doc.pk }}', '{{ doc.title }}')"
+                                            title="Видалити">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    Записів немає.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card-footer bg-white border-top-0 py-3">
+                <small class="text-muted">Всього записів: <span id="file-count">{{ documents.count }}</span></small>
             </div>
         </div>
     </div>
-    {% empty %}
-    <div class="col-12 text-center py-5">
-        <p class="text-muted fs-4">Файлів не знайдено 🕵️‍♂️</p>
-    </div>
-    {% endfor %}
 </div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="" id="deleteForm">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Видалення файлу</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Ви впевнені, що хочете видалити цей запис?</p>
+                    <p class="fw-bold fs-5 text-danger" id="modalDocTitle"></p>
+                    <p class="small text-muted">Цю дію неможливо скасувати.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-danger">Так, видалити</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Функція відкриття вікна видалення
+function openDeleteModal(docId, docTitle) {
+    const form = document.getElementById('deleteForm');
+    // Формуємо правильний URL для видалення (замінюємо 0 на реальний ID)
+    let urlTemplate = "{% url 'doc_delete' 0 %}".replace('0', docId);
+    form.action = urlTemplate;
+
+    document.getElementById('modalDocTitle').textContent = docTitle;
+
+    var myModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    myModal.show();
+}
+
+// Функція пошуку
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('doc-search');
+    const tableBody = document.querySelector('tbody');
+    const countSpan = document.getElementById('file-count');
+
+    if (!searchInput || !tableBody) return;
+
+    searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase();
+        const rows = tableBody.getElementsByTagName('tr');
+        let visibleCount = 0;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.cells.length < 2) continue;
+
+            const text = row.textContent.toLowerCase();
+
+            if (text.includes(filter)) {
+                row.style.display = "";
+                visibleCount++;
+            } else {
+                row.style.display = "none";
+            }
+        }
+
+        if (countSpan) countSpan.textContent = visibleCount;
+    });
+});
+</script>
 {% endblock %}

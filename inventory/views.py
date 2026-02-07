@@ -5,6 +5,7 @@ from django.db.models import Q
 import openpyxl
 from django.http import HttpResponse
 from django.forms.models import model_to_dict  # Для клонування
+from django.utils import timezone
 
 
 def export_assets_xlsx(request):
@@ -115,22 +116,56 @@ def asset_clone(request, pk):
 
 # --- 1. Список майна (Цієї функції не вистачало) ---
 def asset_list(request):
-    query = request.GET.get('q', '')  # Отримуємо пошуковий запит
-    assets = Asset.objects.all()
-    categories = Category.objects.all()
+    # 1. Параметри фільтрації
+    search_query = request.GET.get('search', '').strip()
+    category_id = request.GET.get('category', 'all')
+    show_archived = request.GET.get('archived', 'false')  # 'true' або 'false'
 
-    if query:
+    # 2. Базовий запит: фільтруємо по статусу архіву
+    if show_archived == 'true':
+        assets = Asset.objects.filter(is_archived=True)
+    else:
+        assets = Asset.objects.filter(is_archived=False)
+
+    # 3. Фільтр по категорії
+    if category_id != 'all':
+        assets = assets.filter(category_id=category_id)
+
+    # 4. Пошук (працює і для активних, і для архівних)
+    if search_query:
         assets = assets.filter(
-            Q(name__icontains=query) |
-            Q(inventory_number__icontains=query) |
-            Q(barcode__icontains=query) |
-            Q(responsible_person__icontains=query)
+            Q(name__icontains=search_query) |
+            Q(inventory_number__icontains=search_query) |
+            Q(barcode__icontains=search_query) |
+            Q(location__icontains=search_query) |
+            Q(account__icontains=search_query) |
+            Q(archive_reason__icontains=search_query)  # Шукаємо і в причині архівування
         )
+
+    categories = Category.objects.all()
 
     return render(request, 'inventory/asset_list.html', {
         'assets': assets,
-        'categories': categories  # <--- Додали це
+        'categories': categories,
+        'show_archived': show_archived  # Передаємо статус у шаблон
     })
+
+
+# --- НОВА ФУНКЦІЯ АРХІВУВАННЯ ---
+def asset_archive(request, pk):
+    asset = get_object_or_404(Asset, pk=pk)
+
+    if request.method == 'POST':
+        reason = request.POST.get('archive_reason')
+        date = request.POST.get('archive_date')
+
+        if reason and date:
+            asset.is_archived = True
+            asset.archive_reason = reason
+            asset.archive_date = date
+            asset.save()
+
+    return redirect('asset_list')
 
 
 # --- 2. Створення майна ---

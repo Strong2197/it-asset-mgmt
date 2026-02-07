@@ -36,6 +36,11 @@ class Asset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата створення запису")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Останнє редагування")
 
+    is_archived = models.BooleanField(default=False, verbose_name="В архіві")
+    archive_reason = models.CharField(max_length=200, blank=True, null=True,
+                                      verbose_name="Причина архівування (кому передано/списання)")
+    archive_date = models.DateField(blank=True, null=True, verbose_name="Дата архівування")
+
     class Meta:
         verbose_name = "Майно"
         verbose_name_plural = "Список майна"
