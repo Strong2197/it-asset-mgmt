@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    @media (max-width: 768px) {
+        .mobile-table thead { display: none; }
+        .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
+            display: block; width: 100%;
+        }
+        .mobile-table tr {
+            margin-bottom: 15px; background: #fff; border: 1px solid #ddd;
+            border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px;
+        }
+        .mobile-table td {
+            text-align: right; padding-left: 45%; position: relative;
+            border-bottom: 1px solid #f0f0f0; padding-top: 10px; padding-bottom: 10px;
+        }
+        .mobile-table td:last-child {
+            border-bottom: 0; justify-content: flex-end; padding-top: 15px; display: flex; gap: 10px;
+        }
+        .mobile-table td::before {
+            content: attr(data-label); position: absolute; left: 0; width: 40%;
+            padding-left: 0; font-weight: 600; text-align: left; color: #6c757d; font-size: 0.9em; text-transform: uppercase;
+        }
+        .staff-name-mobile { font-size: 1.1em; color: #0d6efd; font-weight: bold; }
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0 bg-transparent">
+            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <h4 class="mb-0 text-primary">
+                        <i class="bi bi-people"></i> Штатний розпис
+                    </h4>
+                    <div class="d-flex gap-2 w-100 w-md-auto justify-content-md-end">
+                        <div class="input-group" style="max-width: 300px;">
+                            <form method="get" class="d-flex w-100">
+                                <input type="text" name="q" class="form-control" placeholder="Пошук..." value="{{ query }}">
+                                <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+                            </form>
+                        </div>
+                        <a href="{% url 'staff_create' %}" class="btn btn-success">
+    <i class="bi bi-person-plus"></i> Додати
+</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0 bg-transparent">
+                <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
+                    <thead class="table-light text-secondary">
+                        <tr>
+                            <th class="ps-4">ПІБ</th>
+                            <th>Посада / Відділ</th>
+                            <th>Контакти / РНОКПП</th>
+                            <th>КЕП (Файли)</th>
+                            <th class="text-end pe-4">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                        <tr>
+                            <td class="ps-4" data-label="ПІБ">
+                                <span class="staff-name-mobile">{{ emp.full_name }}</span>
+                            </td>
+
+                            <td data-label="Посада">
+                                <div class="fw-bold">{{ emp.position }}</div>
+                                <div class="small text-muted">{{ emp.department }}</div>
+                            </td>
+
+                            <td data-label="Інфо">
+                                <div><i class="bi bi-telephone small text-muted"></i> {{ emp.phone|default:"-" }}</div>
+                                <div class="small text-muted">ІПН: {{ emp.rnokpp|default:"-" }}</div>
+                            </td>
+
+                            <td data-label="КЕП">
+                                {% if emp.certificates.all %}
+                                    <div class="d-flex flex-column gap-1 align-items-md-start align-items-end">
+                                        {% for cert in emp.certificates.all %}
+                                            <a href="{{ cert.file.url }}" download class="btn btn-sm btn-outline-success border-success bg-opacity-10 py-0" style="font-size: 0.85em;">
+                                                <i class="bi bi-file-earmark-lock-fill"></i> {{ cert.filename|truncatechars:15 }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end pe-4" data-label="Дії">
+                                <a href="{% url 'staff_update' emp.pk %}" class="btn btn-outline-primary btn-sm" title="Редагувати">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="openDeleteModal('{{ emp.pk }}', '{{ emp.full_name }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted" data-label="Інфо">
+                                Працівників не знайдено.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="" id="deleteForm">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Видалення працівника</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Видалити працівника: <strong id="modalName"></strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-danger">Видалити</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(pk, name) {
+    const form = document.getElementById('deleteForm');
+    form.action = "{% url 'staff_delete' 0 %}".replace('0', pk);
+    document.getElementById('modalName').textContent = name;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from staff.models import Employee
 
 # --- ВАЖЛИВО: Імпорти моделей ---
 from inventory.models import Asset
@@ -10,38 +11,31 @@ from service.models import ServiceTask
 
 
 def home_view(request):
-    # 1. Загальна кількість майна
+    # Існуючий код статистики
     assets_count = Asset.objects.count()
 
-    # 2. Статистика по сервісу
-
-    # Очікують (Прийняті, але ще не поїхали)
     waiting_for_repair = ServiceTask.objects.filter(
-        date_sent__isnull=True,
-        is_completed=False
+        date_sent__isnull=True, is_completed=False
     ).count()
 
-    # В ремонті (Поїхали, але ще не повернулись на склад)
     in_repair_process = ServiceTask.objects.filter(
-        date_sent__isnull=False,
-        date_back_from_service__isnull=True,
-        is_completed=False
+        date_sent__isnull=False, date_back_from_service__isnull=True, is_completed=False
     ).count()
 
-    # На складі (Повернулись, чекають клієнта)
     ready_on_stock = ServiceTask.objects.filter(
-        date_back_from_service__isnull=False,
-        is_completed=False
+        date_back_from_service__isnull=False, is_completed=False
     ).count()
 
-    # Передаємо ці цифри у шаблон
+    # --- НОВЕ: Кількість працівників ---
+    employees_count = Employee.objects.count()
+
     return render(request, 'index.html', {
         'assets_count': assets_count,
         'waiting_for_repair': waiting_for_repair,
         'in_repair_process': in_repair_process,
-        'ready_on_stock': ready_on_stock
+        'ready_on_stock': ready_on_stock,
+        'employees_count': employees_count  # Передаємо в шаблон
     })
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -51,6 +45,7 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('service/', include('service.urls')),
     path('docs/', include('docs.urls')),
+    path('staff/', include('staff.urls')),
 
 ]
 
