@@ -5,32 +5,28 @@
     <div class="col-md-10">
         <div class="card shadow-sm">
 
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h4 class="mb-0 text-success">
-                    <i class="bi bi-folder2-open"></i> Файлове сховище
-                </h4>
-
-                <div class="d-flex gap-2 align-items-center">
-                    <div class="input-group" style="width: 250px;">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text"
-                               id="doc-search"
-                               class="form-control border-start-0 bg-light"
-                               placeholder="Пошук..."
-                               autocomplete="off">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <h4 class="mb-0 text-success text-nowrap">
+                        <i class="bi bi-folder2-open"></i> Файли
+                    </h4>
+                    <div class="d-flex flex-column flex-sm-row gap-2 w-100 justify-content-md-end">
+                        <div class="input-group w-100" style="max-width: 100%; md:max-width: 250px;">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="doc-search" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
+                        </div>
+                        <a href="{% url 'doc_create' %}" class="btn btn-success text-nowrap w-100 w-sm-auto">
+                            <i class="bi bi-plus-lg"></i> Додати
+                        </a>
                     </div>
-
-                    <a href="{% url 'doc_create' %}" class="btn btn-success">
-                        <i class="bi bi-plus-lg"></i> Додати
-                    </a>
                 </div>
             </div>
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light text-secondary">
                             <tr>
                                 <th class="ps-4">Назва / Посилання</th>
@@ -54,80 +50,40 @@
                                         {% else %}
                                             <i class="bi bi-link-45deg fs-4 text-secondary me-2"></i>
                                         {% endif %}
-
                                         <a href="{{ doc.google_drive_link }}" target="_blank" class="text-decoration-none fw-bold text-dark">
                                             {{ doc.title }}
-                                            <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.7em;"></i>
                                         </a>
                                     </div>
                                 </td>
-
                                 <td>
                                     <span class="badge bg-light text-dark border">{{ doc.get_doc_type_display }}</span>
                                 </td>
-
                                 <td class="text-muted small">
                                     {{ doc.description|default:"-"|truncatechars:40 }}
                                 </td>
-
                                 <td>{{ doc.created_at|date:"d.m.Y" }}</td>
-
                                 <td class="text-end pe-4">
                                     <a href="{{ doc.google_drive_link }}" target="_blank" class="btn btn-sm btn-outline-success me-1" title="Відкрити">
                                         <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
-
                                     <a href="{% url 'doc_update' doc.pk %}" class="btn btn-sm btn-outline-primary me-1" title="Редагувати">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-danger"
-                                            onclick="openDeleteModal('{{ doc.pk }}', '{{ doc.title }}')"
-                                            title="Видалити">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteModal('{{ doc.pk }}', '{{ doc.title }}')" title="Видалити">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
-                                    Записів немає.
-                                </td>
+                                <td colspan="5" class="text-center py-5 text-muted">Записів немає.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            <div class="card-footer bg-white border-top-0 py-3">
-                <small class="text-muted">Всього записів: <span id="file-count">{{ documents.count }}</span></small>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="POST" action="" id="deleteForm">
-            {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Видалення файлу</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Ви впевнені, що хочете видалити цей запис?</p>
-                    <p class="fw-bold fs-5 text-danger" id="modalDocTitle"></p>
-                    <p class="small text-muted">Цю дію неможливо скасувати.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger">Так, видалити</button>
-                </div>
-            </div>
-        </form>
     </div>
 </div>
 

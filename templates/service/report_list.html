@@ -12,7 +12,7 @@
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light text-secondary">
                             <tr>
                                 <th class="ps-4">Номер акту</th>
@@ -26,7 +26,6 @@
                             <tr {% if report.is_archived %}class="table-light text-muted"{% endif %}>
                                 <td class="ps-4">
                                     <strong>Акт №{{ report.id }}</strong>
-
                                     {% if report.is_archived %}
                                         <span class="badge bg-secondary bg-opacity-50 text-dark ms-2" style="font-size: 0.7em;">
                                             <i class="bi bi-archive"></i> Архівний
@@ -46,7 +45,7 @@
                                     </a>
 
                                     {% if report.is_archived %}
-                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Редагування заборонено (є повернуті позиції)">
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Редагування заборонено">
                                             <i class="bi bi-lock"></i>
                                         </button>
                                     {% else %}

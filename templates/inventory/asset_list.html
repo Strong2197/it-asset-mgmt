@@ -4,55 +4,53 @@
 <div class="row justify-content-center">
     <div class="col-md-12">
         <div class="card shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h4 class="mb-0 {% if show_archived == 'true' %}text-secondary{% else %}text-primary{% endif %}">
-                    {% if show_archived == 'true' %}
-                        <i class="bi bi-archive"></i> Архів майна
-                    {% else %}
-                        <i class="bi bi-box-seam"></i> Активне майно
-                    {% endif %}
-                </h4>
-
-                <div class="d-flex gap-2 align-items-center">
-
-                    <div class="btn-group" role="group">
-                        <a href="?archived=false" class="btn btn-sm {% if show_archived == 'false' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                            Активні
-                        </a>
-                        <a href="?archived=true" class="btn btn-sm {% if show_archived == 'true' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-                            Архів
-                        </a>
+            <div class="card-header bg-white py-3">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3">
+                    <h4 class="mb-0 text-nowrap {% if show_archived == 'true' %}text-secondary{% else %}text-primary{% endif %}">
+                        {% if show_archived == 'true' %}
+                            <i class="bi bi-archive"></i> Архів
+                        {% else %}
+                            <i class="bi bi-box-seam"></i> Майно
+                        {% endif %}
+                    </h4>
+                    <div class="d-flex flex-wrap flex-lg-nowrap align-items-center gap-2 w-100 justify-content-lg-end justify-content-center">
+                        <div class="btn-group flex-fill flex-lg-grow-0" role="group">
+                            <a href="?archived=false" class="btn btn-sm {% if show_archived == 'false' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                                Активні
+                            </a>
+                            <a href="?archived=true" class="btn btn-sm {% if show_archived == 'true' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+                                Архів
+                            </a>
+                        </div>
+                        <select id="type-filter" class="form-select bg-light flex-fill flex-lg-grow-0" style="min-width: 150px;">
+                            <option value="all">Всі категорії</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group flex-fill flex-lg-grow-0" style="min-width: 200px;">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="main-search" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button onclick="exportData()" class="btn btn-outline-success" title="Excel">
+                                <i class="bi bi-file-earmark-excel"></i>
+                            </button>
+                            {% if show_archived == 'false' %}
+                            <a href="{% url 'asset_create' %}" class="btn btn-primary text-nowrap">
+                                <i class="bi bi-plus-lg"></i> <span class="d-none d-md-inline">Додати</span>
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
-
-                    <select id="type-filter" class="form-select bg-light ms-2" style="width: 180px; cursor: pointer;">
-                        <option value="all">Всі категорії</option>
-                        {% for cat in categories %}
-                            <option value="{{ cat.id }}">{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-
-                    <div class="input-group" style="width: 200px;">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input type="text" id="main-search" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
-                    </div>
-
-                    <button onclick="exportData()" class="btn btn-outline-success" title="Завантажити в Excel">
-                        <i class="bi bi-file-earmark-excel"></i>
-                    </button>
-
-                    {% if show_archived == 'false' %}
-                    <a href="{% url 'asset_create' %}" class="btn btn-primary">
-                        <i class="bi bi-plus-lg"></i>
-                    </a>
-                    {% endif %}
                 </div>
             </div>
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
                         <thead class="table-light text-secondary">
                             <tr>
                                 <th class="ps-4">Баркод</th>
@@ -60,7 +58,7 @@
                                 <th>Назва</th>
                                 <th>Рахунок</th>
                                 {% if show_archived == 'true' %}
-                                    <th>Причина архівування</th>
+                                    <th>Причина</th>
                                     <th>Дата</th>
                                 {% else %}
                                     <th>Розташування</th>
@@ -102,15 +100,13 @@
                                     {% if show_archived == 'false' %}
                                         <button type="button"
                                                 class="btn btn-sm btn-light text-danger border me-1"
-                                                title="В архів (Списання/Передача)"
+                                                title="В архів"
                                                 onclick="openArchiveModal('{{ asset.id }}', '{{ asset.name }}')">
                                             <i class="bi bi-box-arrow-in-down"></i>
                                         </button>
-
                                         <a href="{% url 'asset_clone' asset.pk %}" class="btn btn-sm btn-light text-success border me-1" title="Клонувати">
                                             <i class="bi bi-files"></i>
                                         </a>
-
                                         <a href="{% url 'asset_update' asset.pk %}" class="btn btn-sm btn-light text-primary border" title="Редагувати">
                                             <i class="bi bi-pencil"></i>
                                         </a>
@@ -122,11 +118,7 @@
                             {% empty %}
                             <tr>
                                 <td colspan="7" class="text-center py-5 text-muted">
-                                    {% if show_archived == 'true' %}
-                                        Архів порожній.
-                                    {% else %}
-                                        Майно відсутнє.
-                                    {% endif %}
+                                    {% if show_archived == 'true' %}Архів порожній.{% else %}Майно відсутнє.{% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -134,7 +126,6 @@
                     </table>
                 </div>
             </div>
-
             <div class="card-footer bg-white border-top-0 py-3">
                 <small class="text-muted">Всього записів: <span id="record-count">{{ assets.count }}</span></small>
             </div>
@@ -153,55 +144,41 @@
                 </div>
                 <div class="modal-body">
                     <p>Ви переносите в архів: <strong id="modalAssetName"></strong></p>
-
                     <div class="mb-3">
                         <label class="form-label">Причина / Куди вибуло:</label>
-                        <input type="text" name="archive_reason" class="form-control" placeholder="Наприклад: Списання (Акт №5) або Передано в інший філіал" required>
+                        <input type="text" name="archive_reason" class="form-control" placeholder="Наприклад: Списання..." required>
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">Дата події:</label>
+                        <label class="form-label">Дата:</label>
                         <input type="date" name="archive_date" class="form-control" value="{% now 'Y-m-d' %}" required>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger">Підтвердити архівування</button>
+                    <button type="submit" class="btn btn-danger">Підтвердити</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-// Відкриття модального вікна
-function openArchiveModal(assetId, assetName) {
-    // Встановлюємо правильний Action URL для форми
-    document.getElementById('archiveForm').action = "/" + assetId + "/archive/"; // Припускаємо, що URL такий. Якщо ні - підкоригуємо.
-    // Або краще так, якщо URL в корені inventory:
-    // document.getElementById('archiveForm').action = "/inventory/" + assetId + "/archive/";
-    // Але оскільки ми не знаємо повний шлях, зробимо універсально через JS змінну у шаблоні або простіше:
 
-    // ПРАВИЛЬНИЙ ВАРІАНТ URL (генеруємо частину шляху)
+
+<script>
+function openArchiveModal(assetId, assetName) {
     const form = document.getElementById('archiveForm');
-    // Оскільки URL може бути складним, ми використаємо заглушку і замінимо ID
     let urlTemplate = "{% url 'asset_archive' 0 %}".replace('0', assetId);
     form.action = urlTemplate;
-
     document.getElementById('modalAssetName').textContent = assetName;
-
     var myModal = new bootstrap.Modal(document.getElementById('archiveModal'));
     myModal.show();
 }
 
-// Експорт
 function exportData() {
     const searchInput = document.getElementById('main-search');
     const typeInput = document.getElementById('type-filter');
     const searchValue = searchInput ? searchInput.value : '';
     const typeValue = typeInput ? typeInput.value : 'all';
-
-    // Додаємо параметр archived
     const urlParams = new URLSearchParams(window.location.search);
     const isArchived = urlParams.get('archived') || 'false';
 
@@ -210,7 +187,6 @@ function exportData() {
     window.location.href = url;
 }
 
-// Живий пошук
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('main-search');
     const typeFilter = document.getElementById('type-filter');
