@@ -40,22 +40,24 @@ def staff_create(request):
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
-        print(f"DEBUG: FILES in request: {request.FILES}")
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
             form.save()
-            # Додаємо нові файли до існуючих
+            # Обробляємо файли
             files = request.FILES.getlist('kep_files')
             for f in files:
                 KepCertificate.objects.create(employee=employee, file=f)
             return redirect('staff_list')
+        else:
+            # ЦЕ ВИВЕДЕ ПРИЧИНУ ПОМИЛКИ В КОНСОЛЬ
+            print("ПОМИЛКИ ФОРМИ:", form.errors)
     else:
         form = EmployeeForm(instance=employee)
 
     return render(request, 'staff/staff_form.html', {
         'form': form,
         'title': 'Редагувати дані',
-        'employee': employee  # Передаємо об'єкт, щоб показати існуючі файли
+        'employee': employee
     })
 
 
