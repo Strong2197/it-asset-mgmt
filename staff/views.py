@@ -20,6 +20,8 @@ def staff_list(request):
 
 
 def staff_create(request):
+    positions = Employee.objects.values_list('position', flat=True).distinct()
+    departments = Employee.objects.values_list('department', flat=True).distinct()
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
         if form.is_valid():
@@ -35,10 +37,14 @@ def staff_create(request):
     # Якщо там написано 'staff/staff_list.html' — змініть на:
     return render(request, 'staff/staff_form.html', {
         'form': form,
-        'title': 'Додати працівника'
+        'title': 'Додати працівника',
+        'positions': positions,  # Передаємо в шаблон
+        'departments': departments  # Передаємо в шаблон
     })
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
+    positions = Employee.objects.values_list('position', flat=True).distinct()
+    departments = Employee.objects.values_list('department', flat=True).distinct()
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
@@ -62,7 +68,9 @@ def staff_update(request, pk):
     return render(request, 'staff/staff_form.html', {
         'form': form,
         'title': 'Редагувати дані',
-        'employee': employee
+        'employee': employee,
+        'positions': positions,
+        'departments': departments
     })
 
 

@@ -70,6 +70,17 @@
                             <i class="bi bi-check-lg"></i> Зберегти
                         </button>
                     </div>
+                    <datalist id="positions-list">
+    {% for pos in positions %}
+        <option value="{{ pos }}">
+    {% endfor %}
+</datalist>
+
+<datalist id="departments-list">
+    {% for dep in departments %}
+        <option value="{{ dep }}">
+    {% endfor %}
+</datalist>
                 </form>
 
             </div>

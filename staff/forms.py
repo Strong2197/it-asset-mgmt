@@ -30,8 +30,9 @@ class EmployeeForm(forms.ModelForm):
         fields = ['full_name', 'position', 'department', 'phone', 'rnokpp']
         widgets = {
             'full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'position': forms.TextInput(attrs={'class': 'form-control'}),
-            'department': forms.TextInput(attrs={'class': 'form-control'}),
+            # Додаємо прив'язку до майбутніх списків (id)
+            'position': forms.TextInput(attrs={'class': 'form-control', 'list': 'positions-list'}),
+            'department': forms.TextInput(attrs={'class': 'form-control', 'list': 'departments-list'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'rnokpp': forms.TextInput(attrs={'class': 'form-control'}),
         }
