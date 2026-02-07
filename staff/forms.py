@@ -1,16 +1,15 @@
 from django import forms
 from .models import Employee
 
-# 1. Створюємо кастомний віджет, який дозволяє вибір декількох файлів
+# Створюємо спеціальний віджет, який дозволяє мультизавантаження
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
 class EmployeeForm(forms.ModelForm):
-    # Поле для вибору декількох файлів
+    # Використовуємо MultipleFileInput замість стандартного ClearableFileInput
     kep_files = forms.FileField(
-        # 2. Використовуємо наш кастомний віджет
         widget=MultipleFileInput(attrs={'multiple': True, 'class': 'form-control'}),
-        label="Сертифікати КЕП (Виберіть один або декілька файлів)",
+        label="Сертифікати КЕП (можна вибрати декілька)",
         required=False
     )
 

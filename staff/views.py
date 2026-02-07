@@ -40,6 +40,7 @@ def staff_create(request):
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
+        print(f"DEBUG: FILES in request: {request.FILES}")
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
             form.save()
