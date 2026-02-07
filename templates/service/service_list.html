@@ -1,118 +1,188 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>🛠️ Журнал сервісу</h2>
-    <div>
-        <a href="{% url 'report_list' %}" class="btn btn-outline-secondary me-2"><i class="bi bi-clock-history"></i> Історія актів</a>
+<style>
+    /* ... (Ваші стилі для мобільного залишаються тут) ... */
+    @media (max-width: 768px) {
+        .mobile-table thead { display: none; }
+        .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
+            display: block; width: 100%;
+        }
+        .mobile-table tr {
+            margin-bottom: 15px; background: #fff; border: 1px solid #ddd;
+            border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 15px;
+        }
+        .mobile-table td {
+            text-align: right; padding-left: 45%; position: relative;
+            border-bottom: 1px solid #f0f0f0; padding-top: 10px; padding-bottom: 10px;
+            min-height: 40px;
+        }
+        .mobile-table td:last-child {
+            border-bottom: 0; justify-content: flex-end; padding-top: 15px; display: flex; gap: 10px;
+        }
+        .mobile-table td::before {
+            content: attr(data-label); position: absolute; left: 0; width: 40%;
+            padding-left: 0; font-weight: 600; text-align: left; color: #6c757d; font-size: 0.9em; text-transform: uppercase;
+        }
+    }
+</style>
 
-        <a href="{% url 'service_create' %}" class="btn btn-warning"><i class="bi bi-plus-lg"></i> Нова заявка</a>
-    </div>
-</div>
+<div class="row justify-content-center">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0 bg-transparent">
 
-<div class="card mb-4 border-primary">
-    <div class="card-body d-flex justify-content-between align-items-center bg-light">
-        <div>
-            <h5 class="mb-0">Відправка в сервіс</h5>
-            <small class="text-muted">Натисніть кнопку, щоб зібрати всі невідправлені картриджі в один акт.</small>
-        </div>
-        <a href="{% url 'print_preview' %}" class="btn btn-primary"><i class="bi bi-printer"></i> Сформувати новий акт</a>
-    </div>
-</div>
+            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <h4 class="mb-0 text-primary">
+                        <i class="bi bi-tools"></i> Журнал сервісу
+                    </h4>
 
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0 align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>Статус</th>
-                    <th>Пристрій</th>
-                    <th>Від кого</th>
-                    <th>Дати (Отр / Відпр / Пов)</th>
-                    <th class="text-end">Дії</th>
-                </tr>
-            </thead>
-           <tbody>
+                    <div class="d-flex gap-2 w-100 w-md-auto justify-content-md-end">
+                        <a href="{% url 'report_list' %}" class="btn btn-outline-secondary flex-fill flex-md-grow-0 text-nowrap">
+                            <i class="bi bi-clock-history"></i> Історія актів
+                        </a>
+                        <a href="{% url 'service_create' %}" class="btn btn-warning flex-fill flex-md-grow-0 text-nowrap">
+                            <i class="bi bi-plus-lg"></i> Нова заявка
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3 border-primary border-opacity-25 shadow-sm">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <div>
+                        <h5 class="card-title text-primary mb-1">Відправка в сервіс</h5>
+                        <p class="card-text text-muted small mb-0">Натисніть кнопку, щоб переглянути список на відправку та створити акт.</p>
+                    </div>
+
+                    <div class="w-100 w-md-auto">
+                        <a href="{% url 'print_preview' %}" class="btn btn-primary w-100">
+                            <i class="bi bi-eye"></i> Переглянути та сформувати акт
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group mb-3 shadow-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="service-search" class="form-control border-start-0" placeholder="Швидкий пошук по сторінці...">
+            </div>
+
+            <div class="card-body p-0 bg-transparent">
+                <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
+                    <thead class="table-light text-secondary">
+                        <tr>
+                            <th class="ps-4">Статус</th>
+                            <th>Пристрій</th>
+                            <th>Від кого</th>
+                            <th>Дати (Отр / Відпр / Пов)</th>
+                            <th class="text-end pe-4">Дії</th>
+                        </tr>
+                    </thead>
+                 <tbody>
     {% for task in tasks %}
     <tr>
-        <td>
+        <td class="ps-4" data-label="Статус">
             {% if task.is_completed %}
-                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Видано</span>
+                <span class="badge bg-success rounded-pill"><i class="bi bi-check-circle"></i> Видано</span>
             {% elif task.date_back_from_service %}
-                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam"></i> На складі</span>
+                <span class="badge bg-warning text-dark rounded-pill border border-warning"><i class="bi bi-box-seam"></i> На складі</span>
             {% elif task.date_sent %}
-                <span class="badge bg-primary"><i class="bi bi-tools"></i> В ремонті</span>
+                <span class="badge bg-primary rounded-pill"><i class="bi bi-tools"></i> В ремонті</span>
             {% else %}
-                <span class="badge bg-danger">Очікує</span>
+                <span class="badge bg-secondary rounded-pill"><i class="bi bi-hourglass-split"></i> Очікує</span>
             {% endif %}
         </td>
-        <td class="fw-bold">{{ task.device_name }}</td>
-        <td>
-            {{ task.department }}<br>
-            <small class="text-muted">{{ task.requester_name }}</small>
+
+        <td data-label="Пристрій">
+            <strong>{{ task.device_name }}</strong>
+            <div class="small text-muted">{{ task.get_task_type_display }}</div>
         </td>
-        <td style="font-size: 0.9em;">
-            📥 {{ task.date_received|date:"d.m" }}<br>
-            🚚 {{ task.date_sent|date:"d.m"|default:"-" }}<br>
-            🔙 {{ task.date_back_from_service|date:"d.m"|default:"-" }} </td>
-        <td class="text-end">
-            {% if not task.is_completed %}
 
-                {% if task.date_sent and not task.date_back_from_service %}
-                    <a href="{% url 'service_receive_from_repair' task.pk %}" class="btn btn-sm btn-info me-1" title="Прийшло з ремонту">
-                        📦 Отримати
+        <td data-label="Від кого">
+            <div>{{ task.department }}</div>
+            <div class="small text-muted">{{ task.requester_name }}</div>
+        </td>
+
+        <td data-label="Дати">
+            <div class="d-flex flex-column align-items-end gap-1 small">
+                <div title="Отримано від клієнта">
+                    <i class="bi bi-download text-danger"></i> {{ task.date_received|date:"d.m" }}
+                </div>
+                <div title="Відправлено в сервіс">
+                    <i class="bi bi-truck text-warning"></i> {{ task.date_sent|date:"d.m"|default:"-" }}
+                </div>
+                <div title="Повернуто з сервісу">
+                    <i class="bi bi-arrow-return-left text-primary"></i> {{ task.date_back_from_service|date:"d.m"|default:"-" }}
+                </div>
+            </div>
+        </td>
+
+        <td class="text-end pe-4" data-label="Дії">
+            <div class="d-flex gap-2 justify-content-end align-items-center">
+
+                {% if task.is_completed %}
+                    <span class="text-success fw-bold"><i class="bi bi-check-all fs-4"></i></span>
+
+                {% else %}
+                    {% if not task.date_sent %}
+                        {% elif not task.date_back_from_service %}
+                        <a href="{% url 'service_receive' task.pk %}" class="btn btn-info btn-sm text-white" onclick="return confirm('Повернути на склад?')" title="Отримати з сервісу">
+                            <i class="bi bi-box-arrow-in-down"></i> Отримати
+                        </a>
+
+                    {% else %}
+                        <a href="{% url 'service_return' task.pk %}" class="btn btn-success btn-sm" onclick="return confirm('Видати клієнту?')" title="Видати клієнту">
+                            <i class="bi bi-check-lg"></i> Видати
+                        </a>
+                    {% endif %}
+
+                    <a href="{% url 'service_update' task.pk %}" class="btn btn-outline-primary btn-sm" title="Редагувати">
+                        <i class="bi bi-pencil"></i>
                     </a>
+
                 {% endif %}
 
-                {% if task.date_back_from_service %}
-                    <a href="{% url 'service_quick_return' task.pk %}" class="btn btn-sm btn-success me-1" title="Віддати клієнту">
-                        ✅ Віддати
-                    </a>
-                {% endif %}
-
-            {% endif %}
-
-            <a href="{% url 'service_update' task.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+            </div>
         </td>
     </tr>
     {% empty %}
     <tr>
-        <td colspan="5" class="text-center py-4">Журнал пустий</td>
+        <td colspan="5" class="text-center py-5 text-muted" data-label="Інфо">
+            Заявок немає.
+        </td>
     </tr>
     {% endfor %}
 </tbody>
-        </table>
+                </table>
+            </div>
+
+             <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
+                <small class="text-muted">Всього заявок: {{ tasks.count }}</small>
+            </div>
+        </div>
     </div>
 </div>
+
 <script>
+// ... Ваш скрипт пошуку залишається без змін ...
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Створюємо поле пошуку динамічно, або використовуємо існуюче якщо є
-    // Давайте додамо поле пошуку прямо над таблицею
-    const tableCard = document.querySelector('.table-responsive').parentNode;
+    const searchInput = document.getElementById('service-search');
+    const tableBody = document.querySelector('tbody');
 
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.placeholder = '🔍 Швидкий пошук по сторінці...';
-    searchInput.className = 'form-control mb-3';
-    searchInput.style.maxWidth = '300px';
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = searchInput.value.toLowerCase();
+            const rows = tableBody.getElementsByTagName('tr');
 
-    // Вставляємо поле перед таблицею
-    tableCard.insertBefore(searchInput, tableCard.firstChild);
-
-    // 2. Логіка фільтрації
-    searchInput.addEventListener('keyup', function() {
-        const filter = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(filter)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.cells.length < 2) continue;
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? "" : "none";
             }
         });
-    });
+    }
 });
 </script>
 {% endblock %}

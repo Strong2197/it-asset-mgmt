@@ -1,70 +1,109 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    /* Мобільні стилі */
+    @media (max-width: 768px) {
+        .mobile-table thead { display: none; }
+        .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
+            display: block; width: 100%;
+        }
+        .mobile-table tr {
+            margin-bottom: 15px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 15px;
+        }
+        .mobile-table td {
+            text-align: right;
+            padding-left: 45%;
+            position: relative;
+            border-bottom: 1px solid #f0f0f0;
+            padding-top: 10px; padding-bottom: 10px;
+        }
+        .mobile-table td:last-child {
+            border-bottom: 0;
+            justify-content: flex-end;
+            padding-top: 15px;
+            display: flex; gap: 10px;
+        }
+        .mobile-table td::before {
+            content: attr(data-label);
+            position: absolute; left: 0; width: 40%;
+            padding-left: 0; font-weight: 600; text-align: left;
+            color: #6c757d; font-size: 0.9em; text-transform: uppercase;
+        }
+    }
+</style>
+
 <div class="row justify-content-center">
     <div class="col-md-10">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <div class="card shadow-sm border-0 bg-transparent">
+
+            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
                 <h4 class="mb-0 text-primary">
                     <i class="bi bi-files"></i> Історія актів передачі
                 </h4>
             </div>
 
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 text-nowrap">
-                        <thead class="table-light text-secondary">
-                            <tr>
-                                <th class="ps-4">Номер акту</th>
-                                <th>Дата створення</th>
-                                <th>Кількість позицій</th>
-                                <th class="text-end pe-4">Дії</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for report in reports %}
-                            <tr {% if report.is_archived %}class="table-light text-muted"{% endif %}>
-                                <td class="ps-4">
-                                    <strong>Акт №{{ report.id }}</strong>
-                                    {% if report.is_archived %}
-                                        <span class="badge bg-secondary bg-opacity-50 text-dark ms-2" style="font-size: 0.7em;">
-                                            <i class="bi bi-archive"></i> Архівний
-                                        </span>
-                                    {% endif %}
-                                </td>
+            <div class="card-body p-0 bg-transparent">
+                <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
+                    <thead class="table-light text-secondary">
+                        <tr>
+                            <th class="ps-4">Номер акту</th>
+                            <th>Дата створення</th>
+                            <th>Кількість позицій</th>
+                            <th class="text-end pe-4">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr {% if report.is_archived %}class="bg-light text-muted"{% endif %}>
 
-                                <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+                            <td class="ps-4" data-label="Номер акту">
+                                <strong>Акт №{{ report.id }}</strong>
+                                {% if report.is_archived %}
+                                    <span class="badge bg-secondary bg-opacity-50 text-dark ms-2" style="font-size: 0.7em;">
+                                        <i class="bi bi-archive"></i> Архівний
+                                    </span>
+                                {% endif %}
+                            </td>
 
-                                <td>
-                                    <span class="badge bg-primary rounded-pill">{{ report.tasks.count }} шт.</span>
-                                </td>
+                            <td data-label="Дата">
+                                {{ report.created_at|date:"d.m.Y H:i" }}
+                            </td>
 
-                                <td class="text-end pe-4">
-                                    <a href="{% url 'report_detail' report.pk %}" class="btn btn-sm btn-outline-info me-1" title="Переглянути">
-                                        <i class="bi bi-eye"></i>
+                            <td data-label="Позицій">
+                                <span class="badge bg-primary rounded-pill">{{ report.tasks.count }} шт.</span>
+                            </td>
+
+                            <td class="text-end pe-4" data-label="Дії">
+                                <a href="{% url 'report_detail' report.pk %}" class="btn btn-outline-info flex-fill" title="Переглянути">
+                                    <i class="bi bi-eye"></i> <span class="d-md-none">Перегляд</span>
+                                </a>
+
+                                {% if report.is_archived %}
+                                    <button class="btn btn-outline-secondary flex-fill" disabled title="Редагування заборонено">
+                                        <i class="bi bi-lock"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'report_edit' report.pk %}" class="btn btn-outline-primary flex-fill" title="Редагувати">
+                                        <i class="bi bi-pencil"></i> <span class="d-md-none">Редагувати</span>
                                     </a>
-
-                                    {% if report.is_archived %}
-                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Редагування заборонено">
-                                            <i class="bi bi-lock"></i>
-                                        </button>
-                                    {% else %}
-                                        <a href="{% url 'report_edit' report.pk %}" class="btn btn-sm btn-outline-primary" title="Редагувати">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
-                                    Історія актів порожня.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted" data-label="Інфо">
+                                Історія актів порожня.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

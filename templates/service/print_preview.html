@@ -1,41 +1,76 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container text-center">
-    <h2 class="mb-3">Перевірка Акту</h2>
-    <p class="lead">Нижче наведено список обладнання, яке <b>ще не має дати відправки</b>.</p>
+<div class="container bg-white p-5 shadow-sm mt-3" style="max-width: 900px;">
 
-    {% if tasks %}
-        <div class="alert alert-info">
-            Всього позицій: <strong>{{ tasks.count }}</strong>
+    <div class="d-print-none d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded border">
+        <div>
+            <a href="{% url 'service_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Скасувати
+            </a>
         </div>
 
-        <ul class="list-group text-start mb-4 d-inline-block" style="max-width: 600px; width: 100%;">
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="bi bi-printer"></i> Друк
+            </button>
+
+            <form method="POST" action="{% url 'save_report' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg"></i> Підтвердити та зберегти Акт
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mb-5">
+        <h4>Акт прийому-передачі обладнання</h4>
+        <p class="text-muted">від {% now "d.m.Y" %}</p>
+    </div>
+
+    <table class="table table-bordered border-dark">
+        <thead>
+            <tr class="table-light">
+                <th style="width: 50px;">№</th>
+                <th>Назва / Модель</th>
+                <th>Відділ / Власник</th>
+                <th>Примітки</th>
+            </tr>
+        </thead>
+        <tbody>
             {% for task in tasks %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ task.device_name }}</strong>
-                        <br><small class="text-muted">{{ task.department }} ({{ task.requester_name }})</small>
-                    </div>
-                    <span class="badge bg-primary rounded-pill">{{ task.date_received|date:"d.m.Y" }}</span>
-                </li>
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>
+                    <strong>{{ task.device_name }}</strong>
+                    <div class="small text-muted">{{ task.get_task_type_display }}</div>
+                </td>
+                <td>
+                    {{ task.department }}<br>
+                    <small class="text-muted">({{ task.requester_name }})</small>
+                </td>
+                <td></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-4">Немає обладнання для відправки</td>
+            </tr>
             {% endfor %}
-        </ul>
+        </tbody>
+    </table>
 
-        <div class="alert alert-warning">
-            ⚠️ При натисканні "Зберегти" всім цим записам буде встановлено <b>сьогоднішню дату відправки</b>.
-        </div>
+    <div class="mt-4 text-end">
+        <strong>Всього позицій: {{ tasks.count }}</strong>
+    </div>
 
-        <form action="{% url 'save_report' %}" method="post">
-            {% csrf_token %}
-            <a href="{% url 'service_list' %}" class="btn btn-secondary btn-lg me-3">Скасувати</a>
-            <button type="submit" class="btn btn-success btn-lg">💾 Зберегти та Друкувати</button>
-        </form>
-    {% else %}
-        <div class="alert alert-success">
-            Всі прийняті картриджі вже мають дату відправки. Формувати нічого.
+    <div class="row mt-5 pt-5">
+        <div class="col-6">
+            <p>Здав: _________________</p>
         </div>
-        <a href="{% url 'service_list' %}" class="btn btn-primary">Повернутися назад</a>
-    {% endif %}
+        <div class="col-6 text-end">
+            <p>Прийняв: _________________</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

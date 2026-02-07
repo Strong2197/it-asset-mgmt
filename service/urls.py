@@ -30,19 +30,30 @@ def home_view(request):
         'in_repair_process': in_repair_process,
         'ready_on_stock': ready_on_stock
     })
+
+
+
 urlpatterns = [
+    # Головна сторінка сервісу
     path('', views.service_list, name='service_list'),
-    path('new/', views.service_create, name='service_create'),
-    path('edit/<int:pk>/', views.service_update, name='service_update'),
 
-    # Нові функції
-    path('return/<int:pk>/', views.service_quick_return, name='service_quick_return'),  # Швидке повернення
+    # Створення та редагування
+    path('create/', views.service_create, name='service_create'),
+    path('<int:pk>/update/', views.service_update, name='service_update'),
 
-    path('print-preview/', views.print_preview, name='print_preview'),  # Попередній перегляд
-    path('save-report/', views.save_report, name='save_report'),  # Кнопка "Зберегти"
+    # --- ВИПРАВЛЕННЯ ДЛЯ НОВОГО ДИЗАЙНУ ---
+    # У шаблоні ми використовуємо імена 'service_receive' та 'service_return'
+    # Тут ми прив'язуємо ці імена до ваших функцій
+    path('<int:pk>/receive/', views.service_receive_from_repair, name='service_receive'),
+    path('<int:pk>/return/', views.service_quick_return, name='service_return'),
+    # --------------------------------------
 
-    path('reports/', views.report_list, name='report_list'),  # Історія
-    path('reports/<int:pk>/', views.report_detail, name='report_detail'),  # Друк старого звіту
+    # Друк та акти
+    path('print-preview/', views.print_preview, name='print_preview'),
+    path('save_report/', views.save_report, name='save_report'),
+
+    # Історія звітів
+    path('reports/', views.report_list, name='report_list'),
+    path('reports/<int:pk>/', views.report_detail, name='report_detail'),
     path('reports/<int:pk>/edit/', views.report_edit, name='report_edit'),
-    path('receive-from-repair/<int:pk>/', views.service_receive_from_repair, name='service_receive_from_repair'),
 ]
