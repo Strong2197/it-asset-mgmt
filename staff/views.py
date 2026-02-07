@@ -44,9 +44,14 @@ def staff_update(request, pk):
         if form.is_valid():
             form.save()
             # Обробляємо файли
+            # У views.py всередині staff_create та staff_update:
             files = request.FILES.getlist('kep_files')
             for f in files:
-                KepCertificate.objects.create(employee=employee, file=f)
+                KepCertificate.objects.create(
+                    employee=employee,
+                    file=f,
+                    original_name=f.name  # Зберігаємо початкове ім'я файлу
+                )
             return redirect('staff_list')
         else:
             # ЦЕ ВИВЕДЕ ПРИЧИНУ ПОМИЛКИ В КОНСОЛЬ
