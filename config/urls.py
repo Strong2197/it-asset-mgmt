@@ -12,7 +12,7 @@ from service.models import ServiceTask
 
 def home_view(request):
     # Існуючий код статистики
-    assets_count = Asset.objects.count()
+    assets_count = Asset.objects.filter(is_archived=False).count()
 
     waiting_for_repair = ServiceTask.objects.filter(
         date_sent__isnull=True, is_completed=False
