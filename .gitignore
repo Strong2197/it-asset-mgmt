@@ -12,3 +12,5 @@ __pycache__/
 # Налаштування редакторів
 .idea/
 .vscode/
+
+config/settings.py
