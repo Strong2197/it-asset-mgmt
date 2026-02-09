@@ -1,67 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container bg-white p-5 shadow-sm mt-3" style="max-width: 900px;">
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
 
-    <div class="d-print-none d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded border">
-        <div>
-            <a href="{% url 'service_list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Скасувати
-            </a>
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-check"></i> Попередній перегляд Акту</h5>
+            <small>Перевірте список перед формуванням</small>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="card-body p-4">
 
+            <div class="text-center mb-5">
+                <h4 class="fw-bold text-uppercase">Акт прийому-передачі обладнання</h4>
+                <p class="text-muted">на сервісне обслуговування (попередній список)</p>
+                <div class="text-muted small">Дата формування: {% now "d.m.Y" %}</div>
+            </div>
 
-            <form method="POST" action="{% url 'save_report' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Підтвердити та зберегти Акт
-                </button>
-            </form>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" style="border-color: #dee2e6;">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th style="width: 5%;">№</th>
+                            <th style="width: 55%;">Назва / Модель / Кількість</th>
+                            <th style="width: 25%;">Відділ / Власник</th>
+                            <th style="width: 15%;">Примітки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td class="text-center fw-bold text-muted">{{ forloop.counter }}</td>
+
+                            <td class="p-3">
+                                {% if task.items.exists %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for item in task.items.all %}
+                                            <li class="mb-2 pb-2 border-bottom border-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-dot text-primary"></i>
+                                                        {% if item.item_name == 'Інше' %}
+                                                            <span class="fw-bold">{{ item.custom_name }}</span>
+                                                        {% else %}
+                                                            <span class="fw-bold">{{ item.get_item_name_display }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <span class="badge bg-light text-dark border px-2">
+                                                        {{ item.quantity }} шт.
+                                                    </span>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted fst-italic">Немає доданих пристроїв ({{ task.description }})</span>
+                                {% endif %}
+                            </td>
+
+                            <td style="white-space: normal; word-wrap: break-word; max-width: 200px;">
+                                <div class="fw-bold">{{ task.department }}</div>
+                                <div class="small text-muted">{{ task.requester_name }}</div>
+                            </td>
+
+                            <td class="small text-muted">
+                                {{ task.description|truncatechars:50 }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                Немає заявок, готових до відправки (статус "Нова").
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
+                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                <div>
+                    Всього позицій (заявок): <strong>{{ tasks.count }}</strong>.
+                    Натисніть "Підтвердити", щоб згенерувати фінальний Акт і присвоїти йому номер.
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4 border-top pt-4">
+                <a href="{% url 'service_list' %}" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-arrow-left"></i> Скасувати
+                </a>
+
+                <form method="post" action="{% url 'save_report' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success px-4 shadow-sm" {% if not tasks %}disabled{% endif %}>
+                        <i class="bi bi-check-lg"></i> Підтвердити та зберегти Акт
+                    </button>
+                </form>
+            </div>
+
         </div>
     </div>
-
-    <div class="text-center mb-5">
-        <h4>Акт прийому-передачі обладнання</h4>
-        <p class="text-muted">від {% now "d.m.Y" %}</p>
-    </div>
-
-    <table class="table table-bordered border-dark">
-        <thead>
-            <tr class="table-light">
-                <th style="width: 50px;">№</th>
-                <th>Назва / Модель</th>
-                <th>Відділ / Власник</th>
-                <th>Примітки</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td class="text-center">{{ forloop.counter }}</td>
-                <td>
-                    <strong>{{ task.device_name }}</strong>
-                    <div class="small text-muted">{{ task.get_task_type_display }}</div>
-                </td>
-                <td>
-                    {{ task.department }}<br>
-                    <small class="text-muted">({{ task.requester_name }})</small>
-                </td>
-                <td></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center py-4">Немає обладнання для відправки</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="mt-4 text-end">
-        <strong>Всього позицій: {{ tasks.count }}</strong>
-    </div>
-
-
 </div>
 {% endblock %}

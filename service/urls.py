@@ -56,4 +56,6 @@ urlpatterns = [
     path('reports/', views.report_list, name='report_list'),
     path('reports/<int:pk>/', views.report_detail, name='report_detail'),
     path('reports/<int:pk>/edit/', views.report_edit, name='report_edit'),
+    path('item/<int:pk>/receive/', views.item_receive, name='item_receive'),
+    path('item/<int:pk>/return/', views.item_return, name='item_return'),
 ]

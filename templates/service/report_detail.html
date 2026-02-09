@@ -1,109 +1,110 @@
-<html>
-<head>
-    <title>Акт передачі №{{ report.id }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        h2 { text-align: center; margin-bottom: 5px; }
-        p.date { text-align: center; margin-bottom: 30px; color: #555; }
-@media print{
-    body{
-        margin: 0 20px;
-    }
-}
-        table {
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <a href="{% url 'report_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> До списку актів
+            </a>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'report_edit' pk=report.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Редагувати
+            </a>
+            <button onclick="window.print()" class="btn btn-success shadow-sm">
+                <i class="bi bi-printer"></i> Друкувати Акт
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-lg border-0" id="print-area">
+        <div class="card-body p-5">
+            
+            <div class="text-center mb-5">
+                <h3 class="fw-bold text-uppercase mb-1">ЗВЕДЕНА ВІДОМІСТЬ № {{ report.id }}</h3>
+                <h5 class="text-muted">на заправку та відновлення картриджів</h5>
+                <div class="mt-2 fs-5">
+                    від <strong>{{ report.created_at|date:"d.m.Y" }}</strong>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" style="border-color: #000 !important;">
+                    <thead class="text-center" style="background-color: #f8f9fa;">
+                        <tr style="border-bottom: 2px solid #000;">
+                            <th style="width: 35%; vertical-align: middle;">Модель картриджа / Пристрій</th>
+                            <th style="width: 10%; vertical-align: middle;">К-ть</th>
+                            <th style="width: 35%; vertical-align: middle;">Деталізація (Відділ — Кількість)</th>
+                            <th style="width: 20%; vertical-align: middle;">Примітка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for name, data in stats.items %}
+                        <tr>
+                            <td class="fw-bold px-3">{{ name }}</td>
+
+                            <td class="text-center fs-5 fw-bold">{{ data.total_qty }}</td>
+
+                            <td class="px-3">
+                                <ul class="list-unstyled mb-0">
+                                    {% for dept, qty in data.departments.items %}
+                                        <li class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 py-1">
+                                            <span>{{ dept }}</span>
+                                            <span class="fw-bold">{{ qty }} шт.</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+
+                            <td></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">Дані відсутні</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold fs-5" style="border-top: 2px solid #000;">
+                            <td class="text-end px-3">ВСЬОГО (шт):</td>
+                            <td class="text-center bg-light">{{ grand_total }}</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="mt-5 text-center text-muted small d-print-none">
+                <hr>
+                <p>Документ згенеровано системою IT Asset Management System</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            margin: 0;
+            padding: 0;
+            border: none !important;
         }
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: left;
-            vertical-align: middle;
+        .table, th, td {
+            color: black !important;
+            border-color: black !important;
         }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-
-        /* Стилі для кнопок (не друкуються) */
-        .actions {
-            margin-bottom: 30px;
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        .btn {
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 14px;
-            margin: 0 10px;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .btn-print { background-color: #4CAF50; color: white; border: none; }
-        .btn-back { background-color: #6c757d; color: white; }
-
-        /* Загальна кількість внизу */
-        .total-count {
-            margin-top: 20px;
-            text-align: right;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        /* Прибираємо зайве при друці */
-        @media print {
-            .actions { display: none; }
-            body { padding: 0; }
-        }
-    </style>
-</head>
-<body>
-    <div class="actions">
-        <button onclick="window.print()" class="btn btn-print">🖨️ Друкувати</button>
-        <a href="/service/reports/" class="btn btn-back">⬅ До історії</a>
-        <a href="/service/" class="btn btn-back">🏠 На головну</a>
-    </div>
-
-    <h2>Акт прийому-передачі обладнання</h2>
-    <p class="date">від {{ report.created_at|date:"d.m.Y" }}</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 40px; text-align: center;">№</th>
-                <th>Назва / Модель</th>
-                <th>Відділ / Власник</th>
-                <th style="width: 200px;">Примітка</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in report.tasks.all %}
-            <tr>
-                <td style="text-align: center;">{{ forloop.counter }}</td>
-                <td style="font-weight: bold;">{{ task.device_name }}</td>
-                <td>
-                    {{ task.department }}
-                    <br><span style="font-size: 0.9em; color: #555;">({{ task.requester_name }})</span>
-                </td>
-                <td></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="total-count">
-        Всього позицій: {{ report.tasks.count }}
-    </div>
-
-</body>
-</html>
+        .d-print-none { display: none !important; }
+        .bg-light { background-color: transparent !important; }
+    }
+</style>
+{% endblock %}

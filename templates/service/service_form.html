@@ -2,67 +2,86 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm"> <div class="card-header bg-warning text-dark">
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
                 <h4 class="mb-0">{{ title }}</h4>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="service-form">
                     {% csrf_token %}
 
                     {% for field in form %}
                     <div class="mb-3">
-
-                        {% if field.name == 'is_completed' %}
-                            <div class="form-check">
-                                {{ field }}
-                                <label class="form-check-label fw-bold">{{ field.label }}</label>
-                            </div>
-
-                        {% elif field.name == 'department' %}
-                            <label class="form-label fw-bold">{{ field.label }}</label>
-                            <input type="text"
-                                   name="{{ field.name }}"
+                        {% if field.name == 'department' %}
+                            <label class="form-label fw-bold">Відділ</label>
+                            <input type="text" name="{{ field.name }}"
                                    value="{{ field.value|default:'' }}"
-                                   class="form-control"
-                                   list="dept-list"
-                                   placeholder="Почніть вводити назву відділу..."
-                                   autocomplete="off">
-
+                                   class="form-control" list="dept-list"
+                                   placeholder="Введіть назву відділу..." autocomplete="off">
                             <datalist id="dept-list">
                                 {% for dept in departments %}
                                     <option value="{{ dept }}">
                                 {% endfor %}
                             </datalist>
-
-                        {% elif field.name == 'device_name' %}
-                            <label class="form-label fw-bold">{{ field.label }}</label>
-
-                            {{ field }}
-
-                            <select id="device-select" class="form-select mb-2">
-                                <option value="" selected disabled>-- Оберіть зі списку --</option>
-                                {% for val, name in cartridges %}
-                                    <option value="{{ val }}">{{ name }}</option>
-                                {% endfor %}
-                                <option value="OTHER_OPTION_MARKER" class="fw-bold text-primary">-- Інше (вписати вручну) --</option>
-                            </select>
-
-                            <div id="custom-device-block" style="display: none;">
-                                <input type="text" id="custom-device-input" class="form-control border-primary" placeholder="Введіть повну назву...">
-                                <div class="form-text text-muted small">Якщо моделі немає в списку, напишіть її тут.</div>
+                        {% elif field.name == 'is_completed' %}
+                            <div class="form-check">
+                                {{ field }}
+                                <label class="form-check-label fw-bold">{{ field.label }}</label>
                             </div>
-
                         {% else %}
                             <label class="form-label fw-bold">{{ field.label }}</label>
                             {{ field }}
                         {% endif %}
-
-                        {% if field.errors %}
-                            <div class="text-danger small">{{ field.errors.0 }}</div>
-                        {% endif %}
                     </div>
                     {% endfor %}
+
+                    <hr>
+                    <label class="form-label fw-bold mb-3">Список картриджів:</label>
+
+                    {{ formset.management_form }}
+
+                    <div id="items-container">
+                        {% for item_form in formset %}
+                        <div class="card mb-2 border-secondary item-row">
+                            <div class="card-body p-2">
+                                {% for hidden in item_form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="mb-1">
+                                            {{ item_form.item_name }}
+                                        </div>
+
+                                        <div class="custom-name-wrapper" style="display:none;">
+                                            {{ item_form.custom_name }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">К-ть</span>
+                                            {{ item_form.quantity }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        {% if formset.can_delete %}
+                                            <div class="d-none">{{ item_form.DELETE }}</div>
+                                            <button type="button" class="btn btn-outline-danger btn-sm delete-row-btn">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" id="add-item" class="btn btn-outline-primary btn-sm mt-2 mb-3">
+                        <i class="bi bi-plus-lg"></i> Додати позицію
+                    </button>
 
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'service_list' %}" class="btn btn-secondary">Скасувати</a>
@@ -76,55 +95,103 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Знаходимо елементи за ID (переконайтесь, що у forms.py для device_name стоїть id='real-device-name')
-    const realInput = document.getElementById('real-device-name');
-    const select = document.getElementById('device-select');
-    const customBlock = document.getElementById('custom-device-block');
-    const customInput = document.getElementById('custom-device-input');
+    const container = document.getElementById('items-container');
+    const addButton = document.getElementById('add-item');
+    const totalForms = document.getElementById('id_items-TOTAL_FORMS');
 
-    // Якщо елементів немає (наприклад, форма іншого типу), виходимо
-    if (!realInput || !select) return;
+    // --- ФУНКЦІЯ: Перемикання поля "Інше" ---
+    function toggleCustomField(selectElement) {
+        // Знаходимо батьківський рядок
+        const row = selectElement.closest('.item-row');
+        // Знаходимо обгортку для нашого поля
+        const wrapper = row.querySelector('.custom-name-wrapper');
+        // Знаходимо саме поле input всередині
+        const input = wrapper.querySelector('input');
 
-    // 1. При завантаженні: перевіряємо, що зараз записано в базі
-    const currentValue = realInput.value;
-    let foundInList = false;
+        console.log("Статус:", selectElement.value);
 
-    if (currentValue) {
-        // Шукаємо, чи є це значення у списку select
-        for (let i = 0; i < select.options.length; i++) {
-            if (select.options[i].value === currentValue) {
-                select.selectedIndex = i;
-                foundInList = true;
-                break;
+        // Перевіряємо, чи вибрано 'Інше'
+        if (selectElement.value === 'Інше') {
+            // 1. Показуємо обгортку
+            wrapper.style.display = 'block';
+
+            // 2. ВАЖЛИВО: Примусово показуємо сам input (виправляємо конфлікт з forms.py)
+            if (input) {
+                input.style.display = 'block';
+                input.required = true;
+                input.placeholder = "Напишіть назву пристрою...";
+                input.focus(); // Ставимо курсор всередину, щоб зручно писати
             }
-        }
-        // Якщо значення є, але в списку його немає -> це "Інше"
-        if (!foundInList) {
-            select.value = "OTHER_OPTION_MARKER";
-            customBlock.style.display = 'block';
-            customInput.value = currentValue;
+        } else {
+            // Ховаємо все назад
+            wrapper.style.display = 'none';
+            if (input) {
+                input.value = '';
+                input.required = false;
+            }
         }
     }
 
-    // 2. Коли користувач змінює вибір у списку
-    select.addEventListener('change', function() {
-        if (this.value === 'OTHER_OPTION_MARKER') {
-            // Обрали "Інше"
-            customBlock.style.display = 'block';
-            customInput.focus();
-            realInput.value = customInput.value;
-        } else {
-            // Обрали стандартний варіант
-            customBlock.style.display = 'none';
-            realInput.value = this.value;
+    // --- СЛУХАЧ ПОДІЙ (Delegation) ---
+    container.addEventListener('change', function(e) {
+        // Перевіряємо, чи це випадаючий список з назвою 'item_name'
+        if (e.target.matches('select') && e.target.name.includes('item_name')) {
+            toggleCustomField(e.target);
         }
     });
 
-    // 3. Коли користувач пише вручну (в режимі "Інше")
-    customInput.addEventListener('input', function() {
-        if (select.value === 'OTHER_OPTION_MARKER') {
-            realInput.value = this.value;
+    // --- ІНІЦІАЛІЗАЦІЯ ---
+    // Проходимо по всіх списках при завантаженні (щоб відкрити "Інше" при редагуванні)
+    const allSelects = container.querySelectorAll('select[name$="item_name"]');
+    allSelects.forEach(select => {
+        toggleCustomField(select);
+    });
+
+    // --- ЛОГІКА ВИДАЛЕННЯ ---
+    container.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-row-btn')) {
+            const row = e.target.closest('.item-row');
+            const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true; // Ставимо галочку видалення для Django
+                row.style.display = 'none';    // Ховаємо рядок візуально
+            } else {
+                row.remove(); // Якщо це новий рядок - просто видаляємо
+            }
         }
+    });
+
+    // --- ЛОГІКА ДОДАВАННЯ НОВОГО РЯДКА ---
+    addButton.addEventListener('click', function() {
+        const formsCount = parseInt(totalForms.value);
+        const firstRow = container.querySelector('.item-row');
+
+        // Клонуємо перший рядок
+        const newRow = firstRow.cloneNode(true);
+        const regex = new RegExp(`items-(\\d+)-`, 'g');
+        newRow.innerHTML = newRow.innerHTML.replace(regex, `items-${formsCount}-`);
+
+        // Очищаємо всі поля в новому рядку
+        newRow.querySelectorAll('input, select').forEach(el => {
+            if (el.type !== 'hidden') {
+                el.value = '';
+                // Скидаємо стилі, щоб поле "Інше" було сховане за замовчуванням
+                if (el.name.includes('custom_name')) el.style.display = 'none';
+                if (el.name.includes('quantity')) el.value = 1;
+            }
+            if (el.type === 'checkbox') el.checked = false;
+        });
+
+        // Скидаємо обгортку "Інше"
+        const wrapper = newRow.querySelector('.custom-name-wrapper');
+        if(wrapper) wrapper.style.display = 'none';
+
+        // Показуємо сам рядок
+        newRow.style.display = 'block';
+
+        container.appendChild(newRow);
+        totalForms.value = formsCount + 1;
     });
 });
 </script>
