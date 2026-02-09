@@ -2,7 +2,23 @@ from django import forms
 from .models import ServiceTask, ServiceReport
 from django.db.models import Q
 
-
+# Список картриджів згідно з файлом PDF
+CARTRIDGE_CHOICES = [
+    ('Картридж Xerox Phaser 3020, WC3025', 'Картридж Xerox Phaser 3020, WC3025'),
+    ('Картридж Canon 725/ HP [CE285A]', 'Картридж Canon 725/ HP [CE285A]'),
+    ('Тонер-картридж OKI MB472', 'Тонер-картридж OKI MB472'),
+    ('Картридж HP [CF283A]', 'Картридж HP [CF283A]'),
+    ('Картридж Canon 103/303/703/HP [Q2612A]', 'Картридж Canon 103/303/703/HP [Q2612A]'),
+    ('Картридж HP [CE278A]', 'Картридж HP [CE278A]'),
+    ('Картридж Canon FX-10', 'Картридж Canon FX-10'),
+    ('Картридж Canon 728', 'Картридж Canon 728'),
+    ('Картридж HP [Q7553A]', 'Картридж HP [Q7553A]'),
+    ('Картридж Samsung MLT-D101S', 'Картридж Samsung MLT-D101S'),
+    ('Картридж Canon 712/ HP [CB435A]', 'Картридж Canon 712/ HP [CB435A]'),
+    ('Картридж HP [CE505A]', 'Картридж HP [CE505A]'),
+    ('Картридж HP [CB436A]', 'Картридж HP [CB436A]'),
+    ('Барабан OKI', 'Барабан OKI'),
+]
 # --- Форма 1: Для створення/редагування заявки на ремонт ---
 class ServiceTaskForm(forms.ModelForm):
     class Meta:
@@ -12,6 +28,7 @@ class ServiceTaskForm(forms.ModelForm):
                   'description', 'is_completed']
         widgets = {
             # Важливо: department тепер звичайний TextInput
+            'device_name': forms.TextInput(attrs={'type': 'hidden', 'id': 'real-device-name'}),
             'department': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}),
             'date_back_from_service': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'date_received': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),

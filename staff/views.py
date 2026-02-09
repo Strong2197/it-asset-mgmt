@@ -20,8 +20,10 @@ def staff_list(request):
 
 
 def staff_create(request):
-    positions = Employee.objects.values_list('position', flat=True).distinct()
-    departments = Employee.objects.values_list('department', flat=True).distinct()
+    positions = Employee.objects.values_list('position', flat=True).exclude(position__exact='').distinct().order_by(
+        'position')
+    departments = Employee.objects.values_list('department', flat=True).exclude(
+        department__exact='').distinct().order_by('department')
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
         if form.is_valid():
@@ -43,8 +45,10 @@ def staff_create(request):
     })
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    positions = Employee.objects.values_list('position', flat=True).distinct()
-    departments = Employee.objects.values_list('department', flat=True).distinct()
+    positions = Employee.objects.values_list('position', flat=True).exclude(position__exact='').distinct().order_by(
+        'position')
+    departments = Employee.objects.values_list('department', flat=True).exclude(
+        department__exact='').distinct().order_by('department')
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():

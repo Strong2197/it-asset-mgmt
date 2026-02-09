@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from .models import ServiceTask, ServiceReport
-from .forms import ServiceTaskForm, ServiceReportForm
+from .forms import ServiceTaskForm, ServiceReportForm, CARTRIDGE_CHOICES
 from django.db.models import Q
 
 
@@ -30,7 +30,7 @@ def service_create(request):
     else:
         form = ServiceTaskForm()
     return render(request, 'service/service_form.html', {
-        'form': form, 'title': 'Нова заявка', 'departments': departments
+        'form': form, 'title': 'Нова заявка', 'departments': departments, 'cartridges': CARTRIDGE_CHOICES,
     })
 
 
@@ -46,7 +46,7 @@ def service_update(request, pk):
     else:
         form = ServiceTaskForm(instance=task)
     return render(request, 'service/service_form.html', {
-        'form': form, 'title': 'Редагування заявки', 'departments': departments
+        'form': form, 'title': 'Редагування заявки', 'departments': departments, 'cartridges': CARTRIDGE_CHOICES
     })
 
 
