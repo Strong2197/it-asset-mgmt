@@ -124,35 +124,40 @@
                                                     </div>
                                                 </div>
 
-                                                <div style="width: 160px; flex-shrink: 0;">
-                                                    {% if not item.date_back_from_service %}
-                                                        {% if task.date_sent %}
-                                                            <a href="{% url 'item_receive' item.pk %}"
-                                                               class="btn btn-sm btn-outline-success w-100 d-flex justify-content-center align-items-center gap-2">
-                                                                <i class="bi bi-box-seam"></i> Отримати
-                                                            </a>
-                                                        {% else %}
-                                                            <div class="text-center text-muted small border rounded bg-light py-1">
-                                                                <i class="bi bi-clock"></i> Очікує
-                                                            </div>
-                                                        {% endif %}
+                                               <div style="width: 160px; flex-shrink: 0;" id="action-block-{{ item.pk }}">
+    
+    {% if not item.date_back_from_service %}
+        {% if task.date_sent %}
+            <a href="#" 
+               data-url="{% url 'item_receive' item.pk %}"
+               class="btn btn-sm btn-outline-success w-100 d-flex justify-content-center align-items-center gap-2 ajax-btn receive-btn">
+                <i class="bi bi-box-seam"></i> Отримати
+            </a>
+        {% else %}
+            <div class="text-center text-muted small border rounded bg-light py-1">
+                <i class="bi bi-clock"></i> Очікує
+            </div>
+        {% endif %}
 
-                                                    {% elif not item.date_returned_to_user %}
-                                                        <div class="d-flex flex-column gap-1">
-                                                            <span class="badge bg-info text-dark w-100">На складі</span>
-                                                            <a href="{% url 'item_return' item.pk %}"
-                                                               class="btn btn-sm btn-primary w-100 py-0" style="font-size: 0.85rem;">
-                                                                Видати <i class="bi bi-arrow-right"></i>
-                                                            </a>
-                                                        </div>
+    {% elif not item.date_returned_to_user %}
+        <div class="d-flex flex-column gap-1">
+            <span class="badge bg-info text-dark w-100">На складі</span>
+            <a href="#" 
+               data-url="{% url 'item_return' item.pk %}"
+               class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" 
+               style="font-size: 0.85rem;">
+                Видати <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
 
-                                                    {% else %}
-                                                        <div class="text-end text-success small">
-                                                            <i class="bi bi-check-all fs-5"></i>
-                                                            <div>Видано {{ item.date_returned_to_user|date:"d.m" }}</div>
-                                                        </div>
-                                                    {% endif %}
-                                                </div>
+    {% else %}
+        <div class="text-end text-success small">
+            <i class="bi bi-check-all fs-5"></i>
+            <div>Видано {{ item.date_returned_to_user|date:"d.m" }}</div>
+        </div>
+    {% endif %}
+    
+</div>
                                             </div>
                                             {% if not forloop.last %}<hr class="my-1 text-muted opacity-25">{% endif %}
                                         {% endfor %}
@@ -279,4 +284,117 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // Функція для отримання CSRF токена (потрібен для безпеки Django)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Обробка кліків на кнопки
+    document.body.addEventListener('click', function(e) {
+        // Шукаємо кнопку з класом .ajax-btn
+        const btn = e.target.closest('.ajax-btn');
+        
+        if (btn) {
+            e.preventDefault(); // Зупиняємо перехід за посиланням
+            
+            const url = btn.getAttribute('data-url');
+            const container = btn.closest('div[id^="action-block-"]'); // Знаходимо батьківський блок
+
+            // Додаємо ефект завантаження (спіннер)
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ...';
+            btn.classList.add('disabled');
+
+            // Відправляємо запит
+            fetch(url, {
+                method: 'GET', // Можна використовувати GET, бо ми модифікували views.py
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    
+                    // 1. Якщо натиснули "ОТРИМАТИ" -> Міняємо на "ВИДАТИ"
+                    if (data.new_state === 'stocked') {
+                        container.innerHTML = `
+                            <div class="d-flex flex-column gap-1 animation-fade-in">
+                                <span class="badge bg-info text-dark w-100">На складі</span>
+                                <a href="#" 
+                                   data-url="${data.return_url}"
+                                   class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" 
+                                   style="font-size: 0.85rem;">
+                                    Видати <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                    // 2. Якщо натиснули "ВИДАТИ" -> Міняємо на "ГАЛОЧКУ"
+                    else if (data.new_state === 'issued') {
+                        container.innerHTML = `
+                            <div class="text-end text-success small animation-fade-in">
+                                <i class="bi bi-check-all fs-5"></i>
+                                <div>Видано ${data.date_str}</div>
+                            </div>
+                        `;
+
+                        // Якщо вся заявка закрита, можна візуально змінити загальний статус (опціонально)
+                        if (data.task_completed) {
+                            // Знаходимо рядок таблиці
+                            const row = container.closest('tr');
+                            if (row) {
+                                // Змінюємо data-status для фільтрів
+                                row.setAttribute('data-status', 'completed');
+                                // Змінюємо іконку статусу зліва
+                                const statusCell = row.querySelector('td:first-child');
+                                if (statusCell) {
+                                    statusCell.innerHTML = '<span class="badge bg-success rounded-pill" title="Заявка закрита"><i class="bi bi-check-all"></i></span>';
+                                }
+                            }
+                        }
+                    }
+
+                } else {
+                    alert('Помилка сервера. Спробуйте оновити сторінку.');
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('disabled');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.innerHTML = originalContent;
+                btn.classList.remove('disabled');
+            });
+        }
+    });
+});
+</script>
+
+<style>
+    .animation-fade-in {
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 {% endblock %}
