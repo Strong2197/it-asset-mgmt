@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.db.models import Case, When, Value, IntegerField 
 from .models import ServiceTask, ServiceReport, ServiceTaskItem
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet
 
@@ -14,8 +15,23 @@ def get_all_departments():
 
 # --- СПИСОК ЗАЯВОК ---
 def service_list(request):
-    # prefetch_related пришвидшує завантаження зв'язаних items
-    tasks = ServiceTask.objects.prefetch_related('items').all().order_by('-date_received')
+    tasks = ServiceTask.objects.prefetch_related('items').annotate(
+        # Створюємо віртуальне поле 'status_rank' для сортування
+        status_rank=Case(
+            # 1. Пріоритет: Нові (чекають відправки)
+            When(is_completed=False, date_sent__isnull=True, then=Value(1)),
+            
+            # 2. Пріоритет: В роботі (відправлені, але не закриті)
+            When(is_completed=False, date_sent__isnull=False, then=Value(2)),
+            
+            # 3. Пріоритет: Виконані (Архів)
+            When(is_completed=True, then=Value(3)),
+            
+            default=Value(4), # На всяк випадок
+            output_field=IntegerField(),
+        )
+    ).order_by('status_rank', '-date_received') # Спочатку по статусу, потім новіші за датою
+
     return render(request, 'service/service_list.html', {'tasks': tasks})
 
 
