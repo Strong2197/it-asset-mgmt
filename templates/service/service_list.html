@@ -2,7 +2,6 @@
 
 {% block content %}
 <style>
-    /* Стилі для мобільного (без змін) */
     @media (max-width: 768px) {
         .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
@@ -25,6 +24,8 @@
             padding-left: 0; font-weight: 600; text-align: left; color: #6c757d; font-size: 0.9em; text-transform: uppercase;
         }
     }
+    .animation-fade-in { animation: fadeIn 0.5s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
 <div class="row justify-content-center">
@@ -33,10 +34,7 @@
 
             <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <h4 class="mb-0 text-primary">
-                        <i class="bi bi-tools"></i> Журнал сервісу
-                    </h4>
-
+                    <h4 class="mb-0 text-primary"><i class="bi bi-tools"></i> Журнал сервісу</h4>
                     <div class="d-flex gap-2 w-100 w-md-auto justify-content-md-end">
                         <a href="{% url 'report_list' %}" class="btn btn-outline-secondary flex-fill flex-md-grow-0 text-nowrap">
                             <i class="bi bi-clock-history"></i> Історія актів
@@ -64,21 +62,25 @@
 
             <div class="card shadow-sm mb-3 border-0">
                 <div class="card-body p-2 d-flex flex-column flex-md-row gap-2 bg-white rounded-3">
-
                     <div class="btn-group w-100 w-md-auto" role="group" id="filter-buttons">
-                        <button type="button" class="btn btn-outline-primary active" data-filter="all">Всі</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="active">В роботі</button>
-                        <button type="button" class="btn btn-outline-primary" data-filter="completed">Архів</button>
-                    </div>
+                        <a href="?filter=all{% if search_query %}&q={{ search_query }}{% endif %}"
+                           class="btn btn-outline-primary filter-link {% if current_filter == 'all' %}active{% endif %}" data-filter="all">Всі</a>
 
+                        <a href="?filter=active{% if search_query %}&q={{ search_query }}{% endif %}"
+                           class="btn btn-outline-primary filter-link {% if current_filter == 'active' %}active{% endif %}" data-filter="active">В роботі</a>
+
+                        <a href="?filter=completed{% if search_query %}&q={{ search_query }}{% endif %}"
+                           class="btn btn-outline-primary filter-link {% if current_filter == 'completed' %}active{% endif %}" data-filter="completed">Архів</a>
+                    </div>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" id="service-search" class="form-control border-start-0 bg-light" placeholder="Пошук картриджа, відділу...">
+                        <input type="text" id="service-search" value="{{ search_query }}" class="form-control border-start-0 bg-light" placeholder="Пошук картриджа, відділу...">
                     </div>
                 </div>
             </div>
 
             <div class="card-body p-0 bg-transparent">
+                <div id="service-table-container">
                 <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="table-layout: fixed;">
                     <thead class="table-light text-secondary">
                         <tr>
@@ -91,9 +93,7 @@
                     </thead>
                     <tbody id="table-body">
                         {% for task in tasks %}
-
-                        <tr class="service-row" data-status="{% if task.is_completed %}completed{% else %}active{% endif %}">
-
+                        <tr class="service-row">
                             <td class="ps-4 align-top pt-3" data-label="Статус">
                                 {% if task.is_completed %}
                                     <span class="badge bg-success rounded-pill" title="Заявка закрита"><i class="bi bi-check-all"></i></span>
@@ -124,40 +124,33 @@
                                                     </div>
                                                 </div>
 
-                                               <div style="width: 160px; flex-shrink: 0;" id="action-block-{{ item.pk }}">
-    
-    {% if not item.date_back_from_service %}
-        {% if task.date_sent %}
-            <a href="#" 
-               data-url="{% url 'item_receive' item.pk %}"
-               class="btn btn-sm btn-outline-success w-100 d-flex justify-content-center align-items-center gap-2 ajax-btn receive-btn">
-                <i class="bi bi-box-seam"></i> Отримати
-            </a>
-        {% else %}
-            <div class="text-center text-muted small border rounded bg-light py-1">
-                <i class="bi bi-clock"></i> Очікує
-            </div>
-        {% endif %}
-
-    {% elif not item.date_returned_to_user %}
-        <div class="d-flex flex-column gap-1">
-            <span class="badge bg-info text-dark w-100">На складі</span>
-            <a href="#" 
-               data-url="{% url 'item_return' item.pk %}"
-               class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" 
-               style="font-size: 0.85rem;">
-                Видати <i class="bi bi-arrow-right"></i>
-            </a>
-        </div>
-
-    {% else %}
-        <div class="text-end text-success small">
-            <i class="bi bi-check-all fs-5"></i>
-            <div>Видано {{ item.date_returned_to_user|date:"d.m" }}</div>
-        </div>
-    {% endif %}
-    
-</div>
+                                                <div style="width: 160px; flex-shrink: 0;" id="action-block-{{ item.pk }}">
+                                                    {% if not item.date_back_from_service %}
+                                                        {% if task.date_sent %}
+                                                            <a href="#"
+                                                               data-url="{% url 'item_receive' item.pk %}"
+                                                               data-qty="{{ item.quantity }}"
+                                                               class="btn btn-sm btn-outline-success w-100 d-flex justify-content-center align-items-center gap-2 ajax-btn receive-btn">
+                                                                <i class="bi bi-box-seam"></i> Отримати
+                                                            </a>
+                                                        {% else %}
+                                                            <div class="text-center text-muted small border rounded bg-light py-1"><i class="bi bi-clock"></i> Очікує</div>
+                                                        {% endif %}
+                                                    {% elif not item.date_returned_to_user %}
+                                                        <div class="d-flex flex-column gap-1">
+                                                            <span class="badge bg-info text-dark w-100">На складі</span>
+                                                            <a href="#" data-url="{% url 'item_return' item.pk %}"
+                                                               class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" style="font-size: 0.85rem;">
+                                                                Видати <i class="bi bi-arrow-right"></i>
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <div class="text-end text-success small">
+                                                            <i class="bi bi-check-all fs-5"></i>
+                                                            <div>Видано {{ item.date_returned_to_user|date:"d.m" }}</div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                             {% if not forloop.last %}<hr class="my-1 text-muted opacity-25">{% endif %}
                                         {% endfor %}
@@ -167,51 +160,77 @@
                                 {% endif %}
                             </td>
 
-                           <td class="align-top pt-3" data-label="Від кого">
-                                <div class="fw-bold text-dark text-wrap search-target" style="line-height: 1.3;">
-                                    {{ task.department }}
-                                </div>
-                                <div class="small text-muted search-target mt-1">
-                                    {{ task.requester_name }}
-                                </div>
+                            <td class="align-top pt-3" data-label="Від кого">
+                                <div class="fw-bold text-dark text-wrap search-target" style="line-height: 1.3;">{{ task.department }}</div>
+                                <div class="small text-muted search-target mt-1">{{ task.requester_name }}</div>
                             </td>
 
                             <td class="align-top pt-3" data-label="Дати">
                                 <div class="d-flex flex-column gap-1 small">
-                                    <div class="d-flex justify-content-between" title="Створено">
-                                        <span class="text-muted">Ство:</span>
-                                        <strong>{{ task.date_received|date:"d.m" }}</strong>
-                                    </div>
+                                    <div class="d-flex justify-content-between"><span class="text-muted">Ство:</span> <strong>{{ task.date_received|date:"d.m" }}</strong></div>
                                     {% if task.date_sent %}
-                                    <div class="d-flex justify-content-between" title="Відправлено">
-                                        <span class="text-primary">Акт:</span>
-                                        <strong>{{ task.date_sent|date:"d.m" }}</strong>
-                                    </div>
+                                    <div class="d-flex justify-content-between"><span class="text-primary">Акт:</span> <strong>{{ task.date_sent|date:"d.m" }}</strong></div>
                                     {% endif %}
                                 </div>
                             </td>
 
                             <td class="align-top text-end pe-4 pt-3" data-label="Дії">
-                                <a href="{% url 'service_update' task.pk %}" class="btn btn-light btn-sm border text-secondary" title="Редагувати">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
+                                <a href="{% url 'service_update' task.pk %}" class="btn btn-light btn-sm border text-secondary" title="Редагувати"><i class="bi bi-pencil"></i></a>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted">
-                                <div class="mb-3"><i class="bi bi-inbox fs-1 opacity-25"></i></div>
-                                Заявок поки немає.
-                            </td>
-                        </tr>
+                        <tr><td colspan="5" class="text-center py-5 text-muted">Заявок поки немає (або нічого не знайдено).</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
 
-             <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <small class="text-muted">Відображено: <span id="visible-count">{{ tasks.count }}</span> із {{ tasks.count }}</small>
+            <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3" id="pagination-container">
+                <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
+                    <small class="text-muted">
+                        Всього заявок: <strong>{{ total_count }}</strong>.
+                        Сторінка {{ tasks.number }} з {{ tasks.paginator.num_pages }}.
+                    </small>
+
+                    {% if tasks.paginator.num_pages > 1 %}
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if tasks.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tasks.previous_page_number }}&filter={{ current_filter }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for i in tasks.paginator.page_range %}
+                                {% if tasks.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > tasks.number|add:'-3' and i < tasks.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}&filter={{ current_filter }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tasks.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ tasks.next_page_number }}&filter={{ current_filter }}{% if search_query %}&q={{ search_query }}{% endif %}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -219,75 +238,78 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('service-search');
-    const filterButtons = document.querySelectorAll('#filter-buttons button');
     const tableBody = document.getElementById('table-body');
-    const rows = tableBody.getElementsByTagName('tr');
-    const counterSpan = document.getElementById('visible-count');
+    const paginationContainer = document.getElementById('pagination-container');
+    const tableContainer = document.getElementById('service-table-container');
+    let debounceTimer;
 
-    let currentFilter = 'all'; // За замовчуванням "Всі"
-    let currentSearch = '';
+    // --- УНІВЕРСАЛЬНА ФУНКЦІЯ ЗАВАНТАЖЕННЯ (AJAX) ---
+    function loadTableData(url) {
+        if(tableContainer) tableContainer.style.opacity = '0.5';
 
-    // Функція фільтрації (об'єднує і пошук, і статус)
-    function filterTable() {
-        let visibleCount = 0;
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
 
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
+            const newTableBody = doc.getElementById('table-body').innerHTML;
+            tableBody.innerHTML = newTableBody;
 
-            // 1. Перевірка статусу (Всі / В роботі / Архів)
-            const status = row.getAttribute('data-status'); // 'active' або 'completed'
-            let isStatusMatch = true;
-
-            if (currentFilter === 'active') {
-                isStatusMatch = (status === 'active');
-            } else if (currentFilter === 'completed') {
-                isStatusMatch = (status === 'completed');
+            const newPagination = doc.getElementById('pagination-container');
+            if (newPagination && paginationContainer) {
+                paginationContainer.innerHTML = newPagination.innerHTML;
             }
 
-            // 2. Перевірка тексту (Пошук)
-            // Шукає по всьому рядку, включаючи назви картриджів (клас search-target не обов'язковий, але корисний для структури)
-            const text = row.textContent.toLowerCase();
-            const isTextMatch = text.includes(currentSearch);
+            // Оновлюємо кнопки фільтрів
+            const currentUrlParams = new URLSearchParams(url.split('?')[1]);
+            const newFilter = currentUrlParams.get('filter') || 'active';
+            document.querySelectorAll('.filter-link').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.filter === newFilter) btn.classList.add('active');
+            });
 
-            // Показуємо рядок, тільки якщо співпадають ОБИДВІ умови
-            if (isStatusMatch && isTextMatch) {
-                row.style.display = "";
-                visibleCount++;
-            } else {
-                row.style.display = "none";
+            // Оновлюємо URL без перезавантаження
+            window.history.pushState({path: url}, '', url);
+
+            if(tableContainer) tableContainer.style.opacity = '1';
+        })
+        .catch(err => {
+            console.error('Помилка:', err);
+            if(tableContainer) tableContainer.style.opacity = '1';
+        });
+    }
+
+    // --- ПЕРЕХОПЛЕННЯ КЛІКІВ (Вкладки та Пагінація) ---
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('.page-link, .filter-link');
+
+        // Перевіряємо, чи це посилання і чи не заблоковане
+        if (link && link.getAttribute('href') && !link.parentElement.classList.contains('disabled')) {
+            if (link.tagName.toLowerCase() === 'a') {
+                e.preventDefault(); // <--- ОСЬ ЦЕ БЛОКУЄ ПЕРЕЗАВАНТАЖЕННЯ
+                loadTableData(link.getAttribute('href'));
             }
         }
+    });
 
-        // Оновлюємо лічильник
-        if (counterSpan) counterSpan.textContent = visibleCount;
-    }
-
-    // Слухач на введення тексту
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
-            currentSearch = this.value.toLowerCase().trim();
-            filterTable();
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+            const urlParams = new URLSearchParams(window.location.search);
+            const filter = urlParams.get('filter') || 'active';
+
+            debounceTimer = setTimeout(() => {
+                const newUrl = `${window.location.pathname}?q=${encodeURIComponent(query)}&filter=${filter}`;
+                loadTableData(newUrl);
+            }, 300);
         });
     }
 
-    // Слухачі на кнопки фільтрів
-    filterButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Змінюємо активну кнопку
-            filterButtons.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-
-            // Оновлюємо фільтр
-            currentFilter = this.getAttribute('data-filter');
-            filterTable();
-        });
-    });
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    
-    // Функція для отримання CSRF токена (потрібен для безпеки Django)
+    // --- AJAX ДЛЯ КНОПОК ---
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -304,76 +326,58 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     const csrftoken = getCookie('csrftoken');
 
-    // Обробка кліків на кнопки
     document.body.addEventListener('click', function(e) {
-        // Шукаємо кнопку з класом .ajax-btn
         const btn = e.target.closest('.ajax-btn');
-        
         if (btn) {
-            e.preventDefault(); // Зупиняємо перехід за посиланням
-            
-            const url = btn.getAttribute('data-url');
-            const container = btn.closest('div[id^="action-block-"]'); // Знаходимо батьківський блок
+            e.preventDefault();
 
-            // Додаємо ефект завантаження (спіннер)
+            let url = btn.getAttribute('data-url');
+            const isReceiveBtn = url.includes('receive');
+            let quantity = parseInt(btn.getAttribute('data-qty') || 1);
+            let qtyToReceive = quantity;
+
+            if (isReceiveBtn && quantity > 1) {
+                let input = prompt(`Всього у заявці: ${quantity} шт.\nСкільки повернулось з ремонту?`, quantity);
+                if (input === null) return;
+                qtyToReceive = parseInt(input);
+                if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) {
+                    alert("Некоректна кількість!");
+                    return;
+                }
+                url += `?qty=${qtyToReceive}`;
+            }
+
+            const container = btn.closest('div[id^="action-block-"]');
             const originalContent = btn.innerHTML;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ...';
             btn.classList.add('disabled');
 
-            // Відправляємо запит
             fetch(url, {
-                method: 'GET', // Можна використовувати GET, бо ми модифікували views.py
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken
-                }
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    
-                    // 1. Якщо натиснули "ОТРИМАТИ" -> Міняємо на "ВИДАТИ"
-                    if (data.new_state === 'stocked') {
-                        container.innerHTML = `
-                            <div class="d-flex flex-column gap-1 animation-fade-in">
-                                <span class="badge bg-info text-dark w-100">На складі</span>
-                                <a href="#" 
-                                   data-url="${data.return_url}"
-                                   class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" 
-                                   style="font-size: 0.85rem;">
-                                    Видати <i class="bi bi-arrow-right"></i>
-                                </a>
-                            </div>
-                        `;
-                    }
-                    
-                    // 2. Якщо натиснули "ВИДАТИ" -> Міняємо на "ГАЛОЧКУ"
-                    else if (data.new_state === 'issued') {
-                        container.innerHTML = `
-                            <div class="text-end text-success small animation-fade-in">
-                                <i class="bi bi-check-all fs-5"></i>
-                                <div>Видано ${data.date_str}</div>
-                            </div>
-                        `;
-
-                        // Якщо вся заявка закрита, можна візуально змінити загальний статус (опціонально)
-                        if (data.task_completed) {
-                            // Знаходимо рядок таблиці
-                            const row = container.closest('tr');
-                            if (row) {
-                                // Змінюємо data-status для фільтрів
-                                row.setAttribute('data-status', 'completed');
-                                // Змінюємо іконку статусу зліва
-                                const statusCell = row.querySelector('td:first-child');
-                                if (statusCell) {
-                                    statusCell.innerHTML = '<span class="badge bg-success rounded-pill" title="Заявка закрита"><i class="bi bi-check-all"></i></span>';
+                    if (data.is_split) {
+                        window.location.reload();
+                    } else {
+                        if (data.new_state === 'stocked') {
+                            container.innerHTML = `<div class="d-flex flex-column gap-1 animation-fade-in"><span class="badge bg-info text-dark w-100">На складі</span><a href="#" data-url="${data.return_url}" class="btn btn-sm btn-primary w-100 py-0 ajax-btn return-btn" style="font-size: 0.85rem;">Видати <i class="bi bi-arrow-right"></i></a></div>`;
+                        } else if (data.new_state === 'issued') {
+                            container.innerHTML = `<div class="text-end text-success small animation-fade-in"><i class="bi bi-check-all fs-5"></i> <div>Видано ${data.date_str}</div></div>`;
+                            if (data.task_completed) {
+                                const row = container.closest('tr');
+                                if (row) {
+                                    row.setAttribute('data-status', 'completed');
+                                    const statusCell = row.querySelector('td:first-child');
+                                    if (statusCell) statusCell.innerHTML = '<span class="badge bg-success rounded-pill" title="Заявка закрита"><i class="bi bi-check-all"></i></span>';
                                 }
                             }
                         }
                     }
-
                 } else {
-                    alert('Помилка сервера. Спробуйте оновити сторінку.');
+                    alert('Помилка сервера.');
                     btn.innerHTML = originalContent;
                     btn.classList.remove('disabled');
                 }
@@ -387,14 +391,4 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
-
-<style>
-    .animation-fade-in {
-        animation: fadeIn 0.5s;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-</style>
 {% endblock %}
