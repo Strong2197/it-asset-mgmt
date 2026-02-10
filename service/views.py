@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField 
 from .models import ServiceTask, ServiceReport, ServiceTaskItem
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet
+from django.http import JsonResponse
 
 
 # --- ДОПОМІЖНА ФУНКЦІЯ ---
@@ -89,22 +90,47 @@ def service_update(request, pk):
 
 def item_receive(request, pk):
     item = get_object_or_404(ServiceTaskItem, pk=pk)
+    
+    # Виконуємо дію
     item.date_back_from_service = timezone.now().date()
     item.save()
+
+    # Якщо це AJAX запит (від нашого JavaScript)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'new_state': 'stocked', # Стан: на складі
+            'item_id': item.pk,
+            'return_url': f"/service/item/{item.pk}/return/" # URL для наступної кнопки
+        })
+
     return redirect('service_list')
 
 
 def item_return(request, pk):
     item = get_object_or_404(ServiceTaskItem, pk=pk)
+    
+    # Виконуємо дію
     item.date_returned_to_user = timezone.now().date()
     item.save()
 
-    # Автоматичне закриття заявки, якщо всі картриджі видані
+    # Перевіряємо батьківську заявку
     parent_task = item.task
-    if not parent_task.items.filter(date_returned_to_user__isnull=True).exists():
+    all_items_done = not parent_task.items.filter(date_returned_to_user__isnull=True).exists()
+    
+    if all_items_done:
         parent_task.is_completed = True
         parent_task.date_returned = timezone.now().date()
         parent_task.save()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'new_state': 'issued', # Стан: видано
+            'date_str': item.date_returned_to_user.strftime("%d.%m"),
+            'task_completed': all_items_done, # Чи закрилась вся заявка
+            'task_id': parent_task.pk
+        })
 
     return redirect('service_list')
 
