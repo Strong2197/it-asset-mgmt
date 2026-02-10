@@ -76,5 +76,12 @@ class ServiceReport(models.Model):
 
     @property
     def is_archived(self):
-        # Перевіряємо, чи повернулися картриджі (тепер перевіряємо через items)
-        return ServiceTaskItem.objects.filter(task__in=self.tasks.all(), date_back_from_service__isnull=False).exists()
+        # Логіка: Акт вважається архівним, ТІЛЬКИ якщо ВСІ картриджі видані замовникам.
+        # Шукаємо, чи є хоч один "незакритий" картридж (де date_returned_to_user пусте)
+        has_unissued_items = ServiceTaskItem.objects.filter(
+            task__in=self.tasks.all(),
+            date_returned_to_user__isnull=True
+        ).exists()
+
+        # Якщо незакритих немає (False) -> значить архівний (True)
+        return not has_unissued_items

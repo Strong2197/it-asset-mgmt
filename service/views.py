@@ -21,13 +21,11 @@ def service_list(request):
         # Створюємо віртуальне поле 'status_rank' для сортування
         status_rank=Case(
             # 1. Пріоритет: Нові (чекають відправки)
-            When(is_completed=False, date_sent__isnull=False, then=Value(1)),
+            When(is_completed=False, date_sent__isnull=True, then=Value(1)),
+
             # 2. Пріоритет: В роботі (відправлені, але не закриті)
-            When(is_completed=False, date_sent__isnull=True, then=Value(2)),
-            
+            When(is_completed=False, date_sent__isnull=False, then=Value(2)),
 
-
-            
             # 3. Пріоритет: Виконані (Архів)
             When(is_completed=True, then=Value(3)),
             

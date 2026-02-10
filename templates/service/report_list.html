@@ -20,7 +20,13 @@
                     <tbody>
                         {% for report in reports %}
                         <tr>
-                            <td class="ps-4 fw-bold">Акт №{{ report.id }}</td>
+                           <td class="ps-4 fw-bold">
+    Акт №{{ report.id }}
+
+    {% if report.is_archived %}
+        <span class="badge bg-secondary ms-2 small">Архівний</span>
+    {% endif %}
+</td>
                             <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
 
                             <td class="text-center">
