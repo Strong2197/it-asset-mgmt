@@ -78,11 +78,12 @@
                 </table>
             </div>
 
-            <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
+           <div class="alert alert-info d-flex align-items-center mt-3" role="alert">
                 <i class="bi bi-info-circle-fill me-2 fs-4"></i>
                 <div>
-                    Всього позицій (заявок): <strong>{{ tasks.count }}</strong>.
-                    Натисніть "Підтвердити", щоб згенерувати фінальний Акт і присвоїти йому номер.
+                    Всього картриджів до відправки: <strong>{{ total_cartridges }} шт.</strong>
+                    (заявок: {{ tasks.count }}).
+                    Натисніть "Підтвердити", щоб згенерувати фінальний Акт.
                 </div>
             </div>
 

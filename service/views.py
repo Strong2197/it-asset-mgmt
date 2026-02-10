@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Case, When, Value, IntegerField 
-from .models import ServiceTask, ServiceReport, ServiceTaskItem
+from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet
 from django.http import JsonResponse
+from django.db.models import Sum
 
 
 # --- ДОПОМІЖНА ФУНКЦІЯ ---
@@ -20,10 +21,12 @@ def service_list(request):
         # Створюємо віртуальне поле 'status_rank' для сортування
         status_rank=Case(
             # 1. Пріоритет: Нові (чекають відправки)
-            When(is_completed=False, date_sent__isnull=True, then=Value(1)),
-            
+            When(is_completed=False, date_sent__isnull=False, then=Value(1)),
             # 2. Пріоритет: В роботі (відправлені, але не закриті)
-            When(is_completed=False, date_sent__isnull=False, then=Value(2)),
+            When(is_completed=False, date_sent__isnull=True, then=Value(2)),
+            
+
+
             
             # 3. Пріоритет: Виконані (Архів)
             When(is_completed=True, then=Value(3)),
@@ -156,14 +159,19 @@ def service_quick_return(request, pk):
 # --- РОБОТА ЗІ ЗВІТАМИ (АКТАМИ) ---
 
 def print_preview(request):
-    # Додаємо .prefetch_related('items'), щоб бачити картриджі
     tasks_to_print = ServiceTask.objects.filter(
         date_sent__isnull=True,
         is_completed=False
-    ).prefetch_related('items').order_by('department')  # Сортуємо по відділу для зручності
+    ).prefetch_related('items').order_by('department')
 
-    return render(request, 'service/print_preview.html', {'tasks': tasks_to_print})
+    # Рахуємо загальну кількість картриджів (сума поля quantity у items)
+    # Ми беремо всі items, які належать відфільтрованим заявкам (tasks_to_print)
+    total_qty = ServiceTaskItem.objects.filter(task__in=tasks_to_print).aggregate(total=Sum('quantity'))['total'] or 0
 
+    return render(request, 'service/print_preview.html', {
+        'tasks': tasks_to_print,
+        'total_cartridges': total_qty  # Передаємо нову змінну в шаблон
+    })
 def save_report(request):
     if request.method == 'POST':
         tasks_to_save = ServiceTask.objects.filter(date_sent__isnull=True, is_completed=False)
@@ -179,19 +187,28 @@ def save_report(request):
 
 
 def report_list(request):
-    reports = ServiceReport.objects.all().order_by('-created_at')
+    # Використовуємо annotate, щоб база даних сама порахувала суму для кожного звіту
+    reports = ServiceReport.objects.annotate(
+        total_items=Sum('tasks__items__quantity')
+    ).order_by('-created_at')
+
     return render(request, 'service/report_list.html', {'reports': reports})
 
+
+# service/views.py
+
+# service/views.py
 
 def report_detail(request, pk):
     report = get_object_or_404(ServiceReport, pk=pk)
 
-    # 1. Знаходимо всі items
     items = ServiceTaskItem.objects.filter(task__in=report.tasks.all())
     stats = {}
 
+    sort_map = {key: index for index, (key, label) in enumerate(CARTRIDGE_CHOICES)}
+
     for item in items:
-        # Визначаємо назву
+        # Назва
         if item.item_name == 'Інше':
             name = item.custom_name if item.custom_name else 'Інше (без назви)'
         else:
@@ -199,22 +216,45 @@ def report_detail(request, pk):
 
         qty = item.quantity
         dept = item.task.department or "Не вказано"
+        sort_index = sort_map.get(item.item_name, 999)
 
-        # Групуємо
+        # 1. Створюємо запис для картриджа, якщо немає
         if name not in stats:
-            stats[name] = {'total_qty': 0, 'departments': {}}
+            stats[name] = {
+                'total_qty': 0,
+                'departments': {},
+                'notes': [],
+                'sort_index': sort_index
+            }
 
         stats[name]['total_qty'] += qty
 
+        # 2. Створюємо запис для відділу, якщо немає
         if dept not in stats[name]['departments']:
-            stats[name]['departments'][dept] = 0
-        stats[name]['departments'][dept] += qty
+            # ТУТ ЗМІНА: зберігаємо і список об'єктів, і суму штук
+            stats[name]['departments'][dept] = {
+                'items': [],
+                'sum_qty': 0
+            }
 
-    grand_total = sum(data['total_qty'] for data in stats.values())
+        # 3. Наповнюємо даними
+        stats[name]['departments'][dept]['items'].append(item)
+        stats[name]['departments'][dept]['sum_qty'] += qty  # Додаємо реальну кількість
+
+        # Примітки
+        if item.item_name == 'Інше':
+            desc = item.task.description
+            if desc and desc not in stats[name]['notes']:
+                stats[name]['notes'].append(desc)
+
+    # Сортування
+    sorted_stats = dict(sorted(stats.items(), key=lambda item: (item[1]['sort_index'], item[0])))
+
+    grand_total = sum(data['total_qty'] for data in sorted_stats.values())
 
     return render(request, 'service/report_detail.html', {
         'report': report,
-        'stats': stats,
+        'stats': sorted_stats,
         'grand_total': grand_total
     })
 
