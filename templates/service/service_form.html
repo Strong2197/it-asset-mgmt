@@ -3,6 +3,7 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+    /* Адаптація Select2 під Bootstrap */
     .select2-container .select2-selection--single {
         height: 38px !important;
         border: 1px solid #ced4da !important;
@@ -11,6 +12,11 @@
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 36px !important;
+    }
+    /* Виправлення фокусу (опціонально, для краси) */
+    .select2-search__field:focus {
+        outline: none !important;
+        box-shadow: none !important;
     }
 </style>
 
@@ -26,21 +32,26 @@
                         
                         {% if field.name == 'department' %}
                             <label class="form-label fw-bold">Відділ</label>
-                            <input type="text" name="{{ field.name }}" id="id_department" 
-                                   value="{{ field.value|default:'' }}" class="form-control" 
-                                   list="dept-list" placeholder="Введіть назву відділу..." autocomplete="off">
-                            <datalist id="dept-list">
-                                {% for dept in departments %}<option value="{{ dept }}">{% endfor %}
-                            </datalist>
+                            <select name="{{ field.name }}" id="id_department" class="form-control" style="width: 100%;">
+                                {% if field.value %}
+                                    <option value="{{ field.value }}" selected>{{ field.value }}</option>
+                                {% endif %}
+                                <option></option>
+                                {% for dept in departments %}
+                                    {% if dept != field.value %}
+                                        <option value="{{ dept }}">{{ dept }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
 
                         {% elif field.name == 'requester_name' %}
                             <label class="form-label fw-bold">{{ field.label }}</label>
-                            
                             <select name="{{ field.name }}" id="id_requester_name" class="form-control" style="width: 100%;">
                                 {% if field.value %}
                                     <option value="{{ field.value }}" selected>{{ field.value }}</option>
                                 {% endif %}
-                                <option></option> {% for name in requesters %}
+                                <option></option>
+                                {% for name in requesters %}
                                     {% if name != field.value %}
                                         <option value="{{ name }}">{{ name }}</option>
                                     {% endif %}
@@ -130,40 +141,61 @@
 <script>
 $(document).ready(function() {
     
-    // 1. ІНІЦІАЛІЗАЦІЯ SELECT2 ДЛЯ ПОЛЯ "ЗАМОВНИК"
+    // 1. ІНІЦІАЛІЗАЦІЯ SELECT2 (для обох полів)
+    // tags: true дозволяє вводити нові значення
     $('#id_requester_name').select2({
-        tags: true, // ВАЖЛИВО: Дозволяє вводити нові імена, яких немає в списку
-        placeholder: "Оберіть або введіть ПІБ замовника...",
+        tags: true,
+        placeholder: "Оберіть або введіть ПІБ...",
         allowClear: true,
-        language: {
-            noResults: function() {
-                return "Нічого не знайдено. Введіть нове ім'я.";
-            }
-        }
+        language: { noResults: () => "Введіть нове ім'я..." }
     });
 
-    // 2. АВТОЗАПОВНЕННЯ ВІДДІЛУ ПРИ ВИБОРІ SELECT2
+    $('#id_department').select2({
+        tags: true,
+        placeholder: "Оберіть або введіть відділ...",
+        allowClear: true,
+        language: { noResults: () => "Введіть нову назву..." }
+    });
+
+    // 2. АВТОФОКУС НА ПОШУК (Фікс для миттєвого введення)
+    // Коли будь-який Select2 відкривається, ми ставимо фокус у поле пошуку
+    $(document).on('select2:open', function(e) {
+        document.querySelector('.select2-search__field').focus();
+    });
+
+    // 3. АВТОЗАПОВНЕННЯ ВІДДІЛУ (При зміні Замовника)
     $('#id_requester_name').on('select2:select change', function (e) {
         const name = $(this).val();
-        const departmentInput = document.getElementById('id_department');
+        
+        // Використовуємо JS-об'єкт Select2 для відділу
+        const $deptSelect = $('#id_department');
 
         if (name && name.length > 2) {
-            // Використовуємо той самий API
             fetch(`{% url 'get_last_department' %}?name=${encodeURIComponent(name)}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.found && data.department && departmentInput) {
-                        departmentInput.value = data.department;
-                        departmentInput.style.backgroundColor = '#e8f5e9';
-                        setTimeout(() => { departmentInput.style.backgroundColor = ''; }, 500);
+                    if (data.found && data.department) {
+                        // Перевіряємо, чи є вже така опція в списку
+                        if ($deptSelect.find("option[value='" + data.department + "']").length) {
+                            $deptSelect.val(data.department).trigger('change');
+                        } else { 
+                            // Якщо це новий відділ (з старого архіву), додаємо його як нову опцію
+                            var newOption = new Option(data.department, data.department, true, true);
+                            $deptSelect.append(newOption).trigger('change');
+                        }
+                        
+                        // Візуальний ефект (блимання рамки)
+                        $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#28a745');
+                        setTimeout(() => {
+                            $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#ced4da');
+                        }, 500);
                     }
                 })
                 .catch(err => console.error('Error:', err));
         }
     });
 
-    // 3. ЛОГІКА FORMSET (Ваш старий код, адаптований під jQuery де зручно, але працює і так)
-    // Тут залишаємо чистий JS для надійності, як було у вас
+    // 4. ЛОГІКА FORMSET (Картриджі)
     const container = document.getElementById('items-container');
     const addButton = document.getElementById('add-item');
     const totalForms = document.getElementById('id_items-TOTAL_FORMS');
@@ -181,16 +213,13 @@ $(document).ready(function() {
         }
     }
 
-    // Делегування подій для динамічних селектів
     container.addEventListener('change', function(e) {
         if (e.target.matches('select') && e.target.name.includes('item_name')) toggleCustomField(e.target);
     });
 
-    // Ініціалізація при завантаженні
     const allSelects = container.querySelectorAll('select[name$="item_name"]');
     allSelects.forEach(select => toggleCustomField(select));
 
-    // Видалення рядка
     container.addEventListener('click', function(e) {
         if (e.target.closest('.delete-row-btn')) {
             const row = e.target.closest('.item-row');
@@ -199,7 +228,6 @@ $(document).ready(function() {
         }
     });
 
-    // Додавання рядка
     addButton.addEventListener('click', function() {
         const formsCount = parseInt(totalForms.value);
         const firstRow = container.querySelector('.item-row');
@@ -207,7 +235,6 @@ $(document).ready(function() {
         const regex = new RegExp(`items-(\\d+)-`, 'g');
         newRow.innerHTML = newRow.innerHTML.replace(regex, `items-${formsCount}-`);
         
-        // Очистка полів у новому рядку
         newRow.querySelectorAll('input, select').forEach(el => {
             if (el.type !== 'hidden') {
                 el.value = '';
