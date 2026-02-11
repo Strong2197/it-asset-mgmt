@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
 from django.core.paginator import Page, EmptyPage, PageNotAnInteger
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
-from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet
+from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet 
 
 
 # --- ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -172,22 +172,24 @@ def service_create(request):
 def service_update(request, pk):
     task = get_object_or_404(ServiceTask, pk=pk)
     departments = get_all_departments()
-    requesters = get_all_requesters()  # Список імен для підказки
-
+    requesters = get_all_requesters()
+    
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST, instance=task)
-        formset = ServiceItemFormSet(request.POST, instance=task)
+        # ТУТ ВИКОРИСТОВУЄМО EditFormSet (extra=0)
+        formset = ServiceItemEditFormSet(request.POST, instance=task)
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
-        formset = ServiceItemFormSet(instance=task)
-
+        # І ТУТ ТАКОЖ EditFormSet
+        formset = ServiceItemEditFormSet(instance=task)
+    
     return render(request, 'service/service_form.html', {
-        'form': form,
-        'formset': formset,
+        'form': form, 
+        'formset': formset, 
         'departments': departments,
         'requesters': requesters,
         'title': 'Редагування заявки'
