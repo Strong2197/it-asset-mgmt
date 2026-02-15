@@ -7,10 +7,11 @@ from django.http import HttpResponse
 from django.forms.models import model_to_dict  # Для клонування
 from django.utils import timezone
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
 
 
 def export_assets_xlsx(request):
-    # 1. Отримуємо параметри та фільтруємо (Код фільтрації залишаємо той самий)
+    # 1. Параметри та фільтрація
     search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
@@ -33,7 +34,7 @@ def export_assets_xlsx(request):
             Q(archive_reason__icontains=search_query)
         )
 
-    # --- СТВОРЕННЯ ТА ФОРМАТУВАННЯ EXCEL ---
+    # --- СТВОРЕННЯ EXCEL ---
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="inventory_export.xlsx"'
 
@@ -42,19 +43,13 @@ def export_assets_xlsx(request):
     ws.title = 'Майно'
 
     # --- СТИЛІ ---
-    # Тонка рамка для всіх клітинок
-    thin_border = Border(
-        left=Side(style='thin'), right=Side(style='thin'),
-        top=Side(style='thin'), bottom=Side(style='thin')
-    )
-    # Стиль заголовка: Жирний, Білий текст, Темно-синій фон
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'),
+                         bottom=Side(style='thin'))
     header_font = Font(bold=True, color="FFFFFF", size=11)
     header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
     header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
-
-    # Стиль для звичайних клітинок (вирівнювання по центру вертикально)
     cell_align_center = Alignment(horizontal="center", vertical="center")
-    cell_align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)  # Для назви
+    cell_align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
     # --- ЗАГОЛОВКИ ---
     headers = ['Баркод', 'Інвентарний №', 'Назва', 'Категорія', 'Розташування', 'Відповідальний', 'Рахунок',
@@ -64,7 +59,14 @@ def export_assets_xlsx(request):
 
     ws.append(headers)
 
-    # Застосовуємо стиль до рядка заголовка (рядок 1)
+    # === ВКЛЮЧАЄМО ФІЛЬТР ===
+    # Визначаємо букву останньої колонки (наприклад, "H" або "J")
+    last_col_letter = get_column_letter(len(headers))
+    # Встановлюємо фільтр на перший рядок від A1 до останньої колонки
+    ws.auto_filter.ref = f"A1:{last_col_letter}1"
+    # ========================
+
+    # Застосовуємо стиль до заголовка
     for cell in ws[1]:
         cell.font = header_font
         cell.fill = header_fill
@@ -88,47 +90,33 @@ def export_assets_xlsx(request):
         ]
 
         if show_archived == 'true':
-            row_data.extend([
-                asset.archive_reason,
-                asset.archive_date
-            ])
+            row_data.extend([asset.archive_reason, asset.archive_date])
 
         ws.append(row_data)
 
-        # Форматуємо щойно доданий рядок
+        # Стилізація рядка даних
         current_row = ws[ws.max_row]
         for cell in current_row:
-            cell.border = thin_border  # Рамка
-
-            # Якщо це колонка "Назва" (індекс 2, бо в Python список з 0, а в Excel cell.col_idx з 1... отже 3-тя колонка)
-            # Але краще перевіряти індекс у списку row_data
-            # Колонка "Назва" - це 3-тя колонка (C)
-            if cell.column == 3:
-                cell.alignment = cell_align_left  # Текст зліва + перенос
+            cell.border = thin_border
+            if cell.column == 3:  # Колонка "Назва"
+                cell.alignment = cell_align_left
             else:
-                cell.alignment = cell_align_center  # Все інше по центру
+                cell.alignment = cell_align_center
 
-    # --- АВТОШИРИНА КОЛОНОК ---
-    # Встановлюємо фіксовану ширину для Назви, щоб текст переносився красиво
+    # --- АВТОШИРИНА ---
     ws.column_dimensions['C'].width = 50
-
-    # Для інших колонок пробуємо підібрати ширину
     for col in ws.columns:
         column_letter = col[0].column_letter
-        if column_letter == 'C':  # Пропускаємо Назву, ми її задали вручну
-            continue
+        if column_letter == 'C': continue
 
         max_length = 0
         for cell in col:
             try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
+                if len(str(cell.value)) > max_length: max_length = len(str(cell.value))
             except:
                 pass
 
-        # Трохи додаємо відступу
         adjusted_width = (max_length + 4)
-        # Не робимо колонки занадто вузькими або широкими
         if adjusted_width < 10: adjusted_width = 10
         if adjusted_width > 30: adjusted_width = 30
 
