@@ -2,6 +2,7 @@
 
 {% block content %}
 <style>
+    /* Стилі для мобільної таблиці */
     @media (max-width: 768px) {
         .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
@@ -24,6 +25,13 @@
         }
         .staff-name-mobile { font-size: 1.1em; color: #0d6efd; font-weight: bold; }
     }
+
+    /* Стиль для ефекту завантаження (сірий список) */
+    .loading-opacity {
+        opacity: 0.5;
+        pointer-events: none; /* Блокуємо кліки під час пошуку */
+        transition: opacity 0.2s ease-in-out;
+    }
 </style>
 
 <div class="row justify-content-center">
@@ -45,7 +53,7 @@
 
                         <div class="input-group shadow-sm" style="max-width: 300px;">
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" id="staff-search" value="{{ query }}" class="form-control border-start-0" placeholder="Пошук...">
+                            <input type="text" id="staff-search" value="{{ query }}" class="form-control border-start-0" placeholder="Пошук..." autocomplete="off">
                         </div>
 
                         {% if show_dismissed == 'false' %}
@@ -57,7 +65,7 @@
                 </div>
             </div>
 
-            <div class="card-body p-0 bg-transparent">
+            <div id="table-container" class="card-body p-0 bg-transparent">
                 <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
                     <thead class="table-light text-secondary">
                         <tr>
@@ -73,49 +81,35 @@
                             <th class="text-end pe-4">Дії</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="staff-tbody">
                         {% for emp in employees %}
                         <tr>
                             <td class="ps-4" data-label="ПІБ">
                                 <span class="staff-name-mobile">{{ emp.full_name }}</span>
                             </td>
-
                             <td data-label="Посада">
                                 <div class="fw-bold">{{ emp.position }}</div>
                                 <div class="small text-muted">{{ emp.department }}</div>
                             </td>
-
                             <td data-label="Інфо">
                                 <div><i class="bi bi-telephone small text-muted"></i> {{ emp.phone|default:"-" }}</div>
                                 <div class="small text-muted">ІПН: {{ emp.rnokpp|default:"-" }}</div>
                             </td>
-
                             {% if show_dismissed == 'true' %}
                                 <td data-label="Звільнено">
                                     <span class="text-danger fw-bold">{{ emp.dismissal_date|date:"d.m.Y"|default:"-" }}</span>
                                     {% if emp.dismissal_order_file %}
-                                       <a href="{% url 'open_order_file' emp.pk 'dismissal' %}"
-       target="_blank"
-       class="text-decoration-none ms-1"
-       title="Переглянути наказ: {{ emp.dismissal_order_original_name }}">
-        <i class="bi bi-file-earmark-pdf text-danger"></i>
-    </a>
+                                        <a href="{% url 'open_order_file' emp.pk 'dismissal' %}" target="_blank" class="text-decoration-none ms-1"><i class="bi bi-file-earmark-pdf text-danger"></i></a>
                                     {% endif %}
                                 </td>
                             {% else %}
                                 <td data-label="Призначено">
                                     <span class="text-success">{{ emp.appointment_date|date:"d.m.Y"|default:"-" }}</span>
                                     {% if emp.appointment_order_file %}
-                                       <a href="{% url 'open_order_file' emp.pk 'appointment' %}"
-       target="_blank"
-       class="text-decoration-none ms-1"
-       title="Переглянути наказ: {{ emp.appointment_order_original_name }}">
-        <i class="bi bi-file-earmark-pdf text-primary"></i>
-    </a>
+                                        <a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none ms-1"><i class="bi bi-file-earmark-pdf text-primary"></i></a>
                                     {% endif %}
                                 </td>
                             {% endif %}
-
                             <td data-label="КЕП">
                                 {% if emp.certificates.all %}
                                     <div class="d-flex flex-column gap-1 align-items-md-start align-items-end">
@@ -129,32 +123,55 @@
                                     <span class="text-muted small">-</span>
                                 {% endif %}
                             </td>
-
                             <td class="text-end pe-4" data-label="Дії">
-                                <a href="{% url 'staff_update' emp.pk %}" class="btn btn-outline-primary btn-sm" title="Редагувати">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
+                                <a href="{% url 'staff_update' emp.pk %}" class="btn btn-outline-primary btn-sm" title="Редагувати"><i class="bi bi-pencil"></i></a>
                                 {% if show_dismissed == 'false' %}
-                                    <button type="button" class="btn btn-outline-warning btn-sm text-dark" onclick="openDismissModal('{{ emp.pk }}', '{{ emp.full_name|escapejs }}')">
-                                        <i class="bi bi-person-dash"></i>
-                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm text-dark" onclick="openDismissModal('{{ emp.pk }}', '{{ emp.full_name|escapejs }}')"><i class="bi bi-person-dash"></i></button>
                                 {% else %}
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openDeleteModal('{{ emp.pk }}', '{{ emp.full_name|escapejs }}')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openDeleteModal('{{ emp.pk }}', '{{ emp.full_name|escapejs }}')"><i class="bi bi-trash"></i></button>
                                 {% endif %}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center py-5 text-muted">Список порожній.</td></tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted">За вашим запитом нічого не знайдено.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
 
-            <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <small class="text-muted">Всього записів: <span id="record-count">{{ employees.count }}</span></small>
+            <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
+                <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
+                    <small class="text-muted">
+                        Всього записів: <strong>{{ total_count }}</strong>.
+                        Сторінка {{ employees.number }} з {{ employees.paginator.num_pages }}.
+                    </small>
+
+                    {% if employees.paginator.num_pages > 1 %}
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if employees.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page={{ employees.previous_page_number }}&q={{ query }}&dismissed={{ show_dismissed }}"><i class="bi bi-chevron-left"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for i in employees.paginator.page_range %}
+                                {% if employees.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > employees.number|add:'-3' and i < employees.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}&q={{ query }}&dismissed={{ show_dismissed }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if employees.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ employees.next_page_number }}&q={{ query }}&dismissed={{ show_dismissed }}"><i class="bi bi-chevron-right"></i></a></li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -171,17 +188,14 @@
                 </div>
                 <div class="modal-body">
                     <p>Звільнити: <strong id="dismissName"></strong>?</p>
-
                     <div class="mb-3">
                         <label class="form-label">Дата звільнення:</label>
                         <input type="date" name="dismissal_date" class="form-control" value="{% now 'Y-m-d' %}" required>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">№ Наказу (текстом):</label>
                         <input type="text" name="dismissal_order_number" class="form-control" placeholder="Наказ №...">
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Скан наказу (PDF/Img):</label>
                         <input type="file" name="dismissal_order_file" class="form-control" accept=".pdf,.jpg,.png">
@@ -236,16 +250,65 @@ function openDeleteModal(pk, name) {
 
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('staff-search');
+    const tableContainer = document.getElementById('table-container');
+    const tableBody = document.getElementById('staff-tbody');
+    const paginationContainer = document.getElementById('pagination-container');
+    let debounceTimer;
+
+    // Функція оновлення таблиці без перезавантаження
+    function fetchResults(query) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDismissed = urlParams.get('dismissed') || 'false';
+
+        // Формуємо URL для запиту
+        const url = `?q=${encodeURIComponent(query)}&dismissed=${isDismissed}&page=1`;
+
+        // Додаємо ефект завантаження (сірий фон)
+        if (tableContainer) tableContainer.classList.add('loading-opacity');
+
+        // Робимо "тихий" запит на сервер
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                // Парсимо отриманий HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Знаходимо нову таблицю і пагінацію в отриманому коді
+                const newTbody = doc.getElementById('staff-tbody');
+                const newPagination = doc.getElementById('pagination-container');
+
+                // Замінюємо старі елементи на нові
+                if (newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+                if (newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+
+                // Оновлюємо URL в браузері (без перезавантаження), щоб можна було скопіювати посилання
+                window.history.pushState(null, '', url);
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => {
+                // Прибираємо ефект завантаження
+                if (tableContainer) tableContainer.classList.remove('loading-opacity');
+            });
+    }
 
     if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            const query = this.value;
-            if (event.key === 'Enter') {
-                const urlParams = new URLSearchParams(window.location.search);
-                urlParams.set('q', query);
-                window.location.search = urlParams.toString();
-            }
+        // Подія на введення тексту
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+            // Затримка 500мс перед відправкою (щоб не спамити сервер)
+            debounceTimer = setTimeout(() => {
+                fetchResults(query);
+            }, 500);
         });
+
+        // Фокус автоматично залишається в полі, бо сторінка не перезавантажується!
     }
 });
 </script>

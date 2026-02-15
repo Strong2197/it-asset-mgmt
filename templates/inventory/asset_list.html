@@ -2,7 +2,7 @@
 
 {% block content %}
 <style>
-    /* Стилі тільки для мобільних телефонів (до 768px) */
+    /* Мобільні стилі */
     @media (max-width: 768px) {
         .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
@@ -25,6 +25,13 @@
             padding-left: 0; font-weight: bold; text-align: left; color: #6c757d;
         }
         .asset-name-mobile { font-size: 1.1em; color: #0d6efd; }
+    }
+
+    /* Ефект завантаження */
+    .loading-opacity {
+        opacity: 0.5;
+        pointer-events: none;
+        transition: opacity 0.2s ease-in-out;
     }
 </style>
 
@@ -53,9 +60,9 @@
                         </div>
 
                         <select id="type-filter" class="form-select bg-light flex-fill flex-lg-grow-0" style="min-width: 150px;">
-                            <option value="all">Всі категорії</option>
+                            <option value="all" {% if current_category == 'all' %}selected{% endif %}>Всі категорії</option>
                             {% for cat in categories %}
-                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                <option value="{{ cat.id }}" {% if current_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
                             {% endfor %}
                         </select>
 
@@ -63,7 +70,7 @@
                             <span class="input-group-text bg-light border-end-0">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input type="text" id="main-search" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
+                            <input type="text" id="main-search" value="{{ search_query }}" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
                         </div>
 
                         <div class="d-flex gap-2">
@@ -81,7 +88,7 @@
                 </div>
             </div>
 
-            <div class="card-body p-0 bg-transparent">
+            <div id="table-container" class="card-body p-0 bg-transparent">
                 <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
                     <thead class="table-light text-secondary">
                         <tr>
@@ -98,7 +105,7 @@
                             <th class="text-end pe-4">Дії</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="asset-tbody">
                         {% for asset in assets %}
                         <tr data-type="{{ asset.category.id }}">
                             <td class="ps-4 font-monospace fw-bold text-dark" data-label="Баркод">
@@ -171,8 +178,49 @@
                 </table>
             </div>
 
-            <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <small class="text-muted">Всього записів: <span id="record-count">{{ assets.count }}</span></small>
+            <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
+                <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
+                    <small class="text-muted">
+                        Всього записів: <strong>{{ total_count }}</strong>.
+                        Сторінка {{ assets.number }} з {{ assets.paginator.num_pages }}.
+                    </small>
+
+                    {% if assets.paginator.num_pages > 1 %}
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if assets.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ assets.previous_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                            {% endif %}
+
+                            {% for i in assets.paginator.page_range %}
+                                {% if assets.number == i %}
+                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                {% elif i > assets.number|add:'-3' and i < assets.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if assets.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ assets.next_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -218,53 +266,72 @@ function openArchiveModal(assetId, assetName) {
 }
 
 function exportData() {
-    const searchInput = document.getElementById('main-search');
-    const typeInput = document.getElementById('type-filter');
-    const searchValue = searchInput ? searchInput.value : '';
-    const typeValue = typeInput ? typeInput.value : 'all';
     const urlParams = new URLSearchParams(window.location.search);
-    const isArchived = urlParams.get('archived') || 'false';
-
-    let url = "{% url 'export_assets_xlsx' %}";
-    url += `?search=${encodeURIComponent(searchValue)}&category=${typeValue}&archived=${isArchived}`;
+    let url = "{% url 'export_assets_xlsx' %}?" + urlParams.toString();
     window.location.href = url;
 }
 
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById('main-search');
     const typeFilter = document.getElementById('type-filter');
-    const tableBody = document.querySelector('tbody');
-    const countSpan = document.getElementById('record-count');
+    const tableContainer = document.getElementById('table-container');
+    const tableBody = document.getElementById('asset-tbody');
+    const paginationContainer = document.getElementById('pagination-container');
+    let debounceTimer;
 
-    if (!searchInput || !typeFilter || !tableBody) return;
+    // Головна функція оновлення через AJAX
+    function fetchAssets() {
+        // Збираємо параметри
+        const searchText = searchInput ? searchInput.value.trim() : '';
+        const selectedType = typeFilter ? typeFilter.value : 'all';
+        const urlParams = new URLSearchParams(window.location.search);
+        const isArchived = urlParams.get('archived') || 'false';
 
-    function filterTable() {
-        const searchText = searchInput.value.toLowerCase();
-        const selectedType = typeFilter.value;
-        const rows = tableBody.getElementsByTagName('tr');
-        let visibleCount = 0;
+        // Формуємо URL: пошук, категорія, архів, і завжди 1-ша сторінка при фільтрації
+        const url = `?search=${encodeURIComponent(searchText)}&category=${selectedType}&archived=${isArchived}&page=1`;
 
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row.hasAttribute('data-type')) continue;
+        // Ефект завантаження
+        if (tableContainer) tableContainer.classList.add('loading-opacity');
 
-            const rowText = row.textContent.toLowerCase();
-            const matchesText = rowText.includes(searchText);
-            const rowType = row.getAttribute('data-type');
-            const matchesType = (selectedType === 'all') || (rowType === selectedType);
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
 
-            if (matchesText && matchesType) {
-                row.style.display = "";
-                visibleCount++;
-            } else {
-                row.style.display = "none";
-            }
-        }
-        if(countSpan) countSpan.textContent = visibleCount;
+                const newTbody = doc.getElementById('asset-tbody');
+                const newPagination = doc.getElementById('pagination-container');
+
+                if (newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+                if (newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+
+                // Оновлюємо URL в адресному рядку
+                window.history.pushState(null, '', url);
+            })
+            .catch(error => console.error('Error fetching assets:', error))
+            .finally(() => {
+                if (tableContainer) tableContainer.classList.remove('loading-opacity');
+            });
     }
 
-    searchInput.addEventListener('keyup', filterTable);
-    typeFilter.addEventListener('change', filterTable);
+    // Слухач для пошуку (input)
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(fetchAssets, 500); // 500мс затримка
+        });
+    }
+
+    // Слухач для категорії (change)
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            fetchAssets();
+        });
+    }
 });
 </script>
 {% endblock %}

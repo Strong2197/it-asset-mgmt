@@ -8,6 +8,7 @@ from django.forms.models import model_to_dict  # Для клонування
 from django.utils import timezone
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 def export_assets_xlsx(request):
@@ -154,22 +155,21 @@ def asset_clone(request, pk):
 
 # --- 1. Список майна (Цієї функції не вистачало) ---
 def asset_list(request):
-    # 1. Параметри фільтрації
+    # 1. Отримання параметрів
     search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
-    show_archived = request.GET.get('archived', 'false')  # 'true' або 'false'
+    show_archived = request.GET.get('archived', 'false')
 
-    # 2. Базовий запит: фільтруємо по статусу архіву
+    # 2. Базовий запит
     if show_archived == 'true':
         assets = Asset.objects.filter(is_archived=True)
     else:
         assets = Asset.objects.filter(is_archived=False)
 
-    # 3. Фільтр по категорії
+    # 3. Фільтрація
     if category_id != 'all':
         assets = assets.filter(category_id=category_id)
 
-    # 4. Пошук (працює і для активних, і для архівних)
     if search_query:
         assets = assets.filter(
             Q(name__icontains=search_query) |
@@ -177,15 +177,29 @@ def asset_list(request):
             Q(barcode__icontains=search_query) |
             Q(location__icontains=search_query) |
             Q(account__icontains=search_query) |
-            Q(archive_reason__icontains=search_query)  # Шукаємо і в причині архівування
+            Q(archive_reason__icontains=search_query)
         )
+
+    # 4. ПАГІНАЦІЯ (30 елементів)
+    paginator = Paginator(assets, 30)
+    page = request.GET.get('page')
+
+    try:
+        assets_page = paginator.page(page)
+    except PageNotAnInteger:
+        assets_page = paginator.page(1)
+    except EmptyPage:
+        assets_page = paginator.page(paginator.num_pages)
 
     categories = Category.objects.all()
 
     return render(request, 'inventory/asset_list.html', {
-        'assets': assets,
+        'assets': assets_page,
         'categories': categories,
-        'show_archived': show_archived  # Передаємо статус у шаблон
+        'show_archived': show_archived,
+        'search_query': search_query,
+        'current_category': category_id,
+        'total_count': paginator.count
     })
 
 

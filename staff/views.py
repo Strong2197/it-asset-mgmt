@@ -6,23 +6,21 @@ from django.db.models import Q
 from django.http import FileResponse, Http404
 from urllib.parse import quote
 import os
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger  # <--- ІМПОРТ
 
 
-# --- ДОПОМІЖНІ ФУНКЦІЇ ДЛЯ СПИСКІВ ---
+# ... (функції get_all_positions та get_all_departments залишаються без змін) ...
 def get_all_positions():
     defaults = [
         'Начальник управління', 'Начальник відділу', 'Заступник начальника відділу',
         'Головний спеціаліст', 'Провідний спеціаліст', 'Провідний інспектор'
     ]
-    # Отримуємо посади з бази, яких немає в defaults
     db_positions = list(Employee.objects.values_list('position', flat=True).distinct())
-    # Об'єднуємо, прибираємо дублікати і порожні, сортуємо
     all_pos = sorted(list(set(defaults + db_positions)))
     return list(filter(None, all_pos))
 
 
 def get_all_departments():
-    # Оновлений список із кодами
     defaults = [
         'Івано-Франківський відділ (2610)',
         'Яремчанський відділ (2612)',
@@ -33,23 +31,25 @@ def get_all_departments():
         'Надвірнянський відділ (2621)',
         'Рогатинський відділ (2622)',
         'Тисменицький відділ (2626)',
+        'Бухгалтерія', 'Кадри', 'Канцелярія'
     ]
     db_depts = list(Employee.objects.values_list('department', flat=True).distinct())
-    # Об'єднуємо та сортуємо
     all_depts = sorted(list(set(defaults + db_depts)))
     return list(filter(None, all_depts))
 
 
-# ... (staff_list залишається без змін) ...
+# --- СПИСОК (ОНОВЛЕНО) ---
 def staff_list(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     show_dismissed = request.GET.get('dismissed', 'false')
 
+    # 1. Базова фільтрація (Активні/Звільнені)
     if show_dismissed == 'true':
         employees = Employee.objects.filter(is_dismissed=True).prefetch_related('certificates')
     else:
         employees = Employee.objects.filter(is_dismissed=False).prefetch_related('certificates')
 
+    # 2. Серверний пошук
     if query:
         employees = employees.filter(
             Q(full_name__icontains=query) |
@@ -58,14 +58,26 @@ def staff_list(request):
             Q(rnokpp__icontains=query)
         )
 
+    # 3. ПАГІНАЦІЯ (50 елементів)
+    paginator = Paginator(employees, 50)
+    page = request.GET.get('page')
+
+    try:
+        employees_page = paginator.page(page)
+    except PageNotAnInteger:
+        employees_page = paginator.page(1)
+    except EmptyPage:
+        employees_page = paginator.page(paginator.num_pages)
+
     return render(request, 'staff/staff_list.html', {
-        'employees': employees,
+        'employees': employees_page,
         'query': query,
-        'show_dismissed': show_dismissed
+        'show_dismissed': show_dismissed,
+        'total_count': paginator.count
     })
 
 
-# --- СТВОРЕННЯ ---
+# ... (решта функцій: staff_create, staff_update, staff_dismiss, staff_delete і т.д. без змін) ...
 def staff_create(request):
     positions = get_all_positions()
     departments = get_all_departments()
@@ -95,11 +107,9 @@ def staff_create(request):
     })
 
 
-# --- РЕДАГУВАННЯ ---
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
 
-    # 1. Запам'ятовуємо старі дані ДО збереження форми
     old_position = employee.position
     old_department = employee.department
 
@@ -109,26 +119,21 @@ def staff_update(request, pk):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
-            # Отримуємо об'єкт, але поки не пишемо в базу
             updated_employee = form.save(commit=False)
 
-            # 2. Перевіряємо, чи змінилися посада або відділ
             pos_changed = old_position != updated_employee.position
             dept_changed = old_department != updated_employee.department
 
             if pos_changed or dept_changed:
-                # Створюємо запис в історії
                 CareerHistory.objects.create(
                     employee=employee,
                     previous_position=old_position,
                     new_position=updated_employee.position,
                     previous_department=old_department,
                     new_department=updated_employee.department,
-                    # Можна додати номер наказу, якщо ви його ввели в формі, але поки залишимо пустим або авто-текст
                     notes="Зміна кадрових даних"
                 )
 
-            # Логіка файлів (без змін)
             if 'appointment_order_file' in request.FILES:
                 updated_employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
             if 'dismissal_order_file' in request.FILES:
@@ -139,7 +144,6 @@ def staff_update(request, pk):
             files = request.FILES.getlist('kep_files')
             for f in files:
                 KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
-
             return redirect('staff_list')
     else:
         form = EmployeeForm(instance=employee)
@@ -153,7 +157,6 @@ def staff_update(request, pk):
     })
 
 
-# ... (решта функцій: staff_dismiss, staff_delete, cert_delete, open_order_file залишаються без змін) ...
 def staff_dismiss(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
