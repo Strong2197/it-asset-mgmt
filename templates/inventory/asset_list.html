@@ -4,69 +4,34 @@
 <style>
     /* Стилі тільки для мобільних телефонів (до 768px) */
     @media (max-width: 768px) {
-        /* Ховаємо шапку таблиці */
-        .mobile-table thead {
-            display: none;
-        }
-
-        /* Перетворюємо таблицю на блочну структуру */
+        .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
-            display: block;
-            width: 100%;
+            display: block; width: 100%;
         }
-
-        /* Кожен рядок стає "карткою" */
         .mobile-table tr {
-            margin-bottom: 15px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            padding: 15px; /* Відступи всередині картки */
+            margin-bottom: 15px; background: #fff;
+            border: 1px solid #ddd; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 15px;
         }
-
-        /* Стилізуємо комірки всередині картки */
         .mobile-table td {
-            text-align: right; /* Текст праворуч */
-            padding-left: 50%; /* Місце для заголовка зліва */
-            position: relative;
-            border-bottom: 1px solid #eee;
-            padding-top: 10px;
-            padding-bottom: 10px;
+            text-align: right; padding-left: 50%; position: relative;
+            border-bottom: 1px solid #eee; padding-top: 10px; padding-bottom: 10px;
         }
-
-        /* Остання комірка (Дії) без лінії знизу */
         .mobile-table td:last-child {
-            border-bottom: 0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            padding-top: 15px;
+            border-bottom: 0; display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px;
         }
-
-        /* Додаємо назви колонок зліва через CSS */
         .mobile-table td::before {
-            content: attr(data-label); /* Беремо текст з HTML атрибута */
-            position: absolute;
-            left: 0;
-            width: 45%;
-            padding-left: 0;
-            font-weight: bold;
-            text-align: left;
-            color: #6c757d; /* Сірий колір для заголовків */
+            content: attr(data-label); position: absolute; left: 0; width: 45%;
+            padding-left: 0; font-weight: bold; text-align: left; color: #6c757d;
         }
-
-        /* Трохи збільшимо шрифт назви майна на мобільному */
-        .asset-name-mobile {
-            font-size: 1.1em;
-            color: #0d6efd;
-        }
+        .asset-name-mobile { font-size: 1.1em; color: #0d6efd; }
     }
 </style>
 
 <div class="row justify-content-center">
     <div class="col-md-12">
-        <div class="card shadow-sm border-0 bg-transparent"> <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
+        <div class="card shadow-sm border-0 bg-transparent">
+            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
                 <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3">
 
                     <h4 class="mb-0 text-nowrap {% if show_archived == 'true' %}text-secondary{% else %}text-primary{% endif %}">
@@ -136,7 +101,7 @@
                     <tbody>
                         {% for asset in assets %}
                         <tr data-type="{{ asset.category.id }}">
-                            <td class="ps-4 font-monospace text-muted" data-label="Баркод">
+                            <td class="ps-4 font-monospace fw-bold text-dark" data-label="Баркод">
                                 {{ asset.barcode|default:"-" }}
                             </td>
 
@@ -172,25 +137,27 @@
                                 </td>
                             {% endif %}
 
-                            <td class="text-end pe-4" data-label="Дії">
-                                {% if show_archived == 'false' %}
-                                    <button type="button"
-                                            class="btn btn-light text-danger border me-1"
-                                            title="В архів"
-                                            onclick="openArchiveModal('{{ asset.id }}', '{{ asset.name }}')">
-                                        <i class="bi bi-box-arrow-in-down"></i>
-                                    </button>
+                            <td class="text-end pe-4 text-nowrap" data-label="Дії">
+                                <div class="d-flex justify-content-end gap-2">
+                                    {% if show_archived == 'false' %}
+                                        <button type="button"
+                                                class="btn btn-light text-danger border"
+                                                title="В архів"
+                                                onclick="openArchiveModal('{{ asset.id }}', '{{ asset.name|escapejs }}')">
+                                            <i class="bi bi-box-arrow-in-down"></i>
+                                        </button>
 
-                                    <a href="{% url 'asset_clone' asset.pk %}" class="btn btn-light text-success border me-1" title="Клонувати">
-                                        <i class="bi bi-files"></i>
-                                    </a>
+                                        <a href="{% url 'asset_clone' asset.pk %}" class="btn btn-light text-success border" title="Клонувати">
+                                            <i class="bi bi-files"></i>
+                                        </a>
 
-                                    <a href="{% url 'asset_update' asset.pk %}" class="btn btn-light text-primary border" title="Редагувати">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                {% else %}
-                                    <span class="badge bg-secondary">Архів</span>
-                                {% endif %}
+                                        <a href="{% url 'asset_update' asset.pk %}" class="btn btn-light text-primary border" title="Редагувати">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Архів</span>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
@@ -279,8 +246,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            // Увага: перевірка row.cells.length може по-різному працювати з display:block
-            // Краще перевіряти наявність data-type
             if (!row.hasAttribute('data-type')) continue;
 
             const rowText = row.textContent.toLowerCase();
@@ -289,7 +254,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const matchesType = (selectedType === 'all') || (rowType === selectedType);
 
             if (matchesText && matchesType) {
-                row.style.display = ""; // Для мобільного воно поверне display: block
+                row.style.display = "";
                 visibleCount++;
             } else {
                 row.style.display = "none";

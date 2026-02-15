@@ -20,8 +20,9 @@ class Asset(models.Model):
         ('113', 'Рахунок 113 (Малоцінні)'),
     ]
 
+    # ЗМІНЕНО: TextField дозволяє зберігати довгі назви/описи
+    name = models.TextField(verbose_name="Назва майна")
 
-    name = models.CharField(max_length=200, verbose_name="Назва майна")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="Тип")
     inventory_number = models.CharField(max_length=50, unique=True, verbose_name="Інвентарний номер")
     barcode = models.CharField(max_length=50, blank=True, null=True, verbose_name="Баркод")
