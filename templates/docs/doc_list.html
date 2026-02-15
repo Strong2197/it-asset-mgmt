@@ -101,9 +101,7 @@
                                 <span class="badge bg-light text-dark border">{{ doc.get_doc_type_display }}</span>
                             </td>
 
-                            <td class="text-muted small" data-label="Опис">
-                                {{ doc.description|default:"-"|truncatechars:40 }}
-                            </td>
+                            <td class="text-muted small" data-label="Опис" style="white-space: pre-wrap;">{{ doc.description|default:"-" }}</td>
 
                             <td data-label="Дата">
                                 {{ doc.created_at|date:"d.m.Y" }}
