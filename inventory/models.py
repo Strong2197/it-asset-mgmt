@@ -20,15 +20,42 @@ class Asset(models.Model):
         ('113', 'Рахунок 113 (Малоцінні)'),
     ]
 
-    # ЗМІНЕНО: TextField дозволяє зберігати довгі назви/описи
+    # --- НОВІ СПИСКИ ВИБОРУ ---
+    RESPONSIBLE_CHOICES = [
+        ('Костишин О.В.', 'Костишин О.В.'),
+        ('Олійник М.Р.', 'Олійник М.Р.'),
+    ]
+
+    LOCATION_CHOICES = [
+        ('100', '100'),
+        ('504', '504'),
+    ]
+    # --------------------------
+
+    # TextField залишаємо, але візуально змінимо у forms.py
     name = models.TextField(verbose_name="Назва майна")
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="Тип")
     inventory_number = models.CharField(max_length=50, unique=True, verbose_name="Інвентарний номер")
     barcode = models.CharField(max_length=50, blank=True, null=True, verbose_name="Баркод")
 
-    responsible_person = models.CharField(max_length=100, verbose_name="Матеріально відповідальний")
-    location = models.CharField(max_length=100, blank=True, verbose_name="Кабінет/Локація")
+    # ЗМІНИ ТУТ: додали choices та default
+    responsible_person = models.CharField(
+        max_length=100,
+        choices=RESPONSIBLE_CHOICES,
+        default='Костишин О.В.',
+        verbose_name="Матеріально відповідальний"
+    )
+
+    # ЗМІНИ ТУТ: додали choices
+    location = models.CharField(
+        max_length=100,
+        choices=LOCATION_CHOICES,
+        default='100',
+        blank=True,
+        verbose_name="Кабінет/Локація"
+    )
+
     account = models.CharField(max_length=3, choices=ACCOUNT_CHOICES, verbose_name="Рахунок")
 
     purchase_date = models.DateField(null=True, blank=True, verbose_name="Дата придбання")

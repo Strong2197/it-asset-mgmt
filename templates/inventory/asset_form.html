@@ -3,19 +3,23 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card">
+        <div class="card shadow-sm border-0">
             <div class="card-header bg-primary text-white">
                 <h4 class="mb-0">{{ title }}</h4>
             </div>
             <div class="card-body">
                 <form method="post">
-                    {% csrf_token %} {% for field in form %}
+                    {% csrf_token %}
+
+                    {% for field in form %}
                     <div class="mb-3">
                         <label class="form-label fw-bold">{{ field.label }}</label>
                         {{ field }}
+
                         {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
                         {% endif %}
+
                         {% if field.errors %}
                             <div class="text-danger small">{{ field.errors.0 }}</div>
                         {% endif %}
@@ -31,4 +35,25 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Скрипт для авторозширення текстового поля
+    document.addEventListener('DOMContentLoaded', function() {
+        const textareas = document.querySelectorAll('textarea.auto-expand');
+
+        textareas.forEach(textarea => {
+            // Функція зміни висоти
+            const adjustHeight = () => {
+                textarea.style.height = 'auto'; // Скидаємо висоту
+                textarea.style.height = textarea.scrollHeight + 'px'; // Встановлюємо по контенту
+            };
+
+            // Слухаємо введення тексту
+            textarea.addEventListener('input', adjustHeight);
+
+            // Викликаємо один раз при завантаженні (якщо ми редагуємо запис з довгим текстом)
+            adjustHeight();
+        });
+    });
+</script>
 {% endblock %}
