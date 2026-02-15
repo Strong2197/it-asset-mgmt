@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8 col-lg-6">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container .select2-selection--single { height: 38px !important; border: 1px solid #ced4da !important; display: flex; align-items: center; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px !important; }
+    .select2-search__field:focus { outline: none !important; box-shadow: none !important; }
+</style>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 border-bottom">
                 <h4 class="mb-0 text-primary">
@@ -11,90 +18,265 @@
             </div>
             <div class="card-body p-4">
 
-                <form method="post" enctype="multipart/form-data" novalidate>
+                <form method="post" enctype="multipart/form-data" novalidate id="staffForm">
                     {% csrf_token %}
 
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary small text-uppercase">
-                            {{ field.label }}
-                        </label>
-                        {{ field }}
-                        {% if field.help_text %}
-                            <div class="form-text">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% if field.errors %}
-                            <div class="text-danger small mt-1">
-                                {% for error in field.errors %}{{ error }}{% endfor %}
-                            </div>
-                        {% endif %}
+                    <h6 class="text-secondary border-bottom pb-2 mb-3">Основні дані</h6>
+                    <div class="mb-3">{{ form.full_name.label_tag }} {{ form.full_name }}</div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Посада</label>
+                            <select name="position" id="id_position_select" class="form-control" style="width: 100%;">
+                                {% if form.position.value %}
+                                    <option value="{{ form.position.value }}" selected>{{ form.position.value }}</option>
+                                {% endif %}
+                                <option></option>
+                                {% for pos in positions %}
+                                    {% if pos != form.position.value %}<option value="{{ pos }}">{{ pos }}</option>{% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Відділ</label>
+                            <select name="department" id="id_department_select" class="form-control" style="width: 100%;">
+                                {% if form.department.value %}
+                                    <option value="{{ form.department.value }}" selected>{{ form.department.value }}</option>
+                                {% endif %}
+                                <option></option>
+                                {% for dep in departments %}
+                                    {% if dep != form.department.value %}<option value="{{ dep }}">{{ dep }}</option>{% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    {% endfor %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Телефон</label>
+                            <input type="text" name="phone" id="phone-mask" class="form-control"
+                                   value="{{ form.phone.value|default:'' }}" placeholder="___-___-__-__">
+                            <div class="form-text text-muted small">Формат: 0xx-xxx-xx-xx</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">РНОКПП (ІПН)</label>
+                            {{ form.rnokpp }}
+                            {% if form.rnokpp.errors %}
+                                <div class="text-danger small">{{ form.rnokpp.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted small">Повинно бути рівно 10 цифр</div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-success border-bottom pb-2 mb-3 mt-4">Призначення на посаду</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small text-muted">Дата призначення</label>
+                            {{ form.appointment_date }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label small text-muted">Номер наказу</label>
+                            {{ form.appointment_order_number }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Скан наказу (PDF/Img)</label>
+                        <div class="input-group">
+                            {{ form.appointment_order_file }}
+                            {% if employee.appointment_order_file %}
+                                <a href="{% url 'open_order_file' employee.pk 'appointment' %}"
+                                   target="_blank" class="btn btn-outline-secondary"
+                                   title="Переглянути: {{ employee.appointment_order_original_name }}">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mt-4 mb-3">
+                        {{ form.is_dismissed }}
+                        <label class="form-check-label fw-bold" for="is_dismissed_check">Працівника звільнено</label>
+                    </div>
+
+                    <div id="dismissal-block" class="p-3 bg-light rounded border border-danger border-opacity-25" style="display: none;">
+                        <h6 class="text-danger border-bottom pb-2 mb-3">Інформація про звільнення</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label small text-muted">Дата звільнення</label>
+                                {{ form.dismissal_date }}
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label small text-muted">Номер наказу</label>
+                                {{ form.dismissal_order_number }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Скан наказу про звільнення</label>
+                            <div class="input-group">
+                                {{ form.dismissal_order_file }}
+                                {% if employee.dismissal_order_file %}
+                                    <a href="{% url 'open_order_file' employee.pk 'dismissal' %}"
+                                       target="_blank" class="btn btn-outline-secondary"
+                                       title="Переглянути: {{ employee.dismissal_order_original_name }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-secondary border-bottom pb-2 mb-3 mt-4">Ключі КЕП</h6>
+                    <div class="mb-3">
+                        {{ form.kep_files }}
+                    </div>
 
                     {% if employee and employee.certificates.all %}
-                    <div class="mt-4 mb-3">
-                        <label class="form-label fw-bold text-secondary small text-uppercase">
-                            Завантажені сертифікати КЕП:
-                        </label>
-                        <div class="list-group list-group-flush border rounded">
+                        <div class="list-group list-group-flush border rounded mb-3">
                             {% for cert in employee.certificates.all %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center bg-light bg-opacity-50">
-                                <div>
-                                    <i class="bi bi-file-earmark-check text-success fs-5"></i>
-                                    <a href="{{ cert.file.url }}"
-                                       download="{{ cert.original_name|default:cert.filename }}"
-                                       class="text-decoration-none text-dark ms-2 fw-medium"
-                                       title="Завантажити на ПК">
-                                        {{ cert.filename }}
-                                    </a>
-                                    <span class="text-muted small ms-2">({{ cert.uploaded_at|date:"d.m.y" }})</span>
+                            <div class="list-group-item d-flex justify-content-between align-items-center bg-white">
+                                <div class="text-truncate">
+                                    <i class="bi bi-key text-warning me-2"></i>
+                                    <a href="{{ cert.file.url }}" download="{{ cert.original_name }}" class="text-decoration-none text-dark">{{ cert.filename }}</a>
                                 </div>
-
-                                <a href="{% url 'cert_delete' cert.pk %}"
-                                   class="btn btn-sm btn-outline-danger border-0"
-                                   onclick="return confirm('Видалити цей файл сертифікату?')"
-                                   title="Видалити файл">
-                                    <i class="bi bi-trash3"></i>
-                                </a>
+                                <a href="{% url 'cert_delete' cert.pk %}" class="btn btn-sm text-danger" onclick="return confirm('Видалити?')"><i class="bi bi-x-lg"></i></a>
                             </div>
                             {% endfor %}
                         </div>
-                    </div>
                     {% endif %}
 
                     <div class="d-flex justify-content-between align-items-center mt-5">
                         <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary px-4">
-                            <i class="bi bi-arrow-left"></i> Скасувати
+                            <i class="bi bi-arrow-left"></i> Назад
                         </a>
                         <button type="submit" class="btn btn-primary px-5 shadow-sm">
-                            <i class="bi bi-check-lg"></i> Зберегти
+                            <i class="bi bi-check-lg"></i> Зберегти зміни
                         </button>
                     </div>
-                    <datalist id="positions-list">
-    {% for pos in positions %}
-        <option value="{{ pos }}">
-    {% endfor %}
-</datalist>
-
-<datalist id="departments-list">
-    {% for dep in departments %}
-        <option value="{{ dep }}">
-    {% endfor %}
-</datalist>
                 </form>
-
             </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top: 20px; z-index: 1;">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Коди відділів</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover mb-0" style="font-size: 0.85rem;">
+                        <thead class="table-light"><tr><th class="ps-3">Назва відділу</th><th class="text-end pe-3">Код</th></tr></thead>
+                        <tbody>
+                            <tr><td class="ps-3">Івано-Франківський відділ</td><td class="text-end pe-3 fw-bold">2610</td></tr>
+                            <tr><td class="ps-3">Яремчанський відділ</td><td class="text-end pe-3 fw-bold">2612</td></tr>
+                            <tr><td class="ps-3">Городенківський відділ</td><td class="text-end pe-3 fw-bold">2616</td></tr>
+                            <tr><td class="ps-3">Долинський відділ</td><td class="text-end pe-3 fw-bold">2617</td></tr>
+                            <tr><td class="ps-3">Коломийський відділ</td><td class="text-end pe-3 fw-bold">2619</td></tr>
+                            <tr><td class="ps-3">Косівський відділ</td><td class="text-end pe-3 fw-bold">2620</td></tr>
+                            <tr><td class="ps-3">Надвірнянський відділ</td><td class="text-end pe-3 fw-bold">2621</td></tr>
+                            <tr><td class="ps-3">Рогатинський відділ</td><td class="text-end pe-3 fw-bold">2622</td></tr>
+                            <tr><td class="ps-3">Тисменицький відділ</td><td class="text-end pe-3 fw-bold">2626</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-light text-muted small"><i class="bi bi-lightbulb"></i> Коди автоматично додаються до назви у списку.</div>
         </div>
     </div>
 </div>
 
-<style>
-    .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // 1. SELECT2
+    $('#id_position_select').select2({
+        tags: true,
+        placeholder: "Оберіть або введіть посаду...",
+        allowClear: true,
+        language: { noResults: () => "Введіть нову назву..." }
+    });
+
+    $('#id_department_select').select2({
+        tags: true,
+        placeholder: "Оберіть або введіть відділ...",
+        allowClear: true,
+        language: { noResults: () => "Введіть нову назву..." }
+    });
+
+    $(document).on('select2:open', function(e) {
+        document.querySelector('.select2-search__field').focus();
+    });
+
+    // 2. МАСКА ТЕЛЕФОНУ
+    $('#phone-mask').inputmask({
+        mask: "999-999-99-99",
+        placeholder: "___-___-__-__",
+        showMaskOnHover: false,
+        showMaskOnFocus: true
+    });
+
+    // 3. ВАЛІДАЦІЯ РНОКПП (Жорстка + візуальна)
+    const rnokppInput = document.getElementById('rnokpp-input');
+
+    if (rnokppInput) {
+        rnokppInput.addEventListener('input', function(e) {
+            // Видаляємо все, що не є цифрою
+            let value = this.value.replace(/\D/g, '');
+
+            // Якщо більше 10 цифр - обрізаємо
+            if (value.length > 10) {
+                value = value.slice(0, 10);
+            }
+
+            this.value = value;
+
+            // Візуальна індикація
+            if (value.length === 10) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else if (value.length > 0) {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+            }
+        });
     }
-    .list-group-item:hover {
-        background-color: #f8f9fa !important;
+
+    // Блокування відправки форми, якщо РНОКПП неправильний
+    $('#staffForm').on('submit', function(e) {
+        const rnokppVal = rnokppInput.value;
+        if (rnokppVal.length > 0 && rnokppVal.length !== 10) {
+            e.preventDefault();
+            alert('Помилка! РНОКПП повинен складатись рівно з 10 цифр.');
+            rnokppInput.focus();
+            rnokppInput.classList.add('is-invalid');
+        }
+    });
+
+    // 4. ЛОГІКА ЗВІЛЬНЕННЯ
+    const dismissCheck = document.getElementById('is_dismissed_check');
+    const dismissBlock = document.getElementById('dismissal-block');
+
+    function toggleDismissBlock() {
+        if (dismissCheck && dismissBlock) {
+            if (dismissCheck.checked) {
+                dismissBlock.style.display = 'block';
+            } else {
+                dismissBlock.style.display = 'none';
+            }
+        }
     }
-</style>
+
+    if (dismissCheck) {
+        toggleDismissBlock();
+        dismissCheck.addEventListener('change', toggleDismissBlock);
+    }
+});
+</script>
 {% endblock %}

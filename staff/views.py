@@ -1,12 +1,54 @@
+# staff/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Employee, KepCertificate
 from .forms import EmployeeForm
 from django.db.models import Q
+from django.http import FileResponse, Http404
+from urllib.parse import quote
+import os
 
 
+# --- ДОПОМІЖНІ ФУНКЦІЇ ДЛЯ СПИСКІВ ---
+def get_all_positions():
+    defaults = [
+        'Начальник управління', 'Начальник відділу', 'Заступник начальника відділу',
+        'Головний спеціаліст', 'Провідний спеціаліст', 'Провідний інспектор'
+    ]
+    # Отримуємо посади з бази, яких немає в defaults
+    db_positions = list(Employee.objects.values_list('position', flat=True).distinct())
+    # Об'єднуємо, прибираємо дублікати і порожні, сортуємо
+    all_pos = sorted(list(set(defaults + db_positions)))
+    return list(filter(None, all_pos))
+
+
+def get_all_departments():
+    # Оновлений список із кодами
+    defaults = [
+        'Івано-Франківський відділ (2610)',
+        'Яремчанський відділ (2612)',
+        'Городенківський відділ (2616)',
+        'Долинський відділ (2617)',
+        'Коломийський відділ (2619)',
+        'Косівський відділ (2620)',
+        'Надвірнянський відділ (2621)',
+        'Рогатинський відділ (2622)',
+        'Тисменицький відділ (2626)',
+    ]
+    db_depts = list(Employee.objects.values_list('department', flat=True).distinct())
+    # Об'єднуємо та сортуємо
+    all_depts = sorted(list(set(defaults + db_depts)))
+    return list(filter(None, all_depts))
+
+
+# ... (staff_list залишається без змін) ...
 def staff_list(request):
     query = request.GET.get('q', '')
-    employees = Employee.objects.all().prefetch_related('certificates')  # Оптимізація запитів
+    show_dismissed = request.GET.get('dismissed', 'false')
+
+    if show_dismissed == 'true':
+        employees = Employee.objects.filter(is_dismissed=True).prefetch_related('certificates')
+    else:
+        employees = Employee.objects.filter(is_dismissed=False).prefetch_related('certificates')
 
     if query:
         employees = employees.filter(
@@ -16,56 +58,63 @@ def staff_list(request):
             Q(rnokpp__icontains=query)
         )
 
-    return render(request, 'staff/staff_list.html', {'employees': employees, 'query': query})
+    return render(request, 'staff/staff_list.html', {
+        'employees': employees,
+        'query': query,
+        'show_dismissed': show_dismissed
+    })
 
 
+# --- СТВОРЕННЯ ---
 def staff_create(request):
-    positions = Employee.objects.values_list('position', flat=True).exclude(position__exact='').distinct().order_by(
-        'position')
-    departments = Employee.objects.values_list('department', flat=True).exclude(
-        department__exact='').distinct().order_by('department')
+    positions = get_all_positions()
+    departments = get_all_departments()
+
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
         if form.is_valid():
-            employee = form.save()
+            employee = form.save(commit=False)
+            if 'appointment_order_file' in request.FILES:
+                employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
+            if 'dismissal_order_file' in request.FILES:
+                employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
+            employee.save()
+
             files = request.FILES.getlist('kep_files')
             for f in files:
-                KepCertificate.objects.create(employee=employee, file=f)
+                KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
             return redirect('staff_list')
     else:
         form = EmployeeForm()
 
-    # ПОМИЛКА ТУТ: перевірте, щоб було 'staff/staff_form.html'
-    # Якщо там написано 'staff/staff_list.html' — змініть на:
     return render(request, 'staff/staff_form.html', {
         'form': form,
         'title': 'Додати працівника',
-        'positions': positions,  # Передаємо в шаблон
-        'departments': departments  # Передаємо в шаблон
+        'positions': positions,
+        'departments': departments
     })
+
+
+# --- РЕДАГУВАННЯ ---
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    positions = Employee.objects.values_list('position', flat=True).exclude(position__exact='').distinct().order_by(
-        'position')
-    departments = Employee.objects.values_list('department', flat=True).exclude(
-        department__exact='').distinct().order_by('department')
+    positions = get_all_positions()
+    departments = get_all_departments()
+
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
-            form.save()
-            # Обробляємо файли
-            # У views.py всередині staff_create та staff_update:
+            employee = form.save(commit=False)
+            if 'appointment_order_file' in request.FILES:
+                employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
+            if 'dismissal_order_file' in request.FILES:
+                employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
+            employee.save()
+
             files = request.FILES.getlist('kep_files')
             for f in files:
-                KepCertificate.objects.create(
-                    employee=employee,
-                    file=f,
-                    original_name=f.name  # Зберігаємо початкове ім'я файлу
-                )
+                KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
             return redirect('staff_list')
-        else:
-            # ЦЕ ВИВЕДЕ ПРИЧИНУ ПОМИЛКИ В КОНСОЛЬ
-            print("ПОМИЛКИ ФОРМИ:", form.errors)
     else:
         form = EmployeeForm(instance=employee)
 
@@ -78,6 +127,26 @@ def staff_update(request, pk):
     })
 
 
+# ... (решта функцій: staff_dismiss, staff_delete, cert_delete, open_order_file залишаються без змін) ...
+def staff_dismiss(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == 'POST':
+        date = request.POST.get('dismissal_date')
+        order_num = request.POST.get('dismissal_order_number')
+        order_file = request.FILES.get('dismissal_order_file')
+
+        employee.is_dismissed = True
+        if date: employee.dismissal_date = date
+        if order_num: employee.dismissal_order_number = order_num
+
+        if order_file:
+            employee.dismissal_order_file = order_file
+            employee.dismissal_order_original_name = order_file.name
+
+        employee.save()
+    return redirect('staff_list')
+
+
 def staff_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == 'POST':
@@ -85,9 +154,28 @@ def staff_delete(request, pk):
     return redirect('staff_list')
 
 
-# Нова функція: видалення конкретного файлу
 def cert_delete(request, pk):
     cert = get_object_or_404(KepCertificate, pk=pk)
     employee_id = cert.employee.id
     cert.delete()
     return redirect('staff_update', pk=employee_id)
+
+
+def open_order_file(request, pk, order_type):
+    employee = get_object_or_404(Employee, pk=pk)
+    file_obj = None
+    file_name = "document.pdf"
+
+    if order_type == 'appointment':
+        file_obj = employee.appointment_order_file
+        file_name = employee.appointment_order_original_name or "appointment_order.pdf"
+    elif order_type == 'dismissal':
+        file_obj = employee.dismissal_order_file
+        file_name = employee.dismissal_order_original_name or "dismissal_order.pdf"
+
+    if not file_obj or not os.path.exists(file_obj.path):
+        raise Http404("Файл не знайдено на сервері")
+
+    response = FileResponse(open(file_obj.path, 'rb'))
+    response['Content-Disposition'] = f"inline; filename*=UTF-8''{quote(file_name)}"
+    return response
