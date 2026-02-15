@@ -60,8 +60,16 @@
                                             <div class="d-flex align-items-end flex-grow-1 me-2" style="min-width: 200px;">
                                                 <span class="text-wrap">{{ dept }}</span>
                                                 <span class="flex-grow-1 border-bottom border-secondary border-opacity-10 mx-2 mb-1 d-print-none"></span>
-                                                <span class="fw-bold text-nowrap me-2">{{ dept_data.sum_qty }} шт.</span>
-                                            </div>
+
+                                                <span class="fw-bold text-nowrap me-2">
+                                                    {{ dept_data.sum_qty }} шт.
+                                                    {% if dept_data.items|length > 1 %}
+                                                        <span class="text-muted fw-normal small" style="font-size: 0.85em;">
+                                                            ({% for item in dept_data.items %}{{ item.quantity }}{% if not forloop.last %}+{% endif %}{% endfor %})
+                                                        </span>
+                                                    {% endif %}
+                                                </span>
+                                                </div>
 
                                             <div class="d-print-none text-end">
                                                 <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
@@ -156,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function() {
             let url = btn.getAttribute('data-url');
             const isReceiveBtn = url.includes('receive');
 
-            // Логіка часткового повернення
             let quantity = parseInt(btn.getAttribute('data-qty') || 1);
             let qtyToReceive = quantity;
 
@@ -186,10 +193,8 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(data => {
                 if (data.success) {
                     if (data.is_split) {
-                        // Якщо запис розділено - перезавантажуємо сторінку, щоб показати нові рядки
                         window.location.reload();
                     } else {
-                        // Якщо ні - просто міняємо кнопку
                         const itemId = data.item_id || btn.closest('div').id.replace('btn-group-', '');
 
                         if (data.new_state === 'stocked') {
@@ -216,7 +221,6 @@ document.addEventListener("DOMContentLoaded", function() {
     .animation-fade-in { animation: fadeIn 0.5s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* --- СТИЛІ ДЛЯ ДРУКУ --- */
     @media print {
         @page { margin: 1cm; }
         body * { visibility: hidden; }
