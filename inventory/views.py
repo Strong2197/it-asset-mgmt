@@ -6,58 +6,77 @@ import openpyxl
 from django.http import HttpResponse
 from django.forms.models import model_to_dict  # Для клонування
 from django.utils import timezone
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 
 
 def export_assets_xlsx(request):
-    # 1. Отримуємо параметри
+    # 1. Отримуємо параметри та фільтруємо (Код фільтрації залишаємо той самий)
     search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
+    show_archived = request.GET.get('archived', 'false')
 
-    # 2. Базовий запит
-    assets = Asset.objects.all()
+    if show_archived == 'true':
+        assets = Asset.objects.filter(is_archived=True)
+    else:
+        assets = Asset.objects.filter(is_archived=False)
 
-    # 3. Фільтр по категорії
     if category_id and category_id != 'all':
-        # Використовуємо category_id (автоматичне поле Django для ForeignKey)
         assets = assets.filter(category_id=category_id)
 
-    # 4. Пошук (Назва, Інвентарний, Баркод, Локація)
     if search_query:
         assets = assets.filter(
             Q(name__icontains=search_query) |
             Q(inventory_number__icontains=search_query) |
             Q(barcode__icontains=search_query) |
             Q(location__icontains=search_query) |
-            Q(account__icontains=search_query)
+            Q(account__icontains=search_query) |
+            Q(archive_reason__icontains=search_query)
         )
 
-    # --- СТВОРЕННЯ EXCEL ---
+    # --- СТВОРЕННЯ ТА ФОРМАТУВАННЯ EXCEL ---
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="inventory_export.xlsx"'
 
-    workbook = openpyxl.Workbook()
-    worksheet = workbook.active
-    worksheet.title = 'Майно'
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Майно'
 
-    # Заголовки (Виправлені під вашу модель)
+    # --- СТИЛІ ---
+    # Тонка рамка для всіх клітинок
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+    # Стиль заголовка: Жирний, Білий текст, Темно-синій фон
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # Стиль для звичайних клітинок (вирівнювання по центру вертикально)
+    cell_align_center = Alignment(horizontal="center", vertical="center")
+    cell_align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)  # Для назви
+
+    # --- ЗАГОЛОВКИ ---
     headers = ['Баркод', 'Інвентарний №', 'Назва', 'Категорія', 'Розташування', 'Відповідальний', 'Рахунок',
                'Дата придбання']
-    worksheet.append(headers)
+    if show_archived == 'true':
+        headers.extend(['Причина архівування', 'Дата архівування'])
 
-    # Жирний шрифт для заголовка
-    for cell in worksheet[1]:
-        cell.font = openpyxl.styles.Font(bold=True)
+    ws.append(headers)
 
-    # Запис даних
+    # Застосовуємо стиль до рядка заголовка (рядок 1)
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = thin_border
+
+    # --- ДАНІ ---
     for asset in assets:
-        # Безпечне отримання назви категорії
         cat_name = asset.category.name if asset.category else ''
-
-        # Отримання назви рахунку (наприклад "Рахунок 104") замість просто "104"
-        # get_account_display() - це стандартний метод Django для полів з choices
         account_name = asset.get_account_display() if hasattr(asset, 'get_account_display') else asset.account
 
-        worksheet.append([
+        row_data = [
             asset.barcode,
             asset.inventory_number,
             asset.name,
@@ -66,25 +85,56 @@ def export_assets_xlsx(request):
             asset.responsible_person,
             account_name,
             asset.purchase_date,
-        ])
+        ]
 
-    # Автоширина колонок
-    for col in worksheet.columns:
+        if show_archived == 'true':
+            row_data.extend([
+                asset.archive_reason,
+                asset.archive_date
+            ])
+
+        ws.append(row_data)
+
+        # Форматуємо щойно доданий рядок
+        current_row = ws[ws.max_row]
+        for cell in current_row:
+            cell.border = thin_border  # Рамка
+
+            # Якщо це колонка "Назва" (індекс 2, бо в Python список з 0, а в Excel cell.col_idx з 1... отже 3-тя колонка)
+            # Але краще перевіряти індекс у списку row_data
+            # Колонка "Назва" - це 3-тя колонка (C)
+            if cell.column == 3:
+                cell.alignment = cell_align_left  # Текст зліва + перенос
+            else:
+                cell.alignment = cell_align_center  # Все інше по центру
+
+    # --- АВТОШИРИНА КОЛОНОК ---
+    # Встановлюємо фіксовану ширину для Назви, щоб текст переносився красиво
+    ws.column_dimensions['C'].width = 50
+
+    # Для інших колонок пробуємо підібрати ширину
+    for col in ws.columns:
+        column_letter = col[0].column_letter
+        if column_letter == 'C':  # Пропускаємо Назву, ми її задали вручну
+            continue
+
         max_length = 0
-        column = col[0].column_letter
         for cell in col:
             try:
                 if len(str(cell.value)) > max_length:
                     max_length = len(str(cell.value))
             except:
                 pass
-        adjusted_width = (max_length + 2)
-        # Обмежимо максимальну ширину, щоб не було гігантських колонок
-        if adjusted_width > 50:
-            adjusted_width = 50
-        worksheet.column_dimensions[column].width = adjusted_width
 
-    workbook.save(response)
+        # Трохи додаємо відступу
+        adjusted_width = (max_length + 4)
+        # Не робимо колонки занадто вузькими або широкими
+        if adjusted_width < 10: adjusted_width = 10
+        if adjusted_width > 30: adjusted_width = 30
+
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    wb.save(response)
     return response
 
 # --- 2. КЛОНУВАННЯ МАЙНА ---
