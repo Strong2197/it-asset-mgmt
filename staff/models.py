@@ -65,3 +65,22 @@ def delete_employee_files(sender, instance, **kwargs):
         os.remove(instance.appointment_order_file.path)
     if instance.dismissal_order_file and os.path.isfile(instance.dismissal_order_file.path):
         os.remove(instance.dismissal_order_file.path)
+
+
+class CareerHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='career_history',
+                                 verbose_name="Працівник")
+    date_changed = models.DateField(auto_now_add=True, verbose_name="Дата зміни")
+
+    previous_position = models.CharField(max_length=100, blank=True, verbose_name="Минула посада")
+    new_position = models.CharField(max_length=100, blank=True, verbose_name="Нова посада")
+
+    previous_department = models.CharField(max_length=100, blank=True, verbose_name="Минулий відділ")
+    new_department = models.CharField(max_length=100, blank=True, verbose_name="Новий відділ")
+
+    notes = models.CharField(max_length=200, blank=True, verbose_name="Примітка (наприклад, № наказу)")
+
+    class Meta:
+        verbose_name = "Запис історії"
+        verbose_name_plural = "Історія переміщень"
+        ordering = ['-date_changed']

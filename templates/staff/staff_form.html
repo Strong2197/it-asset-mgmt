@@ -154,6 +154,41 @@
                             <i class="bi bi-check-lg"></i> Зберегти зміни
                         </button>
                     </div>
+                    {% if employee.career_history.exists %}
+                    <h6 class="text-primary border-bottom pb-2 mb-3 mt-5">
+                        <i class="bi bi-clock-history"></i> Історія переміщень
+                    </h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-sm table-bordered table-hover bg-white small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Звідки (Відділ / Посада)</th>
+                                    <th>Куди (Відділ / Посада)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in employee.career_history.all %}
+                                <tr>
+                                    <td class="text-nowrap">{{ history.date_changed|date:"d.m.Y" }}</td>
+                                    <td class="text-muted">
+                                        {{ history.previous_department }} <br>
+                                        <em>{{ history.previous_position }}</em>
+                                    </td>
+                                    <td class="fw-bold text-success">
+                                        {{ history.new_department }} <br>
+                                        <em>{{ history.new_position }}</em>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    ```
+
+
                 </form>
             </div>
         </div>

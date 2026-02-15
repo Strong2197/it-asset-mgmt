@@ -1,6 +1,6 @@
 # staff/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Employee, KepCertificate
+from .models import Employee, KepCertificate, CareerHistory
 from .forms import EmployeeForm
 from django.db.models import Q
 from django.http import FileResponse, Http404
@@ -98,22 +98,48 @@ def staff_create(request):
 # --- РЕДАГУВАННЯ ---
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
+
+    # 1. Запам'ятовуємо старі дані ДО збереження форми
+    old_position = employee.position
+    old_department = employee.department
+
     positions = get_all_positions()
     departments = get_all_departments()
 
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
-            employee = form.save(commit=False)
+            # Отримуємо об'єкт, але поки не пишемо в базу
+            updated_employee = form.save(commit=False)
+
+            # 2. Перевіряємо, чи змінилися посада або відділ
+            pos_changed = old_position != updated_employee.position
+            dept_changed = old_department != updated_employee.department
+
+            if pos_changed or dept_changed:
+                # Створюємо запис в історії
+                CareerHistory.objects.create(
+                    employee=employee,
+                    previous_position=old_position,
+                    new_position=updated_employee.position,
+                    previous_department=old_department,
+                    new_department=updated_employee.department,
+                    # Можна додати номер наказу, якщо ви його ввели в формі, але поки залишимо пустим або авто-текст
+                    notes="Зміна кадрових даних"
+                )
+
+            # Логіка файлів (без змін)
             if 'appointment_order_file' in request.FILES:
-                employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
+                updated_employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
             if 'dismissal_order_file' in request.FILES:
-                employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
-            employee.save()
+                updated_employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
+
+            updated_employee.save()
 
             files = request.FILES.getlist('kep_files')
             for f in files:
                 KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
+
             return redirect('staff_list')
     else:
         form = EmployeeForm(instance=employee)
