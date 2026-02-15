@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
         <div>
             <a href="{% url 'report_list' %}" class="btn btn-outline-secondary">
@@ -58,18 +58,19 @@
                                         <div class="d-flex align-items-center justify-content-between flex-wrap">
 
                                             <div class="d-flex align-items-end flex-grow-1 me-2" style="min-width: 200px;">
-                                                <span class="text-wrap">{{ dept }}</span>
+                                                <span class="text-wrap me-2">{{ dept }}</span>
+
                                                 <span class="flex-grow-1 border-bottom border-secondary border-opacity-10 mx-2 mb-1 d-print-none"></span>
 
                                                 <span class="fw-bold text-nowrap me-2">
                                                     {{ dept_data.sum_qty }} шт.
                                                     {% if dept_data.items|length > 1 %}
-                                                        <span class="text-muted fw-normal small" style="font-size: 0.85em;">
+                                                        <span class="text-muted fw-normal small d-print-none" style="font-size: 0.85em;">
                                                             ({% for item in dept_data.items %}{{ item.quantity }}{% if not forloop.last %}+{% endif %}{% endfor %})
                                                         </span>
                                                     {% endif %}
                                                 </span>
-                                                </div>
+                                            </div>
 
                                             <div class="d-print-none text-end">
                                                 <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
