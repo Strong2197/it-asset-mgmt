@@ -9,7 +9,7 @@ def disk_usage_monitor(request):
     тому цифра буде відповідати тій, що на дашборді.
     """
     CACHE_KEY = 'pythonanywhere_disk_usage'
-    CACHE_TIMEOUT = 300  # Кешуємо на 5 хвилин
+    CACHE_TIMEOUT = 6000  # Кешуємо на 5 хвилин
 
     stats = cache.get(CACHE_KEY)
 
