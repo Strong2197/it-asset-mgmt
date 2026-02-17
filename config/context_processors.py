@@ -1,10 +1,12 @@
 import os
+import subprocess
 from django.core.cache import cache
 
 def disk_usage_monitor(request):
     """
-    Рахує реальне зайняте місце в домашній директорії (/home/username).
-    Враховує venv, кеш, базу даних, медіа та приховані файли.
+    Рахує реальне використання диска за допомогою системної команди `du`.
+    Це враховує розмір блоків на диску (block size overhead), 
+    тому цифра буде відповідати тій, що на дашборді.
     """
     CACHE_KEY = 'pythonanywhere_disk_usage'
     CACHE_TIMEOUT = 300  # Кешуємо на 5 хвилин
@@ -12,34 +14,40 @@ def disk_usage_monitor(request):
     stats = cache.get(CACHE_KEY)
 
     if not stats:
-        # Ваш ліміт (512 МБ)
+        # Ліміт 512 МБ
         LIMIT_MB = 512
         LIMIT_BYTES = LIMIT_MB * 1024 * 1024
         
-        # Скануємо всю домашню папку користувача (це точніше, ніж BASE_DIR)
-        root_path = os.path.expanduser('~') 
+        root_path = os.path.expanduser('~') # /home/ifit/
         
         total_size = 0
         try:
-            for dirpath, dirnames, filenames in os.walk(root_path):
-                # МИ БІЛЬШЕ НЕ ВИКЛЮЧАЄМО __pycache__, бо вони враховуються хостингом
-                
-                for f in filenames:
-                    fp = os.path.join(dirpath, f)
-                    # Перевіряємо, чи файл існує і не є посиланням
-                    if os.path.exists(fp) and not os.path.islink(fp):
-                        total_size += os.path.getsize(fp)
+            # Виконуємо команду 'du -s' (disk usage summary)
+            # Вона повертає кількість зайнятих блоків (у кілобайтах)
+            cmd = ['du', '-s', root_path]
+            
+            # Запускаємо процес і отримуємо результат
+            output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode('utf-8')
+            
+            # Результат виглядає як: "119804 /home/ifit"
+            kb_used = int(output.split()[0])
+            
+            # Переводимо кілобайти в байти
+            total_size = kb_used * 1024
+            
         except Exception:
-            pass 
+            # Якщо команда не спрацювала, повертаємо 0 або пробуємо старий метод
+            total_size = 0
 
-        # Конвертуємо в МБ
+        # Розрахунки
         used_mb = round(total_size / (1024 * 1024), 1)
-        free_mb = round((LIMIT_BYTES - total_size) / (1024 * 1024), 1)
         
-        # Захист від ділення на нуль або від'ємних значень
+        # Іноді може бути більше 100%, якщо ліміт перевищено
         if used_mb > LIMIT_MB:
+            free_mb = 0
             percent = 100
         else:
+            free_mb = round((LIMIT_BYTES - total_size) / (1024 * 1024), 1)
             percent = round((total_size / LIMIT_BYTES) * 100, 1)
         
         color = 'success'
