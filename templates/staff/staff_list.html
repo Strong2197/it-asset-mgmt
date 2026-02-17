@@ -92,17 +92,14 @@
                                 <div class="small text-muted">{{ emp.department }}</div>
                             </td>
                             <td data-label="Інфо">
-                                <div><i class="bi bi-telephone small text-muted"></i> {{ emp.phone|default:"-" }}</div>
+                                <div><i class="bi bi-telephone small text-muted me-1"></i>{{ emp.phone|default:"-" }}</div>
                                 <div class="small text-muted">ІПН: {{ emp.rnokpp|default:"-" }}</div>
                             </td>
                             
                             {% if show_dismissed == 'true' %}
                                 <td data-label="Звільнено">
                                     <div class="text-danger fw-bold">
-                                        {{ emp.dismissal_date|date:"d.m.Y"|default:"-" }}
-                                        {% if emp.dismissal_order_file %}
-                                            <a href="{% url 'open_order_file' emp.pk 'dismissal' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-danger"></i></a>
-                                        {% endif %}
+                                        {{ emp.dismissal_date|date:"d.m.Y"|default:"-" }}{% if emp.dismissal_order_file %}<a href="{% url 'open_order_file' emp.pk 'dismissal' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-danger"></i></a>{% endif %}
                                     </div>
                                     {% if emp.dismissal_order_number %}
                                         <div class="small text-muted" style="font-size: 0.85em;">{{ emp.dismissal_order_number }}</div>
@@ -111,10 +108,7 @@
                             {% else %}
                                 <td data-label="Призначено">
                                     <div class="text-success fw-bold">
-                                        {{ emp.appointment_date|date:"d.m.Y"|default:"-" }}
-                                        {% if emp.appointment_order_file %}
-                                            <a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-primary"></i></a>
-                                        {% endif %}
+                                        {{ emp.appointment_date|date:"d.m.Y"|default:"-" }}{% if emp.appointment_order_file %}<a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-primary"></i></a>{% endif %}
                                     </div>
                                     {% if emp.appointment_order_number %}
                                         <div class="small text-muted" style="font-size: 0.85em;">{{ emp.appointment_order_number }}</div>
