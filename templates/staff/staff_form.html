@@ -6,6 +6,8 @@
     .select2-container .select2-selection--single { height: 38px !important; border: 1px solid #ced4da !important; display: flex; align-items: center; }
     .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px !important; }
     .select2-search__field:focus { outline: none !important; box-shadow: none !important; }
+    /* Стиль для полів вводу номера наказу */
+    .order-num-input { min-width: 70px; max-width: 90px; text-align: center; font-weight: bold; }
 </style>
 
 <div class="row">
@@ -73,12 +75,20 @@
                     <h6 class="text-success border-bottom pb-2 mb-3 mt-4">Призначення на посаду</h6>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label small text-muted">Дата призначення</label>
+                            <label class="form-label small text-muted">Дата призначення (фактична)</label>
                             {{ form.appointment_date }}
                         </div>
                         <div class="col-md-8 mb-3">
-                            <label class="form-label small text-muted">Номер наказу</label>
-                            {{ form.appointment_order_number }}
+                            <label class="form-label small text-muted">Номер наказу (формат: №123-к/тр від ...)</label>
+                            
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-secondary">№</span>
+                                <input type="text" class="form-control order-num-input" id="appt_num_visual" placeholder="xxxx" maxlength="4" inputmode="numeric">
+                                <span class="input-group-text bg-light text-secondary">-к/тр від</span>
+                                <input type="date" class="form-control" id="appt_date_visual">
+                            </div>
+                            <input type="hidden" name="appointment_order_number" id="id_appointment_order_number" value="{{ form.appointment_order_number.value|default:'' }}">
+                            
                         </div>
                     </div>
                     <div class="mb-3">
@@ -104,12 +114,20 @@
                         <h6 class="text-danger border-bottom pb-2 mb-3">Інформація про звільнення</h6>
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label small text-muted">Дата звільнення</label>
+                                <label class="form-label small text-muted">Дата звільнення (фактична)</label>
                                 {{ form.dismissal_date }}
                             </div>
                             <div class="col-md-8 mb-3">
-                                <label class="form-label small text-muted">Номер наказу</label>
-                                {{ form.dismissal_order_number }}
+                                <label class="form-label small text-muted">Номер наказу (формат: №123-к/тр від ...)</label>
+                                
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-secondary">№</span>
+                                    <input type="text" class="form-control order-num-input" id="dismiss_num_visual" placeholder="xxxx" maxlength="4" inputmode="numeric">
+                                    <span class="input-group-text bg-light text-secondary">-к/тр від</span>
+                                    <input type="date" class="form-control" id="dismiss_date_visual">
+                                </div>
+                                <input type="hidden" name="dismissal_order_number" id="id_dismissal_order_number" value="{{ form.dismissal_order_number.value|default:'' }}">
+
                             </div>
                         </div>
                         <div class="mb-3">
@@ -145,15 +163,7 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-
-                    <div class="d-flex justify-content-between align-items-center mt-5">
-                        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary px-4">
-                            <i class="bi bi-arrow-left"></i> Назад
-                        </a>
-                        <button type="submit" class="btn btn-primary px-5 shadow-sm">
-                            <i class="bi bi-check-lg"></i> Зберегти зміни
-                        </button>
-                    </div>
+                    
                     {% if employee.career_history.exists %}
                     <h6 class="text-primary border-bottom pb-2 mb-3 mt-5">
                         <i class="bi bi-clock-history"></i> Історія переміщень
@@ -186,9 +196,14 @@
                     </div>
                     {% endif %}
 
-                    ```
-
-
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-arrow-left"></i> Назад
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5 shadow-sm">
+                            <i class="bi bi-check-lg"></i> Зберегти зміни
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -257,26 +272,15 @@ $(document).ready(function() {
 
     // 3. ВАЛІДАЦІЯ РНОКПП (Жорстка + візуальна)
     const rnokppInput = document.getElementById('rnokpp-input');
-
     if (rnokppInput) {
         rnokppInput.addEventListener('input', function(e) {
-            // Видаляємо все, що не є цифрою
             let value = this.value.replace(/\D/g, '');
-
-            // Якщо більше 10 цифр - обрізаємо
-            if (value.length > 10) {
-                value = value.slice(0, 10);
-            }
-
+            if (value.length > 10) value = value.slice(0, 10);
             this.value = value;
-
-            // Візуальна індикація
             if (value.length === 10) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
+                this.classList.remove('is-invalid'); this.classList.add('is-valid');
             } else if (value.length > 0) {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
+                this.classList.remove('is-valid'); this.classList.add('is-invalid');
             } else {
                 this.classList.remove('is-valid', 'is-invalid');
             }
@@ -294,7 +298,55 @@ $(document).ready(function() {
         }
     });
 
-    // 4. ЛОГІКА ЗВІЛЬНЕННЯ
+    // 4. ЛОГІКА ДЛЯ КОНСТРУКТОРА НОМЕРА НАКАЗУ
+    function initOrderNumberBuilder(hiddenInputId, numInputId, dateInputId) {
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const numInput = document.getElementById(numInputId);
+        const dateInput = document.getElementById(dateInputId);
+
+        // Парсинг: розбираємо рядок "№123-к/тр від 01.01.2024" назад у поля
+        if (hiddenInput.value) {
+            // Шукаємо цифри після №, і дату в кінці
+            const regex = /№(\d+)-к\/тр від (\d{2})\.(\d{2})\.(\d{4})/;
+            const match = hiddenInput.value.match(regex);
+            if (match) {
+                numInput.value = match[1]; // Номер
+                // Дата для input type="date" має бути YYYY-MM-DD
+                dateInput.value = `${match[4]}-${match[3]}-${match[2]}`;
+            }
+        }
+
+        // Блокування вводу не-цифр у поле номера
+        numInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, ''); // Тільки цифри
+            updateHiddenField();
+        });
+
+        dateInput.addEventListener('input', updateHiddenField);
+
+        function updateHiddenField() {
+            const num = numInput.value;
+            const dateVal = dateInput.value; // YYYY-MM-DD
+
+            if (num && dateVal) {
+                // Перетворення YYYY-MM-DD -> DD.MM.YYYY
+                const [year, month, day] = dateVal.split('-');
+                const formattedDate = `${day}.${month}.${year}`;
+                hiddenInput.value = `№${num}-к/тр від ${formattedDate}`;
+            } else {
+                // Якщо хоча б одне поле пусте, не пишемо сміття (або залишаємо пустим)
+                hiddenInput.value = '';
+            }
+        }
+    }
+
+    // Ініціалізуємо для Призначення
+    initOrderNumberBuilder('id_appointment_order_number', 'appt_num_visual', 'appt_date_visual');
+    // Ініціалізуємо для Звільнення
+    initOrderNumberBuilder('id_dismissal_order_number', 'dismiss_num_visual', 'dismiss_date_visual');
+
+
+    // 5. ЛОГІКА ЗВІЛЬНЕННЯ
     const dismissCheck = document.getElementById('is_dismissed_check');
     const dismissBlock = document.getElementById('dismissal-block');
 
