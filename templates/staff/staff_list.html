@@ -37,15 +37,15 @@
 <div class="row justify-content-center">
     <div class="col-md-12">
         <div class="card shadow-sm border-0 bg-transparent">
-
+            
             <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
                     <h4 class="mb-0 text-primary">
                         <i class="bi bi-people"></i> Штатний розпис
                     </h4>
-
+                    
                     <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-center justify-content-md-end">
-
+                        
                         <div class="btn-group" role="group">
                             <a href="?dismissed=false" class="btn btn-sm {% if show_dismissed == 'false' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Активні</a>
                             <a href="?dismissed=true" class="btn btn-sm {% if show_dismissed == 'true' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Звільнені</a>
@@ -55,7 +55,7 @@
                             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                             <input type="text" id="staff-search" value="{{ query }}" class="form-control border-start-0" placeholder="Пошук..." autocomplete="off">
                         </div>
-
+                        
                         {% if show_dismissed == 'false' %}
                         <a href="{% url 'staff_create' %}" class="btn btn-success">
                             <i class="bi bi-person-plus"></i> Додати
@@ -75,7 +75,7 @@
                             {% if show_dismissed == 'true' %}
                                 <th>Дата звільнення</th>
                             {% else %}
-                                <th>Дата призначення</th>
+                                <th>Призначення / Наказ</th>
                             {% endif %}
                             <th>КЕП (Файли)</th>
                             <th class="text-end pe-4">Дії</th>
@@ -95,21 +95,33 @@
                                 <div><i class="bi bi-telephone small text-muted"></i> {{ emp.phone|default:"-" }}</div>
                                 <div class="small text-muted">ІПН: {{ emp.rnokpp|default:"-" }}</div>
                             </td>
+                            
                             {% if show_dismissed == 'true' %}
                                 <td data-label="Звільнено">
-                                    <span class="text-danger fw-bold">{{ emp.dismissal_date|date:"d.m.Y"|default:"-" }}</span>
-                                    {% if emp.dismissal_order_file %}
-                                        <a href="{% url 'open_order_file' emp.pk 'dismissal' %}" target="_blank" class="text-decoration-none ms-1"><i class="bi bi-file-earmark-pdf text-danger"></i></a>
+                                    <div class="text-danger fw-bold">
+                                        {{ emp.dismissal_date|date:"d.m.Y"|default:"-" }}
+                                        {% if emp.dismissal_order_file %}
+                                            <a href="{% url 'open_order_file' emp.pk 'dismissal' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-danger"></i></a>
+                                        {% endif %}
+                                    </div>
+                                    {% if emp.dismissal_order_number %}
+                                        <div class="small text-muted" style="font-size: 0.85em;">{{ emp.dismissal_order_number }}</div>
                                     {% endif %}
                                 </td>
                             {% else %}
                                 <td data-label="Призначено">
-                                    <span class="text-success">{{ emp.appointment_date|date:"d.m.Y"|default:"-" }}</span>
-                                    {% if emp.appointment_order_file %}
-                                        <a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none ms-1"><i class="bi bi-file-earmark-pdf text-primary"></i></a>
+                                    <div class="text-success fw-bold">
+                                        {{ emp.appointment_date|date:"d.m.Y"|default:"-" }}
+                                        {% if emp.appointment_order_file %}
+                                            <a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none ms-1" title="Скан наказу"><i class="bi bi-file-earmark-pdf text-primary"></i></a>
+                                        {% endif %}
+                                    </div>
+                                    {% if emp.appointment_order_number %}
+                                        <div class="small text-muted" style="font-size: 0.85em;">{{ emp.appointment_order_number }}</div>
                                     {% endif %}
                                 </td>
                             {% endif %}
+                            
                             <td data-label="КЕП">
                                 {% if emp.certificates.all %}
                                     <div class="d-flex flex-column gap-1 align-items-md-start align-items-end">
@@ -138,11 +150,11 @@
                     </tbody>
                 </table>
             </div>
-
+            
             <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
                 <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
                     <small class="text-muted">
-                        Всього записів: <strong>{{ total_count }}</strong>.
+                        Всього записів: <strong>{{ total_count }}</strong>. 
                         Сторінка {{ employees.number }} з {{ employees.paginator.num_pages }}.
                     </small>
 
@@ -259,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function() {
     function fetchResults(query) {
         const urlParams = new URLSearchParams(window.location.search);
         const isDismissed = urlParams.get('dismissed') || 'false';
-
+        
         // Формуємо URL для запиту
         const url = `?q=${encodeURIComponent(query)}&dismissed=${isDismissed}&page=1`;
 
@@ -300,14 +312,14 @@ document.addEventListener("DOMContentLoaded", function() {
         // Подія на введення тексту
         searchInput.addEventListener('input', function() {
             const query = this.value.trim();
-
+            
             clearTimeout(debounceTimer);
             // Затримка 500мс перед відправкою (щоб не спамити сервер)
             debounceTimer = setTimeout(() => {
                 fetchResults(query);
             }, 500);
         });
-
+        
         // Фокус автоматично залишається в полі, бо сторінка не перезавантажується!
     }
 });
