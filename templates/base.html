@@ -12,97 +12,58 @@
         .card { border-radius: 10px; }
         .table-responsive { overflow-x: auto; }
 
-        /* === НАЛАШТУВАННЯ ТЕМНОЇ ТЕМИ === */
+        /* === НАЛАШТУВАННЯ ТЕМНОЇ ТЕМИ (ЕКРАН) === */
+        [data-bs-theme="dark"] body { background-color: #121212 !important; color: #e0e0e0 !important; }
+        [data-bs-theme="dark"] .card { background-color: #1e1e1e; border-color: #333; }
 
-        /* 1. Глобальні кольори */
-        [data-bs-theme="dark"] body {
-            background-color: #121212 !important;
-            color: #e0e0e0 !important;
-        }
-
-        /* 2. Картки */
-        [data-bs-theme="dark"] .card {
-            background-color: #1e1e1e;
-            border-color: #333;
-        }
-
-        /* 3. ВИПРАВЛЕННЯ ТЕКСТУ (Гловне виправлення) */
-        /* Примусово робимо text-dark білим, а text-secondary світло-сірим */
+        /* Текст */
         [data-bs-theme="dark"] .text-dark { color: #f0f0f0 !important; }
-        [data-bs-theme="dark"] .text-muted,
-        [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
+        [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
+        [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #fff !important; }
 
-        /* Чорні заголовки стають білими */
-        [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2,
-        [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4,
-        [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 {
-            color: #fff !important;
-        }
+        /* Таблиці */
+        [data-bs-theme="dark"] .table { --bs-table-bg: transparent; --bs-table-color: #e0e0e0; border-color: #373b3e; color: #e0e0e0 !important; }
+        [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th { color: #e0e0e0 !important; border-color: #373b3e; }
+        /* Заголовки таблиць - робимо темно-сірими */
+        [data-bs-theme="dark"] .table-light th, [data-bs-theme="dark"] thead th { background-color: #2b3035 !important; color: #fff !important; border-color: #373b3e !important; }
+        [data-bs-theme="dark"] .table-light { background-color: #2b3035 !important; }
 
-        /* 4. ТАБЛИЦІ (Виправлення невидимих рядків) */
-        [data-bs-theme="dark"] .table {
-            --bs-table-bg: transparent;
-            --bs-table-color: #e0e0e0;
-            --bs-table-striped-bg: rgba(255, 255, 255, 0.05);
-            --bs-table-hover-bg: rgba(255, 255, 255, 0.1);
-            color: #e0e0e0 !important;
-            border-color: #373b3e;
-        }
-        /* Всі клітинки таблиці мають бути світлими */
-        [data-bs-theme="dark"] .table td,
-        [data-bs-theme="dark"] .table th {
-            color: #e0e0e0 !important;
-            border-color: #373b3e;
-        }
-        /* Заголовки таблиць */
-        [data-bs-theme="dark"] .table-light th {
-            background-color: #2b3035 !important;
-            color: #fff !important;
-            border-color: #373b3e;
-        }
+        /* Посилання */
+        [data-bs-theme="dark"] a:not(.btn):not(.nav-link) { color: #6ea8fe; }
+        [data-bs-theme="dark"] a:not(.btn):not(.nav-link):hover { color: #9ec5fe; }
 
-        /* 5. ПОСИЛАННЯ */
-        /* Стандартні сині посилання на чорному погано видно, робимо їх світло-блакитними */
-        [data-bs-theme="dark"] a:not(.btn):not(.nav-link) {
-            color: #6ea8fe;
-        }
-        [data-bs-theme="dark"] a:not(.btn):not(.nav-link):hover {
-            color: #9ec5fe;
-        }
+        /* Фони */
+        [data-bs-theme="dark"] .bg-white { background-color: #1e1e1e !important; color: #e0e0e0 !important; }
+        [data-bs-theme="dark"] .bg-light { background-color: #2b3035 !important; color: #e0e0e0 !important; border-color: #373b3e !important; }
 
-        /* 6. ФОНИ (Виправлення яскравих білих блоків) */
-        [data-bs-theme="dark"] .bg-white {
-            background-color: #1e1e1e !important;
-            color: #e0e0e0 !important;
-        }
-        [data-bs-theme="dark"] .bg-light {
-            background-color: #2b3035 !important;
-            color: #e0e0e0 !important;
-            border-color: #373b3e !important;
-        }
+        /* Форми */
+        [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #2b3035; border-color: #495057; color: #fff; }
+        [data-bs-theme="dark"] .input-group-text { background-color: #343a40; border-color: #495057; color: #e0e0e0; }
 
-        /* 7. ФОРМИ (Inputs) */
-        [data-bs-theme="dark"] .form-control,
-        [data-bs-theme="dark"] .form-select {
-            background-color: #2b3035;
-            border-color: #495057;
-            color: #fff;
-        }
-        [data-bs-theme="dark"] .form-control::placeholder {
-            color: #adb5bd;
-        }
-        [data-bs-theme="dark"] .input-group-text {
-            background-color: #343a40;
-            border-color: #495057;
-            color: #e0e0e0;
-        }
-
-        /* Кнопка теми */
-        .theme-toggle-btn {
-            cursor: pointer; border: none; background: transparent;
-            color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px;
-        }
+        .theme-toggle-btn { cursor: pointer; border: none; background: transparent; color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px; }
         .theme-toggle-btn:hover { color: #fff; }
+
+        /* === ВАЖЛИВО: ДРУК ЗАВЖДИ СВІТЛИЙ === */
+        @media print {
+            /* Примусово вимикаємо темні кольори */
+            body, [data-bs-theme="dark"] body { background-color: #fff !important; color: #000 !important; }
+            .card, [data-bs-theme="dark"] .card { background-color: #fff !important; border: 1px solid #ddd !important; color: #000 !important; }
+
+            /* Таблиці на друк - чорні лінії, чорний текст */
+            .table, [data-bs-theme="dark"] .table { color: #000 !important; border-color: #000 !important; }
+            .table td, .table th { color: #000 !important; border: 1px solid #000 !important; background-color: transparent !important; }
+            .table-light th { background-color: #f8f9fa !important; color: #000 !important; }
+
+            /* Ховаємо зайве при друці */
+            .navbar, .theme-toggle-btn, .btn, footer, .d-print-none { display: none !important; }
+
+            /* Тексти */
+            .text-white, [data-bs-theme="dark"] .text-white { color: #000 !important; }
+            h1, h2, h3, h4, h5 { color: #000 !important; }
+
+            /* Скидаємо тіні */
+            .shadow-sm, .shadow { box-shadow: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -115,7 +76,7 @@
         })();
     </script>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4 d-print-none">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
                 <i class="bi bi-box-seam"></i> IT Відділ
@@ -149,7 +110,7 @@
         {% endblock %}
     </div>
 
-    <footer class="text-center text-muted py-4 mt-auto">
+    <footer class="text-center text-muted py-4 mt-auto d-print-none">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-6">
