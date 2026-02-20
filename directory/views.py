@@ -2,38 +2,30 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import PhonebookEntry
 from .forms import PhonebookForm
 from django.db.models import Q
-from django.db.models.functions import Lower
-from django.core.paginator import Paginator
 
 def directory_list(request):
-    query = request.GET.get('q', '').strip().lower()  # Перетворюємо пошуковий запит у нижній регістр
+    query = request.GET.get('q', '').strip()
+    # Отримуємо всі записи, відсортовані за кодом (як ми налаштували в Meta)
     entries = PhonebookEntry.objects.all()
 
     if query:
-        # Використовуємо Lower() для кожного поля, щоб ігнорувати регістр
-        entries = entries.annotate(
-            dept_lower=Lower('department'),
-            code_lower=Lower('code'),
-            chief_lower=Lower('chief_name'),
-            deputy_lower=Lower('deputy_name')
-        ).filter(
-            Q(dept_lower__contains=query) |
-            Q(code_lower__contains=query) |
-            Q(chief_lower__contains=query) |
-            Q(deputy_lower__contains=query)
+        # Стандартний пошук без врахування регістру (icontains)
+        entries = entries.filter(
+            Q(department__icontains=query) |
+            Q(code__icontains=query) |
+            Q(chief_name__icontains=query) |
+            Q(chief_phone__icontains=query) |
+            Q(deputy_name__icontains=query) |
+            Q(deputy_phone__icontains=query)
         )
 
     # Логіка для AJAX (живого пошуку)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return render(request, 'directory/directory_rows.html', {'entries': entries})
 
-    # Пагінація
-    paginator = Paginator(entries, 30)
-    page = request.GET.get('page')
-    page_obj = paginator.get_page(page)
-
+    # Повертаємо всі запити без пагінації
     return render(request, 'directory/directory_list.html', {
-        'entries': page_obj,
+        'entries': entries,
         'query': query
     })
 

@@ -41,44 +41,7 @@
                     </table>
                 </div>
             </div>
-
-            {% if entries.paginator.num_pages > 1 %}
-            <div id="paginationContainer" class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <nav>
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        {% if entries.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page={{ entries.previous_page_number }}&q={{ query }}"><i class="bi bi-chevron-left"></i></a></li>
-                        {% endif %}
-                        <li class="page-item disabled"><span class="page-link">Стор. {{ entries.number }} з {{ entries.paginator.num_pages }}</span></li>
-                        {% if entries.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ entries.next_page_number }}&q={{ query }}"><i class="bi bi-chevron-right"></i></a></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
-            {% endif %}
         </div>
-    </div>
-</div>
-
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form method="POST" action="" id="deleteForm">
-            {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Видалити відділ?</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    Видалити запис про: <strong id="deleteName"></strong>?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger">Видалити</button>
-                </div>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -87,48 +50,32 @@
 </style>
 
 <script>
-// --- СКРИПТ ЖИВОГО ПОШУКУ ---
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('liveSearchInput');
     const tableBody = document.getElementById('directoryTableBody');
-    const pagination = document.getElementById('paginationContainer');
     let timeout = null;
 
     searchInput.addEventListener('input', function() {
         clearTimeout(timeout);
         const query = this.value;
 
-        // Затримка 300мс, щоб не спамити сервер при кожному натисканні
         timeout = setTimeout(() => {
             fetch(`{% url 'directory_list' %}?q=${encodeURIComponent(query)}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(response => response.text())
             .then(html => {
                 tableBody.innerHTML = html;
-
-                // Якщо йде пошук - ховаємо пагінацію, якщо пусто - показуємо (але краще перезавантажити для коректної пагінації)
-                if (pagination) {
-                    if (query.length > 0) {
-                        pagination.style.display = 'none';
-                    } else {
-                        // Якщо поле очистили - перезавантажуємо сторінку, щоб повернути пагінацію
-                        window.location.href = "{% url 'directory_list' %}";
-                    }
-                }
             })
-            .catch(err => console.error('Помилка пошуку:', err));
-        }, 300);
+            .catch(err => console.error('Помилка:', err));
+        }, 200); // Зменшив затримку для швидшої реакції
     });
 });
 
 function confirmDelete(pk, name) {
     const form = document.getElementById('deleteForm');
     form.action = "{% url 'directory_delete' 0 %}".replace('0', pk);
-    document.getElementById('deleteName').textContent = name;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    // Тут можна додати модалку видалення, якщо вона у вас була в base.html або внизу цього файлу
 }
 </script>
 {% endblock %}
