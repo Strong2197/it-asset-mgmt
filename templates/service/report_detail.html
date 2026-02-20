@@ -227,7 +227,8 @@ document.addEventListener("DOMContentLoaded", function() {
         @page { margin: 1cm; }
         body * { visibility: hidden; }
         #print-area, #print-area * { visibility: visible; }
-        #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none !important; box-shadow: none !important; background-color: white !important; }
+        #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none !important; box-shadow: none !important; background-color: white !important;background-color: white !important; /* <--- ВАЖЛИВО */
+            color: black !important;             /* <--- ВАЖЛИВО */ }
 
         .table td, .table th { font-size: 10pt !important; padding: 4px !important; }
         .quantity-cell { font-size: 12pt !important; }
