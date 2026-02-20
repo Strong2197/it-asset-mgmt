@@ -3,6 +3,7 @@ from .models import Employee, KepCertificate, CareerHistory
 from .forms import EmployeeForm
 from django.http import FileResponse, Http404
 from urllib.parse import quote
+from django.core.paginator import Paginator
 import os
 
 
@@ -32,34 +33,33 @@ def get_all_departments():
 
 # --- СПИСОК ПРАЦІВНИКІВ (БЕЗ ПАГІНАЦІЇ ТА З ПОШУКОМ БЕЗ РЕГІСТРУ) ---
 def staff_list(request):
-    # 1. Отримуємо параметри
     query = request.GET.get('q', '').strip().lower()
     show_dismissed = request.GET.get('dismissed', 'false')
 
-    # 2. Базова фільтрація в БД
     if show_dismissed == 'true':
         employees_qs = Employee.objects.filter(is_dismissed=True).prefetch_related('certificates')
     else:
         employees_qs = Employee.objects.filter(is_dismissed=False).prefetch_related('certificates')
 
-    # 3. Пошук через Python (для коректної роботи з кирилицею)
     if query:
-        filtered_employees = []
+        emp_list = []
         for emp in employees_qs:
-            # Збираємо дані для пошуку (ПІБ, Посада, Відділ, РНОКПП)
             content = f"{emp.full_name} {emp.position} {emp.department} {emp.rnokpp or ''}".lower()
-
             if query in content:
-                filtered_employees.append(emp)
-        employees = filtered_employees
+                emp_list.append(emp)
     else:
-        employees = list(employees_qs)
+        emp_list = list(employees_qs)
+
+    # ПАГІНАЦІЯ (30 на сторінку)
+    paginator = Paginator(emp_list, 30)
+    page = request.GET.get('page')
+    employees_page = paginator.get_page(page)
 
     return render(request, 'staff/staff_list.html', {
-        'employees': employees,  # Тепер це весь список
+        'employees': employees_page,
         'query': query,
         'show_dismissed': show_dismissed,
-        'total_count': len(employees)
+        'total_count': paginator.count
     })
 
 

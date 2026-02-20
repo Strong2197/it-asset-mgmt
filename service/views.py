@@ -4,7 +4,8 @@ from django.http import JsonResponse
 from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
 from django.core.paginator import Page, EmptyPage, PageNotAnInteger
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
-from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet 
+from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
+from django.core.paginator import Paginator
 
 
 # --- ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -95,52 +96,44 @@ class WeightPaginator:
 
 # --- СПИСОК ЗАЯВОК ---
 def service_list(request):
-    # 1. Базовий запит з анотаціями
     tasks_queryset = ServiceTask.objects.prefetch_related('items').annotate(
         status_rank=Case(
             When(is_completed=False, date_sent__isnull=True, then=Value(1)),
             When(is_completed=False, date_sent__isnull=False, then=Value(2)),
             When(is_completed=True, then=Value(3)),
-            default=Value(4),
-            output_field=IntegerField(),
+            default=Value(4), output_field=IntegerField(),
         )
     ).order_by('status_rank', '-date_received')
 
-    # 2. Фільтр за статусом (active/completed/all)
     status_filter = request.GET.get('filter', 'active')
     if status_filter == 'active':
         tasks_queryset = tasks_queryset.filter(is_completed=False)
     elif status_filter == 'completed':
         tasks_queryset = tasks_queryset.filter(is_completed=True)
 
-    # 3. Пошук через Python (для кирилиці без регістру)
     search_query = request.GET.get('q', '').strip().lower()
 
     if search_query:
-        filtered_tasks = []
+        tasks_list = []
         for task in tasks_queryset:
-            # Збираємо текст усіх пов'язаних картриджів
-            items_text = " ".join([
-                f"{item.get_item_name_display()} {item.custom_name or ''}"
-                for item in task.items.all()
-            ])
-
-            # Текст для пошуку (відділ, замовник, опис, картриджі)
+            items_text = " ".join([f"{i.get_item_name_display()} {i.custom_name or ''}" for i in task.items.all()])
             content = f"{task.department} {task.requester_name} {task.description} {items_text}".lower()
-
             if search_query in content:
-                filtered_tasks.append(task)
-        tasks = filtered_tasks
+                tasks_list.append(task)
     else:
-        tasks = list(tasks_queryset)
+        tasks_list = list(tasks_queryset)
 
-    context = {
-        'tasks': tasks,  # Передаємо весь список без пагінації
+    # ПАГІНАЦІЯ (15 на сторінку)
+    paginator = Paginator(tasks_list, 15)
+    page = request.GET.get('page')
+    page_obj = paginator.get_page(page)
+
+    return render(request, 'service/service_list.html', {
+        'tasks': page_obj,
         'current_filter': status_filter,
         'search_query': search_query,
-        'total_count': len(tasks)
-    }
-    return render(request, 'service/service_list.html', context)
+        'total_count': paginator.count
+    })
 
 
 # --- СТВОРЕННЯ ЗАЯВКИ ---
