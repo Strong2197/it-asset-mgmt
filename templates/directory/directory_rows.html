@@ -22,7 +22,7 @@
         <div class="px-3 py-3">
             <div class="chief-block">
                 {% if item.chief_name %}
-                    <div class="fw-bold text-primary" >{{ item.chief_name }}</div>
+                    <div class="fw-bold text-primary">{{ item.chief_name }}</div>
                     <div class="small text-muted fw-bold">{{ item.chief_position }}</div>
 
                     <div class="d-md-none mt-2">
@@ -36,21 +36,19 @@
                 {% endif %}
             </div>
 
+            {% if item.deputy_name %}
             <div class="deputy-block border-top mt-3 pt-3">
-                {% if item.deputy_name %}
-                    <div class="fw-bold text-dark">{{ item.deputy_name }}</div>
-                    <div class="small text-muted">Заступник</div>
+                <div class="fw-bold text-dark">{{ item.deputy_name }}</div>
+                <div class="small text-muted">Заступник</div>
 
-                    <div class="d-md-none mt-1">
-                        <div class="d-flex align-items-center gap-3">
-                            {% if item.deputy_ip %}<span class="text-success opacity-75"><i class="bi bi-telephone me-1"></i> {{ item.deputy_ip }}</span>{% endif %}
-                            {% if item.deputy_phone %}<a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link"><i class="bi bi-phone me-1"></i> {{ item.deputy_phone }}</a>{% endif %}
-                        </div>
+                <div class="d-md-none mt-1">
+                    <div class="d-flex align-items-center gap-3">
+                        {% if item.deputy_ip %}<span class="text-success opacity-75"><i class="bi bi-telephone me-1"></i> {{ item.deputy_ip }}</span>{% endif %}
+                        {% if item.deputy_phone %}<a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link"><i class="bi bi-phone me-1"></i> {{ item.deputy_phone }}</a>{% endif %}
                     </div>
-                {% else %}
-                    <div class="text-muted small">Заступник не вказаний</div>
-                {% endif %}
+                </div>
             </div>
+            {% endif %}
         </div>
     </td>
 
@@ -67,16 +65,16 @@
                 {% endif %}
             </div>
 
-            <div class="deputy-block border-top mt-3 pt-3 d-flex align-items-center gap-3" style="min-height: 57px;">
-                {% if item.deputy_name %}
-                    {% if item.deputy_ip %}
-                        <div class="d-flex align-items-center text-muted"><i class="bi bi-telephone text-success me-2 opacity-75"></i><span>{{ item.deputy_ip }}</span></div>
-                    {% endif %}
-                    {% if item.deputy_phone %}
-                        <div class="d-flex align-items-center"><i class="bi bi-phone text-secondary me-2"></i><a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link hover-link">{{ item.deputy_phone }}</a></div>
-                    {% endif %}
+            {% if item.deputy_name %}
+            <div class="deputy-block border-top mt-3 pt-3 d-flex align-items-center gap-3" style="min-height: 40px;">
+                {% if item.deputy_ip %}
+                    <div class="d-flex align-items-center text-muted"><i class="bi bi-telephone text-success me-2 opacity-75"></i><span>{{ item.deputy_ip }}</span></div>
+                {% endif %}
+                {% if item.deputy_phone %}
+                    <div class="d-flex align-items-center"><i class="bi bi-phone text-secondary me-2"></i><a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link hover-link">{{ item.deputy_phone }}</a></div>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
     </td>
 
