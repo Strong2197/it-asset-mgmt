@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         /* Базові переходи */
-        body, .card, .table, td, th { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body, .card, .table, td, th, div, span { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
         .card { border-radius: 10px; }
         .table-responsive { overflow-x: auto; }
 
@@ -21,8 +21,7 @@
         [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
         [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #fff !important; }
 
-        /* === ТАБЛИЦІ (ВИПРАВЛЕННЯ БІЛОЇ ШАПКИ) === */
-        /* Робимо саму таблицю темною */
+        /* === ТАБЛИЦІ === */
         [data-bs-theme="dark"] .table {
             --bs-table-bg: transparent;
             --bs-table-color: #e0e0e0;
@@ -34,12 +33,13 @@
             border-color: #373b3e;
         }
 
-        /* ЖОРСТКЕ перевизначення table-light для темної теми */
+        /* ВИПРАВЛЕННЯ БІЛОЇ ШАПКИ (Жорсткий селектор) */
         [data-bs-theme="dark"] .table-light,
+        [data-bs-theme="dark"] .table .table-light,
+        [data-bs-theme="dark"] thead.table-light th,
         [data-bs-theme="dark"] .table-light th,
-        [data-bs-theme="dark"] .table-light td,
-        [data-bs-theme="dark"] thead.table-light th {
-            background-color: #2b3035 !important; /* Темно-сірий замість білого */
+        [data-bs-theme="dark"] .table-light td {
+            background-color: #2b3035 !important;
             color: #fff !important;
             border-color: #373b3e !important;
             box-shadow: none !important;
@@ -60,48 +60,41 @@
         .theme-toggle-btn { cursor: pointer; border: none; background: transparent; color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px; }
         .theme-toggle-btn:hover { color: #fff; }
 
-        /* === ДРУК (PRINT) === */
+        /* === ДРУК (PRINT) - ПОВНЕ СКИДАННЯ === */
         @media print {
-            /* Скидання кольорів на дефолтні (білий папір, чорний текст) */
+            /* Скидаємо CSS змінні Bootstrap */
             :root, body, [data-bs-theme="dark"] body {
+                --bs-body-color: #000;
+                --bs-body-bg: #fff;
+                --bs-table-color: #000;
+                --bs-table-bg: #fff;
+                color: #000 !important;
                 background-color: #fff !important;
-                color: #000 !important;
-                -webkit-print-color-adjust: exact;
             }
 
-            /* Скидання карток */
-            .card, [data-bs-theme="dark"] .card {
-                background-color: transparent !important;
-                border: none !important;
+            /* Примусово все чорним */
+            * {
                 color: #000 !important;
+                background-color: transparent !important;
                 box-shadow: none !important;
+                text-shadow: none !important;
             }
 
-            /* Таблиці для друку */
-            .table, [data-bs-theme="dark"] .table {
-                color: #000 !important;
-                border-color: #000 !important;
-                width: 100% !important;
-            }
-            .table td, .table th,
-            [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th {
-                color: #000 !important;
+            /* Таблиці - чорні межі */
+            .table, .table td, .table th {
                 border: 1px solid #000 !important;
-                background-color: transparent !important;
+                color: #000 !important;
             }
 
-            /* Шапка таблиці при друці - світло-сіра */
-            .table-light th, [data-bs-theme="dark"] .table-light th,
-            thead.table-light th {
+            /* Специфічне виправлення для шапки при друці */
+            .table-light th, thead.table-light th, [data-bs-theme="dark"] .table-light th {
                 background-color: #f0f0f0 !important;
                 color: #000 !important;
             }
 
-            /* Приховуємо меню та кнопки */
+            /* Ховаємо зайве */
             .navbar, footer, .theme-toggle-btn, .d-print-none, .btn { display: none !important; }
-
-            /* Текст */
-            * { color: #000 !important; text-shadow: none !important; }
+            .card { border: none !important; }
         }
     </style>
 </head>

@@ -34,9 +34,9 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered align-middle" style="border-color: #000 !important;">
-                    <thead class="text-center" style="background-color: #f8f9fa;">
-                        <tr style="border-bottom: 2px solid #000;">
+                <table class="table table-bordered align-middle table-report">
+                    <thead class="text-center table-light">
+                        <tr class="header-row">
                             <th style="width: 30%; vertical-align: middle;">Модель картриджа / Пристрій</th>
                             <th style="width: 8%; vertical-align: middle;">К-ть</th>
                             <th style="width: 42%; vertical-align: middle;">Деталізація (Відділ — Кількість)</th>
@@ -47,22 +47,15 @@
                         {% for name, data in stats.items %}
                         <tr>
                             <td class="fw-bold px-3">{{ name }}</td>
-
                             <td class="text-center fs-5 fw-bold quantity-cell">{{ data.total_qty }}</td>
-
                             <td class="px-2">
                                 <ul class="list-unstyled mb-0">
                                     {% for dept, dept_data in data.departments.items %}
-                                    <li class="py-1 border-bottom border-light dept-row">
-
+                                    <li class="py-1 border-bottom border-secondary border-opacity-10 dept-row">
                                         <div class="d-flex align-items-center justify-content-between flex-wrap">
-
                                             <div class="d-flex align-items-end justify-content-between flex-grow-1 me-2" style="min-width: 200px;">
-
                                                 <span class="text-wrap me-2">{{ dept }}</span>
-
                                                 <span class="flex-grow-1 border-bottom border-secondary border-opacity-10 mx-2 mb-1 d-print-none"></span>
-
                                                 <span class="fw-bold text-nowrap me-2">
                                                     {{ dept_data.sum_qty }} шт.
                                                     {% if dept_data.items|length > 1 %}
@@ -72,30 +65,16 @@
                                                     {% endif %}
                                                 </span>
                                             </div>
-
                                             <div class="d-print-none text-end">
                                                 <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
                                                     {% for item in dept_data.items %}
                                                         <div id="btn-group-{{ item.pk }}">
                                                             {% if not item.date_back_from_service %}
-                                                                <button class="btn btn-sm btn-outline-secondary py-0 px-1 ajax-btn"
-                                                                        style="font-size: 1rem; line-height: 1.5;"
-                                                                        data-url="{% url 'item_receive' item.pk %}"
-                                                                        data-qty="{{ item.quantity }}"
-                                                                        title="Прийняти на склад">
-                                                                    #{{ item.id }}
-                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-secondary py-0 px-1 ajax-btn" style="font-size: 1rem; line-height: 1.5;" data-url="{% url 'item_receive' item.pk %}" data-qty="{{ item.quantity }}">#{{ item.id }}</button>
                                                             {% elif not item.date_returned_to_user %}
-                                                                <button class="btn btn-sm btn-primary py-0 px-1 ajax-btn"
-                                                                        style="font-size: 1rem; line-height: 1.5;"
-                                                                        data-url="{% url 'item_return' item.pk %}"
-                                                                        title="Видати">
-                                                                    <i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #{{ item.id }}
-                                                                </button>
+                                                                <button class="btn btn-sm btn-primary py-0 px-1 ajax-btn" style="font-size: 1rem; line-height: 1.5;" data-url="{% url 'item_return' item.pk %}"><i class="bi bi-arrow-right"></i> #{{ item.id }}</button>
                                                             {% else %}
-                                                                <span class="badge bg-success py-0 px-1" style="font-size: 1rem; line-height: 1.5;">
-                                                                    <i class="bi bi-check"></i> {{ item.id }}
-                                                                </span>
+                                                                <span class="badge bg-success py-0 px-1"><i class="bi bi-check"></i> {{ item.id }}</span>
                                                             {% endif %}
                                                         </div>
                                                     {% endfor %}
@@ -106,13 +85,10 @@
                                     {% endfor %}
                                 </ul>
                             </td>
-
                             <td class="small px-2 note-cell" style="vertical-align: top; padding-top: 10px;">
                                 {% if data.notes %}
                                     <ul class="mb-0 ps-3">
-                                        {% for note in data.notes %}
-                                            <li>{{ note }}</li>
-                                        {% endfor %}
+                                        {% for note in data.notes %}<li>{{ note }}</li>{% endfor %}
                                     </ul>
                                 {% endif %}
                             </td>
@@ -122,9 +98,9 @@
                         {% endfor %}
                     </tbody>
                     <tfoot>
-                        <tr class="fw-bold fs-5 total-row" style="border-top: 2px solid #000;">
+                        <tr class="fw-bold fs-5 total-row table-light">
                             <td class="text-end px-3">ВСЬОГО (шт):</td>
-                            <td class="text-center bg-light">{{ grand_total }}</td>
+                            <td class="text-center">{{ grand_total }}</td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -148,72 +124,42 @@ document.addEventListener("DOMContentLoaded", function() {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
+                if (cookie.substring(0, name.length + 1) === (name + '=')) { cookieValue = decodeURIComponent(cookie.substring(name.length + 1)); break; }
             }
         }
         return cookieValue;
     }
     const csrftoken = getCookie('csrftoken');
-
     document.body.addEventListener('click', function(e) {
         const btn = e.target.closest('.ajax-btn');
         if (btn) {
             e.preventDefault();
-
             let url = btn.getAttribute('data-url');
             const isReceiveBtn = url.includes('receive');
-
             let quantity = parseInt(btn.getAttribute('data-qty') || 1);
             let qtyToReceive = quantity;
-
             if (isReceiveBtn && quantity > 1) {
                 let input = prompt(`Всього у заявці: ${quantity} шт.\nСкільки повернулось з ремонту?`, quantity);
                 if (input === null) return;
-
                 qtyToReceive = parseInt(input);
-                if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) {
-                    alert("Некоректна кількість!");
-                    return;
-                }
+                if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) { alert("Некоректна кількість!"); return; }
                 url += `?qty=${qtyToReceive}`;
             }
-
             const container = btn.closest('div[id^="btn-group-"]');
             const originalContent = btn.innerHTML;
-
-            btn.innerHTML = '..';
-            btn.classList.add('disabled');
-
-            fetch(url, {
-                method: 'GET',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken }
-            })
+            btn.innerHTML = '..'; btn.classList.add('disabled');
+            fetch(url, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': csrftoken } })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    if (data.is_split) {
-                        window.location.reload();
-                    } else {
+                    if (data.is_split) { window.location.reload(); } else {
                         const itemId = data.item_id || btn.closest('div').id.replace('btn-group-', '');
-
-                        if (data.new_state === 'stocked') {
-                            container.innerHTML = `<button class="btn btn-sm btn-primary py-0 px-1 ajax-btn animation-fade-in" style="font-size: 1rem; line-height: 1.5;" data-url="${data.return_url}"><i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #${itemId}</button>`;
-                        } else if (data.new_state === 'issued') {
-                            container.innerHTML = `<span class="badge bg-success py-0 px-1 animation-fade-in" style="font-size: 1rem; line-height: 1.5;"><i class="bi bi-check"></i> #${itemId}</span>`;
-                        }
+                        if (data.new_state === 'stocked') { container.innerHTML = `<button class="btn btn-sm btn-primary py-0 px-1 ajax-btn animation-fade-in" style="font-size: 1rem; line-height: 1.5;" data-url="${data.return_url}"><i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #${itemId}</button>`; }
+                        else if (data.new_state === 'issued') { container.innerHTML = `<span class="badge bg-success py-0 px-1 animation-fade-in" style="font-size: 1rem; line-height: 1.5;"><i class="bi bi-check"></i> #${itemId}</span>`; }
                     }
-                } else {
-                    btn.innerHTML = originalContent;
-                    btn.classList.remove('disabled');
-                }
+                } else { btn.innerHTML = originalContent; btn.classList.remove('disabled'); }
             })
-            .catch(error => {
-                btn.innerHTML = originalContent;
-                btn.classList.remove('disabled');
-            });
+            .catch(error => { btn.innerHTML = originalContent; btn.classList.remove('disabled'); });
         }
     });
 });
@@ -223,65 +169,31 @@ document.addEventListener("DOMContentLoaded", function() {
     .animation-fade-in { animation: fadeIn 0.5s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+    /* === СТИЛІ ДЛЯ ДРУКУ (Перекривають ВСЕ) === */
     @media print {
         @page { margin: 1cm; size: auto; }
 
-        /* Всі елементи ховаємо */
         body * { visibility: hidden; }
-
-        /* Показуємо тільки зону друку */
         #print-area, #print-area * { visibility: visible; }
 
-        /* Абсолютне позиціонування та примусовий білий фон */
         #print-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            border: none !important;
-            box-shadow: none !important;
-
-            /* КЛЮЧОВІ РЯДКИ ДЛЯ ВИПРАВЛЕННЯ ДРУКУ */
+            position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
+            border: none !important; box-shadow: none !important;
             background-color: white !important;
             color: black !important;
             filter: none !important;
         }
 
-        /* Таблиця друку */
-        .table {
-            border-collapse: collapse !important;
-            width: 100% !important;
-            color: black !important;
-        }
-        .table td, .table th {
-            border: 1px solid black !important;
-            padding: 5px !important;
-            font-size: 11pt !important;
-            color: black !important;
-            background-color: transparent !important;
-        }
+        .table { width: 100% !important; border-collapse: collapse !important; color: black !important; }
+        .table td, .table th { border: 1px solid black !important; color: black !important; padding: 4px !important; }
 
-        /* Заголовки таблиці */
-        thead tr, thead th {
-            background-color: #f0f0f0 !important;
-            -webkit-print-color-adjust: exact;
-            color: black !important;
-        }
+        /* Фон шапки робимо сірим, а не чорним */
+        .table-light, thead.table-light { background-color: #f2f2f2 !important; color: black !important; }
 
-        /* Прибираємо інтерфейс */
-        .d-print-none, .btn, a, .navbar { display: none !important; }
-
-        h3, h5 { color: black !important; }
-
-        /* Скидання бейджів */
-        .badge {
-            border: none !important;
-            background: none !important;
-            color: black !important;
-            padding: 0 !important;
-        }
+        .d-print-none, .btn, .navbar { display: none !important; }
+        h3, h5, .fs-5 { color: black !important; }
+        .text-muted { color: #555 !important; }
+        .badge { display: none !important; }
     }
 </style>
 {% endblock %}
