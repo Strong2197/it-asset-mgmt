@@ -1,8 +1,13 @@
 from django.db import models
 
+
 class PhonebookEntry(models.Model):
-    department = models.CharField(max_length=255, verbose_name="Підрозділ / Відділ")
-    code = models.CharField(max_length=20, blank=True, verbose_name="Код відділу")
+    # Змінюємо на TextField, щоб можна було писати багато відділів
+    department = models.TextField(verbose_name="Підрозділи / Відділи")
+
+    # Збільшуємо довжину для кодів (наприклад, "2610, 2618, 2622")
+    code = models.CharField(max_length=100, blank=True, verbose_name="Коди відділів")
+
     email = models.EmailField(blank=True, verbose_name="Загальний Email")
 
     # --- КЕРІВНИК ---
@@ -19,7 +24,7 @@ class PhonebookEntry(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Оновлено")
 
     def __str__(self):
-        return self.department
+        return self.department[:50]  # Повертаємо перші 50 символів для адмінки
 
     class Meta:
         verbose_name = "Запис довідника"
