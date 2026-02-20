@@ -95,50 +95,51 @@ class WeightPaginator:
 
 # --- СПИСОК ЗАЯВОК ---
 def service_list(request):
-    # 1. Анотація items_count обов'язкова для пагінатора
-    tasks = ServiceTask.objects.prefetch_related('items').annotate(
+    # 1. Базовий запит з анотаціями
+    tasks_queryset = ServiceTask.objects.prefetch_related('items').annotate(
         status_rank=Case(
             When(is_completed=False, date_sent__isnull=True, then=Value(1)),
             When(is_completed=False, date_sent__isnull=False, then=Value(2)),
             When(is_completed=True, then=Value(3)),
             default=Value(4),
             output_field=IntegerField(),
-        ),
-        items_count=Count('items')
+        )
     ).order_by('status_rank', '-date_received')
 
-    # 2. Фільтр (дефолт: active)
+    # 2. Фільтр за статусом (active/completed/all)
     status_filter = request.GET.get('filter', 'active')
-
     if status_filter == 'active':
-        tasks = tasks.filter(is_completed=False)
+        tasks_queryset = tasks_queryset.filter(is_completed=False)
     elif status_filter == 'completed':
-        tasks = tasks.filter(is_completed=True)
+        tasks_queryset = tasks_queryset.filter(is_completed=True)
 
-    # 3. Пошук
-    search_query = request.GET.get('q', '')
+    # 3. Пошук через Python (для кирилиці без регістру)
+    search_query = request.GET.get('q', '').strip().lower()
+
     if search_query:
-        tasks = tasks.filter(
-            Q(department__icontains=search_query) |
-            Q(requester_name__icontains=search_query) |
-            Q(description__icontains=search_query) |
-            Q(items__item_name__icontains=search_query) |
-            Q(items__custom_name__icontains=search_query)
-        ).distinct()
+        filtered_tasks = []
+        for task in tasks_queryset:
+            # Збираємо текст усіх пов'язаних картриджів
+            items_text = " ".join([
+                f"{item.get_item_name_display()} {item.custom_name or ''}"
+                for item in task.items.all()
+            ])
 
-    # 4. Пагінація
-    paginator = WeightPaginator(tasks, max_weight=15)
-    page_number = request.GET.get('page', 1)
+            # Текст для пошуку (відділ, замовник, опис, картриджі)
+            content = f"{task.department} {task.requester_name} {task.description} {items_text}".lower()
 
-    page_obj = paginator.page(page_number)
+            if search_query in content:
+                filtered_tasks.append(task)
+        tasks = filtered_tasks
+    else:
+        tasks = list(tasks_queryset)
 
     context = {
-        'tasks': page_obj,
+        'tasks': tasks,  # Передаємо весь список без пагінації
         'current_filter': status_filter,
         'search_query': search_query,
-        'total_count': paginator.count
+        'total_count': len(tasks)
     }
-
     return render(request, 'service/service_list.html', context)
 
 

@@ -156,50 +156,46 @@ def asset_clone(request, pk):
 # --- 1. Список майна (Цієї функції не вистачало) ---
 def asset_list(request):
     # 1. Отримання параметрів
-    search_query = request.GET.get('search', '').strip()
+    search_query = request.GET.get('search', '').strip().lower()  # Переводимо в нижній регістр
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
 
-    # 2. Базовий запит
+    # 2. Базова фільтрація в БД (це працює швидко і надійно)
     if show_archived == 'true':
-        assets = Asset.objects.filter(is_archived=True)
+        assets_queryset = Asset.objects.filter(is_archived=True)
     else:
-        assets = Asset.objects.filter(is_archived=False)
+        assets_queryset = Asset.objects.filter(is_archived=False)
 
-    # 3. Фільтрація
     if category_id != 'all':
-        assets = assets.filter(category_id=category_id)
+        assets_queryset = assets_queryset.filter(category_id=category_id)
 
+    # 3. Пошук через Python (для ігнорування регістру кирилиці)
     if search_query:
-        assets = assets.filter(
-            Q(name__icontains=search_query) |
-            Q(inventory_number__icontains=search_query) |
-            Q(barcode__icontains=search_query) |
-            Q(location__icontains=search_query) |
-            Q(account__icontains=search_query) |
-            Q(archive_reason__icontains=search_query)
-        )
+        filtered_assets = []
+        for asset in assets_queryset:
+            # Отримуємо назву рахунку (якщо це вибір)
+            account_display = asset.get_account_display() if hasattr(asset, 'get_account_display') else str(
+                asset.account)
 
-    # 4. ПАГІНАЦІЯ (30 елементів)
-    paginator = Paginator(assets, 30)
-    page = request.GET.get('page')
+            # Збираємо всі поля для пошуку в один рядок
+            search_content = f"{asset.name} {asset.inventory_number} {asset.barcode} {asset.location} {account_display} {asset.archive_reason}".lower()
 
-    try:
-        assets_page = paginator.page(page)
-    except PageNotAnInteger:
-        assets_page = paginator.page(1)
-    except EmptyPage:
-        assets_page = paginator.page(paginator.num_pages)
+            if search_query in search_content:
+                filtered_assets.append(asset)
+
+        assets = filtered_assets
+    else:
+        assets = list(assets_queryset)
 
     categories = Category.objects.all()
 
     return render(request, 'inventory/asset_list.html', {
-        'assets': assets_page,
+        'assets': assets,  # Тепер тут весь список без пагінації
         'categories': categories,
         'show_archived': show_archived,
         'search_query': search_query,
         'current_category': category_id,
-        'total_count': paginator.count
+        'total_count': len(assets)
     })
 
 
