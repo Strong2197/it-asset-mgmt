@@ -3,27 +3,31 @@ from .models import PhonebookEntry
 from .forms import PhonebookForm
 from django.db.models import Q
 
+
 def directory_list(request):
-    query = request.GET.get('q', '').strip()
-    # Отримуємо всі записи, відсортовані за кодом (як ми налаштували в Meta)
-    entries = PhonebookEntry.objects.all()
+    query = request.GET.get('q', '').strip().lower()  # Перетворюємо запит у нижній регістр
+
+    # Отримуємо всі записи (воно відсортується по коду, як ми писали раніше)
+    all_entries = PhonebookEntry.objects.all()
 
     if query:
-        # Стандартний пошук без врахування регістру (icontains)
-        entries = entries.filter(
-            Q(department__icontains=query) |
-            Q(code__icontains=query) |
-            Q(chief_name__icontains=query) |
-            Q(chief_phone__icontains=query) |
-            Q(deputy_name__icontains=query) |
-            Q(deputy_phone__icontains=query)
-        )
+        # Фільтруємо список вручну засобами Python
+        filtered_entries = []
+        for item in all_entries:
+            # Збираємо всі текстові поля в один рядок для пошуку
+            search_content = f"{item.department} {item.code} {item.chief_name} {item.chief_phone} {item.deputy_name} {item.deputy_phone}".lower()
+
+            if query in search_content:
+                filtered_entries.append(item)
+
+        entries = filtered_entries
+    else:
+        entries = all_entries
 
     # Логіка для AJAX (живого пошуку)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         return render(request, 'directory/directory_rows.html', {'entries': entries})
 
-    # Повертаємо всі запити без пагінації
     return render(request, 'directory/directory_list.html', {
         'entries': entries,
         'query': query
