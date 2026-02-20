@@ -29,4 +29,4 @@ class PhonebookEntry(models.Model):
     class Meta:
         verbose_name = "Запис довідника"
         verbose_name_plural = "Телефонний довідник"
-        ordering = ['department']
+        ordering = ['code', 'department']
