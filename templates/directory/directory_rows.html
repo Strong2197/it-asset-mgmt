@@ -1,5 +1,5 @@
 {% for item in entries %}
-<tr>
+<tr class="directory-row">
     <td class="ps-md-4 align-top pt-3">
         <div class="d-md-none text-muted small text-uppercase mb-1" style="letter-spacing: 1px; font-size: 0.7rem;">Підрозділи:</div>
         <div class="fw-bold text-dark mb-1" style="white-space: pre-line;">{{ item.department }}</div>
@@ -16,72 +16,68 @@
         {% endif %}
     </td>
 
-    <td class="align-top pt-3">
-        <div class="d-md-none text-muted small text-uppercase mb-2" style="letter-spacing: 1px; font-size: 0.7rem;">Керівництво та контакти:</div>
+    <td class="align-top p-0">
+        <div class="d-md-none px-3 pt-3 text-muted small text-uppercase" style="letter-spacing: 1px; font-size: 0.7rem;">Керівництво та контакти:</div>
 
-        {% if item.chief_name %}
-            <div class="mb-3">
-                <div class="fw-bold text-primary">{{ item.chief_name }}</div>
-                <div class="small text-muted fw-bold">{{ item.chief_position }}</div>
+        <div class="px-3 py-3">
+            <div class="chief-block">
+                {% if item.chief_name %}
+                    <div class="fw-bold text-primary" >{{ item.chief_name }}</div>
+                    <div class="small text-muted fw-bold">{{ item.chief_position }}</div>
 
-                <div class="d-md-none mt-2">
-                    <div class="d-flex align-items-center gap-3">
-                        {% if item.chief_ip %}
-                            <span class="fw-bold text-success"><i class="bi bi-telephone-fill me-1"></i> {{ item.chief_ip }}</span>
-                        {% endif %}
-                        {% if item.chief_phone %}
-                            <a href="tel:{{ item.chief_phone }}" class="text-decoration-none fw-bold text-dark tel-link"><i class="bi bi-phone text-primary me-1"></i> {{ item.chief_phone }}</a>
-                        {% endif %}
+                    <div class="d-md-none mt-2">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if item.chief_ip %}<span class="fw-bold text-success"><i class="bi bi-telephone-fill me-1"></i> {{ item.chief_ip }}</span>{% endif %}
+                            {% if item.chief_phone %}<a href="tel:{{ item.chief_phone }}" class="text-decoration-none fw-bold text-dark tel-link"><i class="bi bi-phone text-primary me-1"></i> {{ item.chief_phone }}</a>{% endif %}
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="text-muted small">Дані відсутні</div>
+                {% endif %}
             </div>
-        {% endif %}
 
-        {% if item.deputy_name %}
-            <div class="{% if item.chief_name %}border-top pt-2 mt-2{% endif %}">
-                <div class="fw-bold text-dark">{{ item.deputy_name }}</div>
-                <div class="small text-muted mb-1">Заступник</div>
+            <div class="deputy-block border-top mt-3 pt-3">
+                {% if item.deputy_name %}
+                    <div class="fw-bold text-dark">{{ item.deputy_name }}</div>
+                    <div class="small text-muted">Заступник</div>
 
-                <div class="d-md-none mt-1">
-                    <div class="d-flex align-items-center gap-3">
-                        {% if item.deputy_ip %}
-                            <span class="text-success opacity-75"><i class="bi bi-telephone me-1"></i> {{ item.deputy_ip }}</span>
-                        {% endif %}
-                        {% if item.deputy_phone %}
-                            <a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link"><i class="bi bi-phone me-1"></i> {{ item.deputy_phone }}</a>
-                        {% endif %}
+                    <div class="d-md-none mt-1">
+                        <div class="d-flex align-items-center gap-3">
+                            {% if item.deputy_ip %}<span class="text-success opacity-75"><i class="bi bi-telephone me-1"></i> {{ item.deputy_ip }}</span>{% endif %}
+                            {% if item.deputy_phone %}<a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link"><i class="bi bi-phone me-1"></i> {{ item.deputy_phone }}</a>{% endif %}
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="text-muted small">Заступник не вказаний</div>
+                {% endif %}
             </div>
-        {% endif %}
+        </div>
     </td>
 
-    <td class="align-top pt-3 d-none d-md-table-cell">
-        {% if item.chief_name %}
-            <div class="mb-3" style="min-height: 40px;">
-                <div class="d-flex align-items-center gap-3">
+    <td class="align-top p-0 d-none d-md-table-cell">
+        <div class="px-3 py-3">
+            <div class="chief-block d-flex align-items-center gap-3" style="min-height: 45px;">
+                {% if item.chief_name %}
                     {% if item.chief_ip %}
                         <div class="d-flex align-items-center"><i class="bi bi-telephone-fill text-success me-2"></i><strong>{{ item.chief_ip }}</strong></div>
                     {% endif %}
                     {% if item.chief_phone %}
                         <div class="d-flex align-items-center"><i class="bi bi-phone text-primary me-2"></i><a href="tel:{{ item.chief_phone }}" class="text-decoration-none fw-bold text-dark tel-link hover-link">{{ item.chief_phone }}</a></div>
                     {% endif %}
-                </div>
+                {% endif %}
             </div>
-        {% endif %}
 
-        {% if item.deputy_name %}
-            <div class="{% if item.chief_name %}border-top pt-2 mt-2{% endif %}">
-                <div class="d-flex align-items-center gap-3">
+            <div class="deputy-block border-top mt-3 pt-3 d-flex align-items-center gap-3" style="min-height: 57px;">
+                {% if item.deputy_name %}
                     {% if item.deputy_ip %}
                         <div class="d-flex align-items-center text-muted"><i class="bi bi-telephone text-success me-2 opacity-75"></i><span>{{ item.deputy_ip }}</span></div>
                     {% endif %}
                     {% if item.deputy_phone %}
                         <div class="d-flex align-items-center"><i class="bi bi-phone text-secondary me-2"></i><a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary tel-link hover-link">{{ item.deputy_phone }}</a></div>
                     {% endif %}
-                </div>
+                {% endif %}
             </div>
-        {% endif %}
+        </div>
     </td>
 
     <td class="text-end pe-md-4 align-top pt-3">
@@ -92,5 +88,5 @@
     </td>
 </tr>
 {% empty %}
-<tr><td colspan="4" class="text-center py-5 text-muted">Нічого не знайдено.</td></tr>
+<tr><td colspan="4" class="text-center py-5 text-muted">Записів не знайдено.</td></tr>
 {% endfor %}
