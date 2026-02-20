@@ -2,6 +2,7 @@
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <style>
     .select2-container .select2-selection--single { height: 38px !important; border: 1px solid #ced4da !important; display: flex; align-items: center; }
     .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px !important; }
@@ -56,9 +57,14 @@
                                             </button>
                                         </div>
                                         <div class="custom-name-wrapper" style="display:none;">{{ item_form.custom_name }}</div>
+
                                         <div class="note-wrapper mt-1" style="{% if not item_form.note.value %}display:none;{% endif %}">
-                                            {{ item_form.note }}
+                                            <div class="input-group input-group-sm">
+                                                {{ item_form.note }}
+                                                <button type="button" class="btn btn-light border emoji-trigger" title="Смайлик">😊</button>
+                                            </div>
                                         </div>
+
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group input-group-sm"><span class="input-group-text">К-ть</span>{{ item_form.quantity }}</div>
@@ -120,32 +126,27 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-$(document).ready(function() {
+// Додаємо async, щоб можна було використовувати await для імпорту
+$(document).ready(async function() {
 
-    // 1. ІНІЦІАЛІЗАЦІЯ SELECT2
-    $('#id_requester_name').select2({
-        tags: true,
-        placeholder: "Оберіть або введіть ПІБ...",
-        allowClear: true,
-        language: { noResults: () => "Введіть нове ім'я..." }
-    });
-    $('#id_department').select2({
-        tags: true,
-        placeholder: "Оберіть або введіть відділ...",
-        allowClear: true,
-        language: { noResults: () => "Введіть нову назву..." }
-    });
+    // --- ДИНАМІЧНИЙ ІМПОРТ EMOJI BUTTON ---
+    let EmojiButtonClass = null;
+    try {
+        // Імпортуємо модуль як змінну
+        const module = await import('https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.4/dist/index.min.js');
+        EmojiButtonClass = module.EmojiButton;
+    } catch (error) {
+        console.error("Не вдалося завантажити EmojiButton:", error);
+    }
 
-    // 2. АВТОФОКУС НА ПОШУК
-    $(document).on('select2:open', function(e) {
-        document.querySelector('.select2-search__field').focus();
-    });
+    // --- Ініціалізація Select2 ---
+    $('#id_requester_name').select2({ tags: true, placeholder: "Оберіть або введіть ПІБ...", allowClear: true });
+    $('#id_department').select2({ tags: true, placeholder: "Оберіть або введіть відділ...", allowClear: true });
+    $(document).on('select2:open', function(e) { document.querySelector('.select2-search__field').focus(); });
 
-    // 3. АВТОЗАПОВНЕННЯ ВІДДІЛУ
     $('#id_requester_name').on('select2:select change', function (e) {
         const name = $(this).val();
         const $deptSelect = $('#id_department');
-
         if (name && name.length > 2) {
             fetch(`{% url 'get_last_department' %}?name=${encodeURIComponent(name)}`)
                 .then(response => response.json())
@@ -157,20 +158,82 @@ $(document).ready(function() {
                             var newOption = new Option(data.department, data.department, true, true);
                             $deptSelect.append(newOption).trigger('change');
                         }
-                        $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#28a745');
-                        setTimeout(() => {
-                            $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#ced4da');
-                        }, 500);
                     }
-                })
-                .catch(err => console.error('Error:', err));
+                });
         }
     });
 
-    // 4. ЛОГІКА FORMSET
     const container = document.getElementById('items-container');
     const addButton = document.getElementById('add-item');
     const totalForms = document.getElementById('id_items-TOTAL_FORMS');
+
+    // --- 1. ЛОГІКА СМАЙЛИКІВ ---
+    let picker = null;
+    let currentInputForEmoji = null;
+
+    // Ініціалізуємо пікер, тільки якщо клас завантажився
+    if (EmojiButtonClass) {
+        picker = new EmojiButtonClass({
+            position: 'bottom-start',
+            emojiSize: '1.5em',
+            autoHide: false,
+            zIndex: 9999
+        });
+
+        picker.on('emoji', selection => {
+            if (currentInputForEmoji) {
+                currentInputForEmoji.value += selection.emoji;
+                currentInputForEmoji.focus();
+            }
+        });
+    }
+
+    // --- 2. ГОЛОВНИЙ ОБРОБНИК КЛІКІВ ---
+    container.addEventListener('click', function(e) {
+
+        // А) Клік по кнопці "Смайлик"
+        const emojiBtn = e.target.closest('.emoji-trigger');
+        if (emojiBtn) {
+            if (picker) {
+                const inputGroup = emojiBtn.closest('.input-group');
+                currentInputForEmoji = inputGroup.querySelector('input');
+                picker.togglePicker(emojiBtn);
+            } else {
+                alert("Смайлики ще завантажуються або виникла помилка.");
+            }
+            return;
+        }
+
+        // Б) Клік по кнопці "Примітка"
+        const noteBtn = e.target.closest('.toggle-note-btn');
+        if (noteBtn) {
+            toggleNoteField(noteBtn);
+            return;
+        }
+
+        // В) Клік по "Видалити рядок"
+        if (e.target.closest('.delete-row-btn')) {
+            const row = e.target.closest('.item-row');
+            const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
+            if (deleteCheckbox) { deleteCheckbox.checked = true; row.style.display = 'none'; } else { row.remove(); }
+        }
+    });
+
+    function toggleNoteField(button) {
+        const row = button.closest('.item-row');
+        const wrapper = row.querySelector('.note-wrapper');
+        const input = wrapper.querySelector('input');
+
+        if (wrapper.style.display === 'none') {
+            wrapper.style.display = 'block';
+            button.classList.add('active', 'btn-secondary', 'text-white');
+            if (input) input.focus();
+        } else {
+            wrapper.style.display = 'none';
+            button.classList.remove('active', 'btn-secondary', 'text-white');
+            if (input) input.value = '';
+        }
+    }
 
     function toggleCustomField(selectElement) {
         const row = selectElement.closest('.item-row');
@@ -178,33 +241,10 @@ $(document).ready(function() {
         const input = wrapper.querySelector('input');
         if (selectElement.value === 'Інше') {
             wrapper.style.display = 'block';
-            if (input) { input.style.display = 'block'; input.required = true; input.placeholder = "Напишіть назву пристрою..."; }
+            if (input) { input.style.display = 'block'; input.required = true; }
         } else {
             wrapper.style.display = 'none';
             if (input) { input.value = ''; input.required = false; }
-        }
-    }
-
-    // НОВА функція для кнопки примітки
-   function toggleNoteField(button) {
-        const row = button.closest('.item-row');
-        const wrapper = row.querySelector('.note-wrapper');
-        const input = wrapper.querySelector('input');
-
-        if (wrapper.style.display === 'none') {
-            // Показуємо обгортку
-            wrapper.style.display = 'block';
-            // ПРИМУСОВО показуємо поле input, якщо воно було приховане
-            if (input) input.style.display = 'block';
-
-            button.classList.add('active', 'btn-secondary', 'text-white');
-            if (input) input.focus();
-        } else {
-            // Ховаємо
-            wrapper.style.display = 'none';
-            button.classList.remove('active', 'btn-secondary', 'text-white');
-            // Очищаємо значення, якщо сховали, щоб не зберігати сміття
-            if (input) input.value = '';
         }
     }
 
@@ -214,17 +254,6 @@ $(document).ready(function() {
 
     const allSelects = container.querySelectorAll('select[name$="item_name"]');
     allSelects.forEach(select => toggleCustomField(select));
-
-    container.addEventListener('click', function(e) {
-        const noteBtn = e.target.closest('.toggle-note-btn');
-        if (noteBtn) toggleNoteField(noteBtn);
-
-        if (e.target.closest('.delete-row-btn')) {
-            const row = e.target.closest('.item-row');
-            const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
-            if (deleteCheckbox) { deleteCheckbox.checked = true; row.style.display = 'none'; } else { row.remove(); }
-        }
-    });
 
     addButton.addEventListener('click', function() {
         const formsCount = parseInt(totalForms.value);
@@ -241,10 +270,14 @@ $(document).ready(function() {
             if (el.type === 'checkbox') el.checked = false;
         });
 
-        // Скидання нових полів
-        newRow.querySelector('.custom-name-wrapper').style.display = 'none';
-        newRow.querySelector('.note-wrapper').style.display = 'none';
-        newRow.querySelector('.toggle-note-btn').classList.remove('active', 'btn-secondary', 'text-white');
+        const customWrapper = newRow.querySelector('.custom-name-wrapper');
+        if(customWrapper) customWrapper.style.display = 'none';
+
+        const noteWrapper = newRow.querySelector('.note-wrapper');
+        if(noteWrapper) noteWrapper.style.display = 'none';
+
+        const noteBtn = newRow.querySelector('.toggle-note-btn');
+        if(noteBtn) noteBtn.classList.remove('active', 'btn-secondary', 'text-white');
 
         newRow.style.display = 'block';
         container.appendChild(newRow);

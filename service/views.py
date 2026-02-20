@@ -229,26 +229,27 @@ def report_detail(request, pk):
         dept = item.task.department or "Не вказано"
         sort_index = sort_map.get(item.item_name, 999)
 
+        # Ініціалізація структури, якщо це новий картридж
         if name not in stats:
-            stats[name] = {'total_qty': 0, 'departments': {}, 'notes': [], 'sort_index': sort_index}
+            stats[name] = {
+                'total_qty': 0,
+                'departments': {},
+                'sort_index': sort_index
+            }
 
         stats[name]['total_qty'] += qty
 
-        # НОВА ЛОГІКА: збираємо примітки саме з картриджів
-        if item.note and item.note not in stats[name]['notes']:
-            stats[name]['notes'].append(item.note)
+        # Групуємо по відділах
+        if dept not in stats[name]['departments']:
+            stats[name]['departments'][dept] = {'items': [], 'sum_qty': 0}
 
-        # Також залишаємо опис із заявки для типу "Інше" (якщо є)
-        if item.item_name == 'Інше' and item.task.description:
-            if item.task.description not in stats[name]['notes']:
-                stats[name]['notes'].append(item.task.description)
-
-        if dept not in stats[name]['departments']: stats[name]['departments'][dept] = {'items': [], 'sum_qty': 0}
         stats[name]['departments'][dept]['items'].append(item)
         stats[name]['departments'][dept]['sum_qty'] += qty
 
+    # Сортування
     sorted_stats = dict(sorted(stats.items(), key=lambda item: (item[1]['sort_index'], item[0])))
     grand_total = sum(data['total_qty'] for data in sorted_stats.values())
+
     return render(request, 'service/report_detail.html',
                   {'report': report, 'stats': sorted_stats, 'grand_total': grand_total})
 
