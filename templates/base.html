@@ -12,28 +12,21 @@
         .card { border-radius: 10px; }
         .table-responsive { overflow-x: auto; }
 
-        /* === ТЕМНА ТЕМА === */
+        /* === НАЛАШТУВАННЯ ТЕМНОЇ ТЕМИ (ЕКРАН) === */
         [data-bs-theme="dark"] body { background-color: #121212 !important; color: #e0e0e0 !important; }
         [data-bs-theme="dark"] .card { background-color: #1e1e1e; border-color: #333; }
 
-        /* Тексти */
+        /* Текст */
         [data-bs-theme="dark"] .text-dark { color: #f0f0f0 !important; }
         [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
         [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #fff !important; }
 
-        /* Таблиці - ГОЛОВНЕ ВИПРАВЛЕННЯ */
+        /* Таблиці */
         [data-bs-theme="dark"] .table { --bs-table-bg: transparent; --bs-table-color: #e0e0e0; border-color: #373b3e; color: #e0e0e0 !important; }
         [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th { color: #e0e0e0 !important; border-color: #373b3e; }
-
-        /* Виправлення білої шапки таблиці */
-        [data-bs-theme="dark"] .table-light,
-        [data-bs-theme="dark"] .table-light th,
-        [data-bs-theme="dark"] .table-light td,
-        [data-bs-theme="dark"] thead.table-light {
-            background-color: #2b3035 !important;
-            color: #fff !important;
-            border-color: #373b3e !important;
-        }
+        /* Заголовки таблиць - робимо темно-сірими */
+        [data-bs-theme="dark"] .table-light th, [data-bs-theme="dark"] thead th { background-color: #2b3035 !important; color: #fff !important; border-color: #373b3e !important; }
+        [data-bs-theme="dark"] .table-light { background-color: #2b3035 !important; }
 
         /* Посилання */
         [data-bs-theme="dark"] a:not(.btn):not(.nav-link) { color: #6ea8fe; }
@@ -50,25 +43,26 @@
         .theme-toggle-btn { cursor: pointer; border: none; background: transparent; color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px; }
         .theme-toggle-btn:hover { color: #fff; }
 
-        /* === ДРУК (Print) === */
+        /* === ВАЖЛИВО: ДРУК ЗАВЖДИ СВІТЛИЙ === */
         @media print {
-            /* Скидання всіх кольорів на чорно-білі */
+            /* Примусово вимикаємо темні кольори */
             body, [data-bs-theme="dark"] body { background-color: #fff !important; color: #000 !important; }
-            .card, [data-bs-theme="dark"] .card { background-color: transparent !important; border: none !important; color: #000 !important; box-shadow: none !important; }
+            .card, [data-bs-theme="dark"] .card { background-color: #fff !important; border: 1px solid #ddd !important; color: #000 !important; }
 
-            /* Таблиці для друку - чіткі чорні лінії */
-            .table, [data-bs-theme="dark"] .table { color: #000 !important; border: 1px solid #000 !important; width: 100% !important; }
-            .table td, .table th {
-                color: #000 !important;
-                border: 1px solid #000 !important;
-                background-color: transparent !important;
-            }
+            /* Таблиці на друк - чорні лінії, чорний текст */
+            .table, [data-bs-theme="dark"] .table { color: #000 !important; border-color: #000 !important; }
+            .table td, .table th { color: #000 !important; border: 1px solid #000 !important; background-color: transparent !important; }
+            .table-light th { background-color: #f8f9fa !important; color: #000 !important; }
 
-            /* Приховуємо меню */
-            .navbar, footer, .theme-toggle-btn, .d-print-none, .btn { display: none !important; }
+            /* Ховаємо зайве при друці */
+            .navbar, .theme-toggle-btn, .btn, footer, .d-print-none { display: none !important; }
 
-            /* Текст */
-            * { color: #000 !important; text-shadow: none !important; }
+            /* Тексти */
+            .text-white, [data-bs-theme="dark"] .text-white { color: #000 !important; }
+            h1, h2, h3, h4, h5 { color: #000 !important; }
+
+            /* Скидаємо тіні */
+            .shadow-sm, .shadow { box-shadow: none !important; }
         }
     </style>
 </head>
@@ -87,6 +81,7 @@
             <a class="navbar-brand fw-bold" href="/">
                 <i class="bi bi-box-seam"></i> IT Відділ
             </a>
+
             <div class="d-flex align-items-center order-lg-3 ms-lg-2">
                 <button class="theme-toggle-btn" id="themeToggle" title="Змінити тему">
                     <i class="bi bi-circle-half"></i>
@@ -95,6 +90,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
             </div>
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Головна</a></li>
@@ -122,14 +118,15 @@
                     {% if disk_usage %}
                     <div class="mt-2" style="font-size: 0.75rem;">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Сховище:</span>
+                            <span>Сховище (PythonAnywhere):</span>
                             <span class="fw-bold {% if disk_usage.is_critical %}text-danger{% endif %}">
                                 {{ disk_usage.used }} МБ / {{ disk_usage.total }} МБ
                             </span>
                         </div>
                         <div class="progress" style="height: 6px;" title="Вільно: {{ disk_usage.free }} МБ">
                             <div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar"
-                                 style="width: {{ disk_usage.percent }}%;" aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
+                                 style="width: {{ disk_usage.percent }}%;"
+                                 aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                     </div>
@@ -140,14 +137,21 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const toggleBtn = document.getElementById('themeToggle');
             const icon = toggleBtn.querySelector('i');
             const html = document.documentElement;
+
             function updateIcon(theme) {
-                if (theme === 'dark') { icon.classList.remove('bi-sun-fill'); icon.classList.add('bi-moon-stars-fill'); }
-                else { icon.classList.remove('bi-moon-stars-fill'); icon.classList.add('bi-sun-fill'); }
+                if (theme === 'dark') {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-stars-fill');
+                } else {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                }
             }
             updateIcon(html.getAttribute('data-bs-theme'));
             toggleBtn.addEventListener('click', () => {
