@@ -223,17 +223,16 @@ document.addEventListener("DOMContentLoaded", function() {
     .animation-fade-in { animation: fadeIn 0.5s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* === СТИЛІ ДЛЯ ДРУКУ === */
     @media print {
         @page { margin: 1cm; size: auto; }
 
-        /* Ховаємо все зайве */
+        /* Всі елементи ховаємо */
         body * { visibility: hidden; }
 
         /* Показуємо тільки зону друку */
         #print-area, #print-area * { visibility: visible; }
 
-        /* Позиціонування на папері */
+        /* Абсолютне позиціонування та примусовий білий фон */
         #print-area {
             position: absolute;
             left: 0;
@@ -244,12 +243,13 @@ document.addEventListener("DOMContentLoaded", function() {
             border: none !important;
             box-shadow: none !important;
 
-            /* ПРИМУСОВО БІЛИЙ ФОН І ЧОРНИЙ ТЕКСТ */
+            /* КЛЮЧОВІ РЯДКИ ДЛЯ ВИПРАВЛЕННЯ ДРУКУ */
             background-color: white !important;
             color: black !important;
+            filter: none !important;
         }
 
-        /* Таблиця: чорні лінії, чорний текст */
+        /* Таблиця друку */
         .table {
             border-collapse: collapse !important;
             width: 100% !important;
@@ -264,20 +264,18 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         /* Заголовки таблиці */
-        thead tr {
-            background-color: #f0f0f0 !important; /* Світло-сірий фон для шапки */
-            -webkit-print-color-adjust: exact; /* Щоб фон надрукувався */
+        thead tr, thead th {
+            background-color: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact;
+            color: black !important;
         }
 
-        /* Приховуємо кнопки і посилання */
-        .d-print-none, .btn, a { display: none !important; }
+        /* Прибираємо інтерфейс */
+        .d-print-none, .btn, a, .navbar { display: none !important; }
 
-        /* Розміри шрифтів */
-        h3 { font-size: 16pt !important; color: black !important; }
-        h5 { font-size: 12pt !important; color: black !important; }
-        .fs-5 { font-size: 11pt !important; }
+        h3, h5 { color: black !important; }
 
-        /* Прибираємо бейджі, залишаємо просто текст */
+        /* Скидання бейджів */
         .badge {
             border: none !important;
             background: none !important;
