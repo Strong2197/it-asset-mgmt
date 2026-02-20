@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import PhonebookEntry
 from .forms import PhonebookForm
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.core.paginator import Paginator
 
 def directory_list(request):
