@@ -1,0 +1,95 @@
+{% extends 'base.html' %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-10 col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-primary text-white py-3">
+        <h4 class="mb-0"><i class="bi bi-building-add"></i> {{ title }}</h4>
+      </div>
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+
+          <h6 class="text-muted border-bottom pb-2 mb-3">
+            Загальна інформація
+          </h6>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Назва відділу</label>
+              {{ form.department }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Код відділу</label>
+              {{ form.code }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold">Загальний Email</label>
+              {{ form.email }}
+            </div>
+          </div>
+
+          <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
+            <i class="bi bi-person-fill-up"></i> Керівник
+          </h6>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">ПІБ Начальника</label>
+              {{ form.chief_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Посада</label>
+              {{ form.chief_position }}
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-primary">Мобільний</label>
+              {{ form.chief_phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-success">IP Телефон</label>
+              {{ form.chief_ip }}
+            </div>
+          </div>
+
+          <h6 class="text-secondary border-bottom pb-2 mb-3 mt-4">
+            <i class="bi bi-person-fill-down"></i> Заступник
+          </h6>
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label class="form-label fw-bold">ПІБ Заступника</label>
+              {{ form.deputy_name }}
+            </div>
+          </div>
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-primary">Мобільний</label>
+              {{ form.deputy_phone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-success">IP Телефон</label>
+              {{ form.deputy_ip }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3">
+            <a href="{% url 'directory_list' %}" class="btn btn-secondary"
+              >Скасувати</a
+            >
+            <button type="submit" class="btn btn-primary px-5">Зберегти</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $(".phone-mask").inputmask("999-999-99-99", {
+      placeholder: "___-___-__-__",
+    });
+  });
+</script>
+{% endblock %}

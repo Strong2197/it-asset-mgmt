@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'service',
     'docs',
     'staff',
+    'directory',
 ]
 
 MIDDLEWARE = [

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +7,113 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f9fa; }
+        /* Базові переходи */
+        body, .card, .table, td, th { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
         .card { border-radius: 10px; }
-        /* Щоб таблиці на мобільному не розтягували екран */
         .table-responsive { overflow-x: auto; }
+
+        /* === НАЛАШТУВАННЯ ТЕМНОЇ ТЕМИ === */
+
+        /* 1. Глобальні кольори */
+        [data-bs-theme="dark"] body {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+
+        /* 2. Картки */
+        [data-bs-theme="dark"] .card {
+            background-color: #1e1e1e;
+            border-color: #333;
+        }
+
+        /* 3. ВИПРАВЛЕННЯ ТЕКСТУ (Гловне виправлення) */
+        /* Примусово робимо text-dark білим, а text-secondary світло-сірим */
+        [data-bs-theme="dark"] .text-dark { color: #f0f0f0 !important; }
+        [data-bs-theme="dark"] .text-muted,
+        [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
+
+        /* Чорні заголовки стають білими */
+        [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2,
+        [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4,
+        [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 {
+            color: #fff !important;
+        }
+
+        /* 4. ТАБЛИЦІ (Виправлення невидимих рядків) */
+        [data-bs-theme="dark"] .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: #e0e0e0;
+            --bs-table-striped-bg: rgba(255, 255, 255, 0.05);
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0 !important;
+            border-color: #373b3e;
+        }
+        /* Всі клітинки таблиці мають бути світлими */
+        [data-bs-theme="dark"] .table td,
+        [data-bs-theme="dark"] .table th {
+            color: #e0e0e0 !important;
+            border-color: #373b3e;
+        }
+        /* Заголовки таблиць */
+        [data-bs-theme="dark"] .table-light th {
+            background-color: #2b3035 !important;
+            color: #fff !important;
+            border-color: #373b3e;
+        }
+
+        /* 5. ПОСИЛАННЯ */
+        /* Стандартні сині посилання на чорному погано видно, робимо їх світло-блакитними */
+        [data-bs-theme="dark"] a:not(.btn):not(.nav-link) {
+            color: #6ea8fe;
+        }
+        [data-bs-theme="dark"] a:not(.btn):not(.nav-link):hover {
+            color: #9ec5fe;
+        }
+
+        /* 6. ФОНИ (Виправлення яскравих білих блоків) */
+        [data-bs-theme="dark"] .bg-white {
+            background-color: #1e1e1e !important;
+            color: #e0e0e0 !important;
+        }
+        [data-bs-theme="dark"] .bg-light {
+            background-color: #2b3035 !important;
+            color: #e0e0e0 !important;
+            border-color: #373b3e !important;
+        }
+
+        /* 7. ФОРМИ (Inputs) */
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: #2b3035;
+            border-color: #495057;
+            color: #fff;
+        }
+        [data-bs-theme="dark"] .form-control::placeholder {
+            color: #adb5bd;
+        }
+        [data-bs-theme="dark"] .input-group-text {
+            background-color: #343a40;
+            border-color: #495057;
+            color: #e0e0e0;
+        }
+
+        /* Кнопка теми */
+        .theme-toggle-btn {
+            cursor: pointer; border: none; background: transparent;
+            color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px;
+        }
+        .theme-toggle-btn:hover { color: #fff; }
     </style>
 </head>
 <body>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = savedTheme ? savedTheme : systemTheme;
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
         <div class="container">
@@ -21,30 +121,24 @@
                 <i class="bi bi-box-seam"></i> IT Відділ
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="d-flex align-items-center order-lg-3 ms-lg-2">
+                <button class="theme-toggle-btn" id="themeToggle" title="Змінити тему">
+                    <i class="bi bi-circle-half"></i>
+                </button>
+                <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Головна</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/inventory/">Майно</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/service/">Сервіс</a>
-                    </li>
-                     <li class="nav-item">
-                        <a class="nav-link" href="/service/reports/">Акти</a>
-                    </li>
-                    <li class="nav-item">
-    <a class="nav-link" href="{% url 'staff_list' %}">Штатний розпис</a>
-</li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/docs/">Файлове сховище</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/">Головна</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/inventory/">Майно</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/service/">Сервіс</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/service/reports/">Акти</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'staff_list' %}">Штатний розпис</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/docs/">Файлове сховище</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'directory_list' %}">Довідник</a></li>
                 </ul>
             </div>
         </div>
@@ -60,7 +154,6 @@
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <small>&copy; {% now "Y" %} IT Asset Management System</small>
-                    
                     {% if disk_usage %}
                     <div class="mt-2" style="font-size: 0.75rem;">
                         <div class="d-flex justify-content-between mb-1">
@@ -70,8 +163,8 @@
                             </span>
                         </div>
                         <div class="progress" style="height: 6px;" title="Вільно: {{ disk_usage.free }} МБ">
-                            <div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar" 
-                                 style="width: {{ disk_usage.percent }}%;" 
+                            <div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar"
+                                 style="width: {{ disk_usage.percent }}%;"
                                  aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
@@ -83,5 +176,31 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('themeToggle');
+            const icon = toggleBtn.querySelector('i');
+            const html = document.documentElement;
+
+            function updateIcon(theme) {
+                if (theme === 'dark') {
+                    icon.classList.remove('bi-sun-fill');
+                    icon.classList.add('bi-moon-stars-fill');
+                } else {
+                    icon.classList.remove('bi-moon-stars-fill');
+                    icon.classList.add('bi-sun-fill');
+                }
+            }
+            updateIcon(html.getAttribute('data-bs-theme'));
+            toggleBtn.addEventListener('click', () => {
+                const currentTheme = html.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateIcon(newTheme);
+            });
+        });
+    </script>
 </body>
 </html>

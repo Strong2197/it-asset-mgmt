@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.views.static import serve
 from django.db.models import Sum  # <--- ВАЖЛИВО: Додаємо цей імпорт
 
+
 from staff.models import Employee
 from inventory.models import Asset
 from service.models import ServiceTask, ServiceTaskItem
@@ -57,6 +58,7 @@ urlpatterns = [
     path('service/', include('service.urls')),
     path('docs/', include('docs.urls')),
     path('staff/', include('staff.urls')),
+    path('directory/', include('directory.urls')),
 ]
 
 urlpatterns += [
