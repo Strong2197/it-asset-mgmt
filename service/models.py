@@ -27,26 +27,16 @@ class ServiceTask(models.Model):
         ('maintenance', 'Обслуговування'),
         ('drum_clean', 'Чистка драм-юніта'),
     ]
-
     task_type = models.CharField(max_length=20, choices=TASK_TYPES, default='refill', verbose_name="Тип робіт")
-
-    # Зробили null=True, blank=True, бо тепер ми використовуємо items
     device_name = models.CharField(max_length=200, verbose_name="Назва пристрою/Картриджу", null=True, blank=True)
-
-    requester_name = models.CharField(max_length=100, verbose_name="Замовник (ПІБ)",
-                                      blank=True)  # Можна зробити необов'язковим, якщо беремо з відділу
+    requester_name = models.CharField(max_length=100, verbose_name="Замовник (ПІБ)", blank=True)
     department = models.CharField(max_length=100, verbose_name="Відділ")
-
     date_received = models.DateField(default=timezone.now, verbose_name="Дата отримання")
     date_sent = models.DateField(null=True, blank=True, verbose_name="Дата відправки (Акт)")
-
-    # Ці поля залишаємо як "загальні" для закриття заявки, але основна робота буде в items
     date_back_from_service = models.DateField(null=True, blank=True, verbose_name="Повернуто з сервісу (Загальне)")
     date_returned = models.DateField(null=True, blank=True, verbose_name="Дата закриття заявки")
-
     description = models.TextField(blank=True, verbose_name="Опис проблеми")
     is_completed = models.BooleanField(default=False, verbose_name="Виконано")
-
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -59,7 +49,9 @@ class ServiceTaskItem(models.Model):
     quantity = models.PositiveIntegerField(default=1, verbose_name="Кількість")
     custom_name = models.CharField(max_length=100, blank=True, verbose_name="Уточнення (якщо 'Інше')")
 
-    # --- НОВІ ПОЛЯ ДЛЯ ОКРЕМИХ КАРТРИДЖІВ ---
+    # НОВЕ ПОЛЕ
+    note = models.CharField(max_length=255, blank=True, verbose_name="Примітка до позиції")
+
     date_back_from_service = models.DateField(null=True, blank=True, verbose_name="Повернувся з сервісу")
     date_returned_to_user = models.DateField(null=True, blank=True, verbose_name="Видано клієнту")
 
@@ -68,19 +60,18 @@ class ServiceTaskItem(models.Model):
 
 
 class ServiceReport(models.Model):
-    # Змінено: прибрали auto_now_add=True, щоб поле можна було редагувати
+    # Дозволяємо редагувати дату (default замість auto_now_add)
     created_at = models.DateTimeField(
         default=timezone.now,
         verbose_name="Дата створення"
     )
-    tasks = models.ManyToManyField('ServiceTask', verbose_name="Картриджі в акті")
+    tasks = models.ManyToManyField(ServiceTask, verbose_name="Картриджі в акті")
 
     def __str__(self):
         return f"Акт №{self.id} від {self.created_at.strftime('%d.%m.%Y')}"
 
     @property
     def is_archived(self):
-        # Логіка архівування залишається без змін [cite: 7]
         has_unissued_items = ServiceTaskItem.objects.filter(
             task__in=self.tasks.all(),
             date_returned_to_user__isnull=True

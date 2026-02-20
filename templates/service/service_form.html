@@ -3,21 +3,9 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-    /* Адаптація Select2 під Bootstrap */
-    .select2-container .select2-selection--single {
-        height: 38px !important;
-        border: 1px solid #ced4da !important;
-        display: flex;
-        align-items: center;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px !important;
-    }
-    /* Виправлення фокусу (опціонально, для краси) */
-    .select2-search__field:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
+    .select2-container .select2-selection--single { height: 38px !important; border: 1px solid #ced4da !important; display: flex; align-items: center; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px !important; }
+    .select2-search__field:focus { outline: none !important; box-shadow: none !important; }
 </style>
 
 <div class="row">
@@ -29,35 +17,20 @@
                     {% csrf_token %}
                     {% for field in form %}
                     <div class="mb-3">
-                        
                         {% if field.name == 'department' %}
                             <label class="form-label fw-bold">Відділ</label>
                             <select name="{{ field.name }}" id="id_department" class="form-control" style="width: 100%;">
-                                {% if field.value %}
-                                    <option value="{{ field.value }}" selected>{{ field.value }}</option>
-                                {% endif %}
+                                {% if field.value %}<option value="{{ field.value }}" selected>{{ field.value }}</option>{% endif %}
                                 <option></option>
-                                {% for dept in departments %}
-                                    {% if dept != field.value %}
-                                        <option value="{{ dept }}">{{ dept }}</option>
-                                    {% endif %}
-                                {% endfor %}
+                                {% for dept in departments %}{% if dept != field.value %}<option value="{{ dept }}">{{ dept }}</option>{% endif %}{% endfor %}
                             </select>
-
                         {% elif field.name == 'requester_name' %}
                             <label class="form-label fw-bold">{{ field.label }}</label>
                             <select name="{{ field.name }}" id="id_requester_name" class="form-control" style="width: 100%;">
-                                {% if field.value %}
-                                    <option value="{{ field.value }}" selected>{{ field.value }}</option>
-                                {% endif %}
+                                {% if field.value %}<option value="{{ field.value }}" selected>{{ field.value }}</option>{% endif %}
                                 <option></option>
-                                {% for name in requesters %}
-                                    {% if name != field.value %}
-                                        <option value="{{ name }}">{{ name }}</option>
-                                    {% endif %}
-                                {% endfor %}
+                                {% for name in requesters %}{% if name != field.value %}<option value="{{ name }}">{{ name }}</option>{% endif %}{% endfor %}
                             </select>
-
                         {% elif field.name == 'is_completed' %}
                             <div class="form-check">{{ field }} <label class="form-check-label fw-bold">{{ field.label }}</label></div>
                         {% else %}
@@ -75,14 +48,22 @@
                             <div class="card-body p-2">
                                 {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
                                 <div class="row g-2 align-items-center">
-                                    <div class="col-md-6">
-                                        <div class="mb-1">{{ item_form.item_name }}</div>
+                                    <div class="col-md-7">
+                                        <div class="d-flex gap-2 mb-1">
+                                            <div class="flex-grow-1">{{ item_form.item_name }}</div>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm toggle-note-btn" title="Додати примітку">
+                                                <i class="bi bi-chat-left-text"></i>
+                                            </button>
+                                        </div>
                                         <div class="custom-name-wrapper" style="display:none;">{{ item_form.custom_name }}</div>
+                                        <div class="note-wrapper mt-1" style="{% if not item_form.note.value %}display:none;{% endif %}">
+                                            {{ item_form.note }}
+                                        </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="input-group input-group-sm"><span class="input-group-text">К-ть</span>{{ item_form.quantity }}</div>
                                     </div>
-                                    <div class="col-md-3 text-end">
+                                    <div class="col-md-2 text-end">
                                         {% if formset.can_delete %}
                                             <div class="d-none">{{ item_form.DELETE }}</div>
                                             <button type="button" class="btn btn-outline-danger btn-sm delete-row-btn"><i class="bi bi-trash"></i></button>
@@ -140,16 +121,14 @@
 
 <script>
 $(document).ready(function() {
-    
-    // 1. ІНІЦІАЛІЗАЦІЯ SELECT2 (для обох полів)
-    // tags: true дозволяє вводити нові значення
+
+    // 1. ІНІЦІАЛІЗАЦІЯ SELECT2
     $('#id_requester_name').select2({
         tags: true,
         placeholder: "Оберіть або введіть ПІБ...",
         allowClear: true,
         language: { noResults: () => "Введіть нове ім'я..." }
     });
-
     $('#id_department').select2({
         tags: true,
         placeholder: "Оберіть або введіть відділ...",
@@ -157,17 +136,14 @@ $(document).ready(function() {
         language: { noResults: () => "Введіть нову назву..." }
     });
 
-    // 2. АВТОФОКУС НА ПОШУК (Фікс для миттєвого введення)
-    // Коли будь-який Select2 відкривається, ми ставимо фокус у поле пошуку
+    // 2. АВТОФОКУС НА ПОШУК
     $(document).on('select2:open', function(e) {
         document.querySelector('.select2-search__field').focus();
     });
 
-    // 3. АВТОЗАПОВНЕННЯ ВІДДІЛУ (При зміні Замовника)
+    // 3. АВТОЗАПОВНЕННЯ ВІДДІЛУ
     $('#id_requester_name').on('select2:select change', function (e) {
         const name = $(this).val();
-        
-        // Використовуємо JS-об'єкт Select2 для відділу
         const $deptSelect = $('#id_department');
 
         if (name && name.length > 2) {
@@ -175,16 +151,12 @@ $(document).ready(function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.found && data.department) {
-                        // Перевіряємо, чи є вже така опція в списку
                         if ($deptSelect.find("option[value='" + data.department + "']").length) {
                             $deptSelect.val(data.department).trigger('change');
-                        } else { 
-                            // Якщо це новий відділ (з старого архіву), додаємо його як нову опцію
+                        } else {
                             var newOption = new Option(data.department, data.department, true, true);
                             $deptSelect.append(newOption).trigger('change');
                         }
-                        
-                        // Візуальний ефект (блимання рамки)
                         $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#28a745');
                         setTimeout(() => {
                             $deptSelect.next('.select2-container').find('.select2-selection').css('border-color', '#ced4da');
@@ -195,7 +167,7 @@ $(document).ready(function() {
         }
     });
 
-    // 4. ЛОГІКА FORMSET (Картриджі)
+    // 4. ЛОГІКА FORMSET
     const container = document.getElementById('items-container');
     const addButton = document.getElementById('add-item');
     const totalForms = document.getElementById('id_items-TOTAL_FORMS');
@@ -213,6 +185,29 @@ $(document).ready(function() {
         }
     }
 
+    // НОВА функція для кнопки примітки
+   function toggleNoteField(button) {
+        const row = button.closest('.item-row');
+        const wrapper = row.querySelector('.note-wrapper');
+        const input = wrapper.querySelector('input');
+
+        if (wrapper.style.display === 'none') {
+            // Показуємо обгортку
+            wrapper.style.display = 'block';
+            // ПРИМУСОВО показуємо поле input, якщо воно було приховане
+            if (input) input.style.display = 'block';
+
+            button.classList.add('active', 'btn-secondary', 'text-white');
+            if (input) input.focus();
+        } else {
+            // Ховаємо
+            wrapper.style.display = 'none';
+            button.classList.remove('active', 'btn-secondary', 'text-white');
+            // Очищаємо значення, якщо сховали, щоб не зберігати сміття
+            if (input) input.value = '';
+        }
+    }
+
     container.addEventListener('change', function(e) {
         if (e.target.matches('select') && e.target.name.includes('item_name')) toggleCustomField(e.target);
     });
@@ -221,6 +216,9 @@ $(document).ready(function() {
     allSelects.forEach(select => toggleCustomField(select));
 
     container.addEventListener('click', function(e) {
+        const noteBtn = e.target.closest('.toggle-note-btn');
+        if (noteBtn) toggleNoteField(noteBtn);
+
         if (e.target.closest('.delete-row-btn')) {
             const row = e.target.closest('.item-row');
             const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
@@ -234,19 +232,20 @@ $(document).ready(function() {
         const newRow = firstRow.cloneNode(true);
         const regex = new RegExp(`items-(\\d+)-`, 'g');
         newRow.innerHTML = newRow.innerHTML.replace(regex, `items-${formsCount}-`);
-        
+
         newRow.querySelectorAll('input, select').forEach(el => {
             if (el.type !== 'hidden') {
                 el.value = '';
-                if (el.name.includes('custom_name')) el.style.display = 'none';
                 if (el.name.includes('quantity')) el.value = 1;
             }
             if (el.type === 'checkbox') el.checked = false;
         });
-        
-        const wrapper = newRow.querySelector('.custom-name-wrapper');
-        if(wrapper) wrapper.style.display = 'none';
-        
+
+        // Скидання нових полів
+        newRow.querySelector('.custom-name-wrapper').style.display = 'none';
+        newRow.querySelector('.note-wrapper').style.display = 'none';
+        newRow.querySelector('.toggle-note-btn').classList.remove('active', 'btn-secondary', 'text-white');
+
         newRow.style.display = 'block';
         container.appendChild(newRow);
         totalForms.value = formsCount + 1;

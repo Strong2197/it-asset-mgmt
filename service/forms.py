@@ -3,15 +3,14 @@ from .models import ServiceTask, ServiceReport, ServiceTaskItem
 from django.db.models import Q
 from django.forms import inlineformset_factory
 
-# --- 1. Віджети для картриджів (винесені окремо, щоб не дублювати код) ---
-# Ми використовуємо цей словник в обох FormSet-ах нижче
 common_widgets = {
     'item_name': forms.Select(attrs={'class': 'form-select item-select'}),
     'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'style': 'width: 80px;'}),
     'custom_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Уточнення...', 'style': 'display:none;'}),
+    # НОВИЙ ВІДЖЕТ ПРИМІТКИ
+    'note': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Примітка (напр. "маже")...'}),
 }
 
-# --- 2. Головна форма заявки (ваша стара форма без змін) ---
 class ServiceTaskForm(forms.ModelForm):
     class Meta:
         model = ServiceTask
@@ -34,25 +33,22 @@ class ServiceTaskForm(forms.ModelForm):
             if field_name != 'is_completed':
                 field.widget.attrs['class'] = 'form-control'
 
-# --- 3. Набір форм для СТВОРЕННЯ (extra=1 -> є пустий рядок) ---
 ServiceItemFormSet = inlineformset_factory(
     ServiceTask, ServiceTaskItem,
-    fields=['item_name', 'quantity', 'custom_name'],
-    extra=1,          # <--- ТУТ 1 (додає пустий рядок при створенні)
+    fields=['item_name', 'quantity', 'custom_name', 'note'], # Додано note
+    extra=1,
     can_delete=True,
-    widgets=common_widgets  # Використовуємо налаштування згори
+    widgets=common_widgets
 )
 
-# --- 4. Набір форм для РЕДАГУВАННЯ (extra=0 -> немає пустих рядків) ---
 ServiceItemEditFormSet = inlineformset_factory(
     ServiceTask, ServiceTaskItem,
-    fields=['item_name', 'quantity', 'custom_name'],
-    extra=0,          # <--- ТУТ 0 (не додає зайвого рядка при редагуванні)
+    fields=['item_name', 'quantity', 'custom_name', 'note'], # Додано note
+    extra=0,
     can_delete=True,
-    widgets=common_widgets  # Ті самі налаштування, що і вище
+    widgets=common_widgets
 )
 
-# --- 5. Форма для звіту/акту (ваша стара форма без змін) ---
 class ServiceReportForm(forms.ModelForm):
     class Meta:
         model = ServiceReport
@@ -63,7 +59,6 @@ class ServiceReportForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ServiceReportForm, self).__init__(*args, **kwargs)
-
         if self.instance.pk:
             self.fields['tasks'].queryset = ServiceTask.objects.filter(
                 Q(id__in=self.instance.tasks.values_list('id', flat=True)) |
@@ -71,5 +66,4 @@ class ServiceReportForm(forms.ModelForm):
             )
         else:
             self.fields['tasks'].queryset = ServiceTask.objects.filter(date_sent__isnull=True)
-
         self.fields['tasks'].label = "Оберіть картриджі для цього акту"

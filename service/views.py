@@ -2,14 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
-from django.core.paginator import Page, EmptyPage, PageNotAnInteger
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 
 
 # --- ДОПОМІЖНІ ФУНКЦІЇ ---
-
 def get_all_departments():
     defaults = ['Бухгалтерія', 'Кадри', 'Івано-Франківський відділ']
     db_depts = list(ServiceTask.objects.values_list('department', flat=True).distinct())
@@ -18,80 +16,16 @@ def get_all_departments():
 
 
 def get_all_requesters():
-    """Отримує список усіх унікальних імен замовників для підказок."""
     return list(ServiceTask.objects.values_list('requester_name', flat=True).distinct().order_by('requester_name'))
 
 
-# --- API ДЛЯ AJAX: Пошук відділу за ПІБ ---
 def get_last_department(request):
     name = request.GET.get('name', '').strip()
     if name:
-        # Шукаємо останню заявку від цієї людини
         last_task = ServiceTask.objects.filter(requester_name__iexact=name).order_by('-created_at').first()
         if last_task:
             return JsonResponse({'found': True, 'department': last_task.department})
-
     return JsonResponse({'found': False})
-
-
-# --- КЛАС РОЗУМНОЇ ПАГІНАЦІЇ ---
-class WeightPaginator:
-    def __init__(self, queryset, max_weight=15):
-        self.pages = []
-        self.count = queryset.count()
-
-        current_page = []
-        current_weight = 0
-
-        for task in queryset:
-            # Вага = к-ть картриджів (або 1, якщо 0)
-            w = task.items_count if hasattr(task, 'items_count') and task.items_count > 0 else 1
-
-            # Якщо додавання перевищить ліміт і сторінка не пуста
-            if current_weight + w > max_weight and current_page:
-                self.pages.append(current_page)
-                current_page = []
-                current_weight = 0
-
-            current_page.append(task)
-            current_weight += w
-
-        if current_page:
-            self.pages.append(current_page)
-
-        self.num_pages = len(self.pages)
-
-    def validate_number(self, number):
-        """Перевіряє коректність номера сторінки"""
-        try:
-            if isinstance(number, float) and not number.is_integer():
-                raise ValueError
-            number = int(number)
-        except (ValueError, TypeError):
-            raise PageNotAnInteger('Номер сторінки має бути цілим числом')
-
-        if number < 1:
-            raise EmptyPage('Номер сторінки менше 1')
-
-        if number > self.num_pages:
-            if number == 1 and self.num_pages == 0:
-                pass
-            else:
-                raise EmptyPage('Сторінка не містить результатів')
-        return number
-
-    def page(self, number):
-        try:
-            number = self.validate_number(number)
-        except PageNotAnInteger:
-            number = 1
-        except EmptyPage:
-            number = self.num_pages if int(number) > 1 else 1
-
-        if self.num_pages == 0:
-            return Page([], number, self)
-
-        return Page(self.pages[number - 1], number, self)
 
 
 # --- СПИСОК ЗАЯВОК ---
@@ -123,7 +57,6 @@ def service_list(request):
     else:
         tasks_list = list(tasks_queryset)
 
-    # ПАГІНАЦІЯ (15 на сторінку)
     paginator = Paginator(tasks_list, 15)
     page = request.GET.get('page')
     page_obj = paginator.get_page(page)
@@ -139,7 +72,7 @@ def service_list(request):
 # --- СТВОРЕННЯ ЗАЯВКИ ---
 def service_create(request):
     departments = get_all_departments()
-    requesters = get_all_requesters()  # Список імен для підказки
+    requesters = get_all_requesters()
 
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST)
@@ -167,10 +100,9 @@ def service_update(request, pk):
     task = get_object_or_404(ServiceTask, pk=pk)
     departments = get_all_departments()
     requesters = get_all_requesters()
-    
+
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST, instance=task)
-        # ТУТ ВИКОРИСТОВУЄМО EditFormSet (extra=0)
         formset = ServiceItemEditFormSet(request.POST, instance=task)
         if form.is_valid() and formset.is_valid():
             form.save()
@@ -178,12 +110,11 @@ def service_update(request, pk):
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
-        # І ТУТ ТАКОЖ EditFormSet
         formset = ServiceItemEditFormSet(instance=task)
-    
+
     return render(request, 'service/service_form.html', {
-        'form': form, 
-        'formset': formset, 
+        'form': form,
+        'formset': formset,
         'departments': departments,
         'requesters': requesters,
         'title': 'Редагування заявки'
@@ -298,16 +229,23 @@ def report_detail(request, pk):
         dept = item.task.department or "Не вказано"
         sort_index = sort_map.get(item.item_name, 999)
 
-        if name not in stats: stats[name] = {'total_qty': 0, 'departments': {}, 'notes': [], 'sort_index': sort_index}
+        if name not in stats:
+            stats[name] = {'total_qty': 0, 'departments': {}, 'notes': [], 'sort_index': sort_index}
+
         stats[name]['total_qty'] += qty
+
+        # НОВА ЛОГІКА: збираємо примітки саме з картриджів
+        if item.note and item.note not in stats[name]['notes']:
+            stats[name]['notes'].append(item.note)
+
+        # Також залишаємо опис із заявки для типу "Інше" (якщо є)
+        if item.item_name == 'Інше' and item.task.description:
+            if item.task.description not in stats[name]['notes']:
+                stats[name]['notes'].append(item.task.description)
 
         if dept not in stats[name]['departments']: stats[name]['departments'][dept] = {'items': [], 'sum_qty': 0}
         stats[name]['departments'][dept]['items'].append(item)
         stats[name]['departments'][dept]['sum_qty'] += qty
-
-        if item.item_name == 'Інше':
-            desc = item.task.description
-            if desc and desc not in stats[name]['notes']: stats[name]['notes'].append(desc)
 
     sorted_stats = dict(sorted(stats.items(), key=lambda item: (item[1]['sort_index'], item[0])))
     grand_total = sum(data['total_qty'] for data in sorted_stats.values())

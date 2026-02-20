@@ -37,32 +37,25 @@
                 <table class="table table-bordered align-middle" style="border-color: #000 !important;">
                     <thead class="text-center" style="background-color: #f8f9fa;">
                         <tr style="border-bottom: 2px solid #000;">
-                            <th style="width: 30%; vertical-align: middle;">Модель картриджа / Пристрій</th>
-                            <th style="width: 8%; vertical-align: middle;">К-ть</th>
-                            <th style="width: 42%; vertical-align: middle;">Деталізація (Відділ — Кількість)</th>
-                            <th style="width: 20%; vertical-align: middle;">Примітка</th>
+                            <th style="width: 30%;">Модель картриджа / Пристрій</th>
+                            <th style="width: 8%;">К-ть</th>
+                            <th style="width: 42%;">Деталізація (Відділ — Кількість)</th>
+                            <th style="width: 20%;">Примітка</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for name, data in stats.items %}
                         <tr>
                             <td class="fw-bold px-3">{{ name }}</td>
-
                             <td class="text-center fs-5 fw-bold quantity-cell">{{ data.total_qty }}</td>
-
                             <td class="px-2">
                                 <ul class="list-unstyled mb-0">
                                     {% for dept, dept_data in data.departments.items %}
                                     <li class="py-1 border-bottom border-light dept-row">
-
                                         <div class="d-flex align-items-center justify-content-between flex-wrap">
-
                                             <div class="d-flex align-items-end justify-content-between flex-grow-1 me-2" style="min-width: 200px;">
-
                                                 <span class="text-wrap me-2">{{ dept }}</span>
-
                                                 <span class="flex-grow-1 border-bottom border-secondary border-opacity-10 mx-2 mb-1 d-print-none"></span>
-
                                                 <span class="fw-bold text-nowrap me-2">
                                                     {{ dept_data.sum_qty }} шт.
                                                     {% if dept_data.items|length > 1 %}
@@ -110,9 +103,7 @@
                             <td class="small px-2 note-cell" style="vertical-align: top; padding-top: 10px;">
                                 {% if data.notes %}
                                     <ul class="mb-0 ps-3">
-                                        {% for note in data.notes %}
-                                            <li>{{ note }}</li>
-                                        {% endfor %}
+                                        {% for note in data.notes %}<li>{{ note }}</li>{% endfor %}
                                     </ul>
                                 {% endif %}
                             </td>
@@ -165,14 +156,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
             let url = btn.getAttribute('data-url');
             const isReceiveBtn = url.includes('receive');
-
             let quantity = parseInt(btn.getAttribute('data-qty') || 1);
             let qtyToReceive = quantity;
 
             if (isReceiveBtn && quantity > 1) {
                 let input = prompt(`Всього у заявці: ${quantity} шт.\nСкільки повернулось з ремонту?`, quantity);
                 if (input === null) return;
-
                 qtyToReceive = parseInt(input);
                 if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) {
                     alert("Некоректна кількість!");
@@ -183,7 +172,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const container = btn.closest('div[id^="btn-group-"]');
             const originalContent = btn.innerHTML;
-
             btn.innerHTML = '..';
             btn.classList.add('disabled');
 
@@ -198,7 +186,6 @@ document.addEventListener("DOMContentLoaded", function() {
                         window.location.reload();
                     } else {
                         const itemId = data.item_id || btn.closest('div').id.replace('btn-group-', '');
-
                         if (data.new_state === 'stocked') {
                             container.innerHTML = `<button class="btn btn-sm btn-primary py-0 px-1 ajax-btn animation-fade-in" style="font-size: 1rem; line-height: 1.5;" data-url="${data.return_url}"><i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #${itemId}</button>`;
                         } else if (data.new_state === 'issued') {
@@ -229,9 +216,19 @@ document.addEventListener("DOMContentLoaded", function() {
         #print-area, #print-area * { visibility: visible; }
         #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none !important; box-shadow: none !important; background-color: white !important; }
 
-        .table td, .table th { font-size: 10pt !important; padding: 4px !important; }
+        .table td, .table th { font-size: 10pt !important; padding: 4px !important; border: 1px solid #000 !important; }
+
         .quantity-cell { font-size: 12pt !important; }
         .dept-row { padding-top: 1px !important; padding-bottom: 1px !important; border-bottom: 1px solid #ddd !important; }
+
+        /* Чітке відображення приміток при друці */
+        .note-cell {
+            font-size: 9pt !important;
+            color: #000 !important;
+            font-style: italic;
+            line-height: 1.1;
+        }
+        .note-cell li { margin-bottom: 2px; }
 
         h3 { font-size: 16pt !important; margin-bottom: 5px !important; }
         h5 { font-size: 12pt !important; margin-bottom: 10px !important; }
