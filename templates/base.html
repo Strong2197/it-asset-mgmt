@@ -21,18 +21,28 @@
         [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
         [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #fff !important; }
 
-        /* Таблиці - ГОЛОВНЕ ВИПРАВЛЕННЯ */
-        [data-bs-theme="dark"] .table { --bs-table-bg: transparent; --bs-table-color: #e0e0e0; border-color: #373b3e; color: #e0e0e0 !important; }
-        [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th { color: #e0e0e0 !important; border-color: #373b3e; }
+        /* === ТАБЛИЦІ (ВИПРАВЛЕННЯ БІЛОЇ ШАПКИ) === */
+        /* Робимо саму таблицю темною */
+        [data-bs-theme="dark"] .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: #e0e0e0;
+            border-color: #373b3e;
+            color: #e0e0e0 !important;
+        }
+        [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th {
+            color: #e0e0e0 !important;
+            border-color: #373b3e;
+        }
 
-        /* Виправлення білої шапки таблиці */
+        /* ЖОРСТКЕ перевизначення table-light для темної теми */
         [data-bs-theme="dark"] .table-light,
         [data-bs-theme="dark"] .table-light th,
         [data-bs-theme="dark"] .table-light td,
-        [data-bs-theme="dark"] thead.table-light {
-            background-color: #2b3035 !important;
+        [data-bs-theme="dark"] thead.table-light th {
+            background-color: #2b3035 !important; /* Темно-сірий замість білого */
             color: #fff !important;
             border-color: #373b3e !important;
+            box-shadow: none !important;
         }
 
         /* Посилання */
@@ -50,21 +60,44 @@
         .theme-toggle-btn { cursor: pointer; border: none; background: transparent; color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px; }
         .theme-toggle-btn:hover { color: #fff; }
 
-        /* === ДРУК (Print) === */
+        /* === ДРУК (PRINT) === */
         @media print {
-            /* Скидання всіх кольорів на чорно-білі */
-            body, [data-bs-theme="dark"] body { background-color: #fff !important; color: #000 !important; }
-            .card, [data-bs-theme="dark"] .card { background-color: transparent !important; border: none !important; color: #000 !important; box-shadow: none !important; }
+            /* Скидання кольорів на дефолтні (білий папір, чорний текст) */
+            :root, body, [data-bs-theme="dark"] body {
+                background-color: #fff !important;
+                color: #000 !important;
+                -webkit-print-color-adjust: exact;
+            }
 
-            /* Таблиці для друку - чіткі чорні лінії */
-            .table, [data-bs-theme="dark"] .table { color: #000 !important; border: 1px solid #000 !important; width: 100% !important; }
-            .table td, .table th {
+            /* Скидання карток */
+            .card, [data-bs-theme="dark"] .card {
+                background-color: transparent !important;
+                border: none !important;
+                color: #000 !important;
+                box-shadow: none !important;
+            }
+
+            /* Таблиці для друку */
+            .table, [data-bs-theme="dark"] .table {
+                color: #000 !important;
+                border-color: #000 !important;
+                width: 100% !important;
+            }
+            .table td, .table th,
+            [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th {
                 color: #000 !important;
                 border: 1px solid #000 !important;
                 background-color: transparent !important;
             }
 
-            /* Приховуємо меню */
+            /* Шапка таблиці при друці - світло-сіра */
+            .table-light th, [data-bs-theme="dark"] .table-light th,
+            thead.table-light th {
+                background-color: #f0f0f0 !important;
+                color: #000 !important;
+            }
+
+            /* Приховуємо меню та кнопки */
             .navbar, footer, .theme-toggle-btn, .d-print-none, .btn { display: none !important; }
 
             /* Текст */
