@@ -68,20 +68,21 @@ class ServiceTaskItem(models.Model):
 
 
 class ServiceReport(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата створення")
-    tasks = models.ManyToManyField(ServiceTask, verbose_name="Картриджі в акті")
+    # Змінено: прибрали auto_now_add=True, щоб поле можна було редагувати
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Дата створення"
+    )
+    tasks = models.ManyToManyField('ServiceTask', verbose_name="Картриджі в акті")
 
     def __str__(self):
         return f"Акт №{self.id} від {self.created_at.strftime('%d.%m.%Y')}"
 
     @property
     def is_archived(self):
-        # Логіка: Акт вважається архівним, ТІЛЬКИ якщо ВСІ картриджі видані замовникам.
-        # Шукаємо, чи є хоч один "незакритий" картридж (де date_returned_to_user пусте)
+        # Логіка архівування залишається без змін [cite: 7]
         has_unissued_items = ServiceTaskItem.objects.filter(
             task__in=self.tasks.all(),
             date_returned_to_user__isnull=True
         ).exists()
-
-        # Якщо незакритих немає (False) -> значить архівний (True)
         return not has_unissued_items

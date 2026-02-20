@@ -92,21 +92,26 @@ class ServiceTaskAdmin(admin.ModelAdmin):
 # --- 3. АДМІНКА ЗВІТІВ (АКТІВ) ---
 @admin.register(ServiceReport)
 class ServiceReportAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'created_at', 'get_total_cartridges', 'view_report_link')
+    # Додаємо 'created_at' у список відображення та поля форми
+    list_display = ('id', 'created_at', 'get_total_cartridges', 'view_report_link')
+    list_editable = ('created_at',)  # Дозволяє редагувати дату прямо у списку актів
     ordering = ('-created_at',)
-    readonly_fields = ('created_at',)
 
-    # Рахуємо загальну кількість картриджів (через aggregate Sum)
+    # Видаляємо 'created_at' з readonly_fields, щоб воно стало доступним для зміни [cite: 50]
+    readonly_fields = ()
+
     def get_total_cartridges(self, obj):
-        # Сумуємо поле quantity у всіх item, що належать до tasks цього звіту
-        total = ServiceTaskItem.objects.filter(task__in=obj.tasks.all()).aggregate(total=Sum('quantity'))['total']
+        total = ServiceTaskItem.objects.filter(
+            task__in=obj.tasks.all()
+        ).aggregate(total=Sum('quantity'))['total']
         return f"{total or 0} шт."
 
     get_total_cartridges.short_description = "Всього картриджів"
 
-    # Посилання на перегляд на сайті
     def view_report_link(self, obj):
-        return format_html(f'<a href="/service/reports/{obj.pk}/" target="_blank" class="button">Відкрити Акт</a>')
+        return format_html(
+            f'<a href="/service/reports/{obj.pk}/" target="_blank" class="button">Відкрити Акт</a>'
+        )
 
     view_report_link.short_description = "Дії"
 
