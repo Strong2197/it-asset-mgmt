@@ -18,6 +18,12 @@ def directory_list(request):
             Q(deputy_phone__icontains=query)
         )
 
+    # --- ЛОГІКА ЖИВОГО ПОШУКУ (AJAX) ---
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # Якщо це AJAX запит - повертаємо тільки рядки таблиці і БЕЗ пагінації (показуємо все знайдене)
+        return render(request, 'directory/directory_rows.html', {'entries': entries})
+
+    # Стандартна логіка для повного завантаження сторінки
     paginator = Paginator(entries, 30)
     page = request.GET.get('page')
     page_obj = paginator.get_page(page)

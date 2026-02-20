@@ -1,0 +1,78 @@
+{% for item in entries %}
+<tr>
+    <td class="ps-4 align-top pt-3">
+        <div class="fw-bold text-dark mb-1" style="white-space: pre-line;">{{ item.department }}</div>
+
+        {% if item.code %}
+            <span class="badge bg-light text-dark border text-wrap text-start mt-1">Код: {{ item.code }}</span>
+        {% endif %}
+
+        {% if item.email %}
+            <div class="small mt-2">
+                <i class="bi bi-envelope text-secondary me-1"></i>
+                <a href="mailto:{{ item.email }}" class="text-decoration-none text-secondary">{{ item.email }}</a>
+            </div>
+        {% endif %}
+    </td>
+    <td class="align-top pt-3">
+        {% if item.chief_name %}
+            <div class="mb-3">
+                <div class="fw-bold text-primary">{{ item.chief_name }}</div>
+                <div class="small text-muted fw-bold">{{ item.chief_position }}</div>
+            </div>
+        {% endif %}
+
+        {% if item.deputy_name %}
+            <div class="mb-1 border-top pt-2">
+                <div class="fw-bold text-dark">{{ item.deputy_name }}</div>
+                <div class="small text-muted">Заступник</div>
+            </div>
+        {% endif %}
+    </td>
+    <td class="align-top pt-3">
+        {% if item.chief_name %}
+            <div class="mb-3">
+                {% if item.chief_ip %}
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="bi bi-telephone-fill text-success me-2" title="Внутрішній"></i>
+                        <strong>{{ item.chief_ip }}</strong>
+                    </div>
+                {% endif %}
+                {% if item.chief_phone %}
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-phone text-primary me-2" title="Мобільний"></i>
+                        <a href="tel:{{ item.chief_phone }}" class="text-decoration-none fw-bold text-dark hover-link">
+                            {{ item.chief_phone }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if item.deputy_name %}
+            <div class="mb-1 border-top pt-2">
+                {% if item.deputy_ip %}
+                    <div class="d-flex align-items-center mb-1">
+                        <i class="bi bi-telephone text-success me-2 opacity-75"></i>
+                        <span>{{ item.deputy_ip }}</span>
+                    </div>
+                {% endif %}
+                {% if item.deputy_phone %}
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-phone text-secondary me-2"></i>
+                        <a href="tel:{{ item.deputy_phone }}" class="text-decoration-none text-secondary hover-link">
+                            {{ item.deputy_phone }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </td>
+    <td class="text-end pe-4 align-top pt-3">
+        <a href="{% url 'directory_update' item.pk %}" class="btn btn-sm btn-outline-secondary mb-1" title="Редагувати"><i class="bi bi-pencil"></i></a>
+        <button type="button" class="btn btn-sm btn-outline-danger mb-1" onclick="confirmDelete('{{ item.pk }}', '{{ item.department|escapejs }}')"><i class="bi bi-trash"></i></button>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="text-center py-5 text-muted">Записів не знайдено.</td></tr>
+{% endfor %}
