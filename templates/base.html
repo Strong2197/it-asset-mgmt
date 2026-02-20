@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uk" id="htmlRoot">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,120 +7,28 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        /* Базові переходи */
-        body, .card, .table, td, th, div, span { transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { background-color: #f8f9fa; }
         .card { border-radius: 10px; }
         .table-responsive { overflow-x: auto; }
 
-        /* === ТЕМНА ТЕМА === */
-        [data-bs-theme="dark"] body { background-color: #121212 !important; color: #e0e0e0 !important; }
-        [data-bs-theme="dark"] .card { background-color: #1e1e1e; border-color: #333; }
-
-        /* Тексти */
-        [data-bs-theme="dark"] .text-dark { color: #f0f0f0 !important; }
-        [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #adb5bd !important; }
-        [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #fff !important; }
-
-        /* === ТАБЛИЦІ === */
-        [data-bs-theme="dark"] .table {
-            --bs-table-bg: transparent;
-            --bs-table-color: #e0e0e0;
-            border-color: #373b3e;
-            color: #e0e0e0 !important;
-        }
-        [data-bs-theme="dark"] .table td, [data-bs-theme="dark"] .table th {
-            color: #e0e0e0 !important;
-            border-color: #373b3e;
-        }
-
-        /* ВИПРАВЛЕННЯ БІЛОЇ ШАПКИ (Жорсткий селектор) */
-        [data-bs-theme="dark"] .table-light,
-        [data-bs-theme="dark"] .table .table-light,
-        [data-bs-theme="dark"] thead.table-light th,
-        [data-bs-theme="dark"] .table-light th,
-        [data-bs-theme="dark"] .table-light td {
-            background-color: #2b3035 !important;
-            color: #fff !important;
-            border-color: #373b3e !important;
-            box-shadow: none !important;
-        }
-
-        /* Посилання */
-        [data-bs-theme="dark"] a:not(.btn):not(.nav-link) { color: #6ea8fe; }
-        [data-bs-theme="dark"] a:not(.btn):not(.nav-link):hover { color: #9ec5fe; }
-
-        /* Фони */
-        [data-bs-theme="dark"] .bg-white { background-color: #1e1e1e !important; color: #e0e0e0 !important; }
-        [data-bs-theme="dark"] .bg-light { background-color: #2b3035 !important; color: #e0e0e0 !important; border-color: #373b3e !important; }
-
-        /* Форми */
-        [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: #2b3035; border-color: #495057; color: #fff; }
-        [data-bs-theme="dark"] .input-group-text { background-color: #343a40; border-color: #495057; color: #e0e0e0; }
-
-        .theme-toggle-btn { cursor: pointer; border: none; background: transparent; color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; padding: 0 10px; }
-        .theme-toggle-btn:hover { color: #fff; }
-
-        /* === ДРУК (PRINT) - ПОВНЕ СКИДАННЯ === */
+        /* Стилі для друку (стандартні) */
         @media print {
-            /* Скидаємо CSS змінні Bootstrap */
-            :root, body, [data-bs-theme="dark"] body {
-                --bs-body-color: #000;
-                --bs-body-bg: #fff;
-                --bs-table-color: #000;
-                --bs-table-bg: #fff;
-                color: #000 !important;
-                background-color: #fff !important;
-            }
-
-            /* Примусово все чорним */
-            * {
-                color: #000 !important;
-                background-color: transparent !important;
-                box-shadow: none !important;
-                text-shadow: none !important;
-            }
-
-            /* Таблиці - чорні межі */
-            .table, .table td, .table th {
-                border: 1px solid #000 !important;
-                color: #000 !important;
-            }
-
-            /* Специфічне виправлення для шапки при друці */
-            .table-light th, thead.table-light th, [data-bs-theme="dark"] .table-light th {
-                background-color: #f0f0f0 !important;
-                color: #000 !important;
-            }
-
-            /* Ховаємо зайве */
-            .navbar, footer, .theme-toggle-btn, .d-print-none, .btn { display: none !important; }
-            .card { border: none !important; }
+            .navbar, footer, .d-print-none, .btn { display: none !important; }
+            body { background-color: white !important; }
+            .card { border: none !important; shadow: none !important; }
         }
     </style>
 </head>
 <body>
-    <script>
-        (function() {
-            const savedTheme = localStorage.getItem('theme');
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            const theme = savedTheme ? savedTheme : systemTheme;
-            document.documentElement.setAttribute('data-bs-theme', theme);
-        })();
-    </script>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4 d-print-none">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">
                 <i class="bi bi-box-seam"></i> IT Відділ
             </a>
-            <div class="d-flex align-items-center order-lg-3 ms-lg-2">
-                <button class="theme-toggle-btn" id="themeToggle" title="Змінити тему">
-                    <i class="bi bi-circle-half"></i>
-                </button>
-                <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Головна</a></li>
@@ -145,17 +53,19 @@
             <div class="row justify-content-center">
                 <div class="col-md-6">
                     <small>&copy; {% now "Y" %} IT Asset Management System</small>
+
                     {% if disk_usage %}
                     <div class="mt-2" style="font-size: 0.75rem;">
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Сховище:</span>
+                            <span>Сховище (PythonAnywhere):</span>
                             <span class="fw-bold {% if disk_usage.is_critical %}text-danger{% endif %}">
                                 {{ disk_usage.used }} МБ / {{ disk_usage.total }} МБ
                             </span>
                         </div>
                         <div class="progress" style="height: 6px;" title="Вільно: {{ disk_usage.free }} МБ">
                             <div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar"
-                                 style="width: {{ disk_usage.percent }}%;" aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
+                                 style="width: {{ disk_usage.percent }}%;"
+                                 aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                     </div>
@@ -166,24 +76,5 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('themeToggle');
-            const icon = toggleBtn.querySelector('i');
-            const html = document.documentElement;
-            function updateIcon(theme) {
-                if (theme === 'dark') { icon.classList.remove('bi-sun-fill'); icon.classList.add('bi-moon-stars-fill'); }
-                else { icon.classList.remove('bi-moon-stars-fill'); icon.classList.add('bi-sun-fill'); }
-            }
-            updateIcon(html.getAttribute('data-bs-theme'));
-            toggleBtn.addEventListener('click', () => {
-                const currentTheme = html.getAttribute('data-bs-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                html.setAttribute('data-bs-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                updateIcon(newTheme);
-            });
-        });
-    </script>
 </body>
 </html>
