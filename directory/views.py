@@ -5,25 +5,28 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 
 def directory_list(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip().lower()  # Перетворюємо пошуковий запит у нижній регістр
     entries = PhonebookEntry.objects.all()
 
     if query:
-        entries = entries.filter(
-            Q(department__icontains=query) |
-            Q(code__icontains=query) |
-            Q(chief_name__icontains=query) |
-            Q(chief_phone__icontains=query) |
-            Q(deputy_name__icontains=query) |
-            Q(deputy_phone__icontains=query)
+        # Використовуємо Lower() для кожного поля, щоб ігнорувати регістр
+        entries = entries.annotate(
+            dept_lower=Lower('department'),
+            code_lower=Lower('code'),
+            chief_lower=Lower('chief_name'),
+            deputy_lower=Lower('deputy_name')
+        ).filter(
+            Q(dept_lower__contains=query) |
+            Q(code_lower__contains=query) |
+            Q(chief_lower__contains=query) |
+            Q(deputy_lower__contains=query)
         )
 
-    # --- ЛОГІКА ЖИВОГО ПОШУКУ (AJAX) ---
+    # Логіка для AJAX (живого пошуку)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        # Якщо це AJAX запит - повертаємо тільки рядки таблиці і БЕЗ пагінації (показуємо все знайдене)
         return render(request, 'directory/directory_rows.html', {'entries': entries})
 
-    # Стандартна логіка для повного завантаження сторінки
+    # Пагінація
     paginator = Paginator(entries, 30)
     page = request.GET.get('page')
     page_obj = paginator.get_page(page)
