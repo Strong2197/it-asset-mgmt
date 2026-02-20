@@ -223,29 +223,67 @@ document.addEventListener("DOMContentLoaded", function() {
     .animation-fade-in { animation: fadeIn 0.5s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+    /* === СТИЛІ ДЛЯ ДРУКУ === */
     @media print {
-        @page { margin: 1cm; }
+        @page { margin: 1cm; size: auto; }
+
+        /* Ховаємо все зайве */
         body * { visibility: hidden; }
+
+        /* Показуємо тільки зону друку */
         #print-area, #print-area * { visibility: visible; }
-        /* Примусово білий фон для зони друку */
+
+        /* Позиціонування на папері */
         #print-area {
-            position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0;
-            border: none !important; box-shadow: none !important;
-            background-color: white !important; /* <--- ВАЖЛИВО */
-            color: black !important;             /* <--- ВАЖЛИВО */
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border: none !important;
+            box-shadow: none !important;
+
+            /* ПРИМУСОВО БІЛИЙ ФОН І ЧОРНИЙ ТЕКСТ */
+            background-color: white !important;
+            color: black !important;
         }
 
-        .table td, .table th { font-size: 10pt !important; padding: 4px !important; }
-        .quantity-cell { font-size: 12pt !important; }
-        .dept-row { padding-top: 1px !important; padding-bottom: 1px !important; border-bottom: 1px solid #ddd !important; }
+        /* Таблиця: чорні лінії, чорний текст */
+        .table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            color: black !important;
+        }
+        .table td, .table th {
+            border: 1px solid black !important;
+            padding: 5px !important;
+            font-size: 11pt !important;
+            color: black !important;
+            background-color: transparent !important;
+        }
 
-        h3 { font-size: 16pt !important; margin-bottom: 5px !important; }
-        h5 { font-size: 12pt !important; margin-bottom: 10px !important; }
+        /* Заголовки таблиці */
+        thead tr {
+            background-color: #f0f0f0 !important; /* Світло-сірий фон для шапки */
+            -webkit-print-color-adjust: exact; /* Щоб фон надрукувався */
+        }
+
+        /* Приховуємо кнопки і посилання */
+        .d-print-none, .btn, a { display: none !important; }
+
+        /* Розміри шрифтів */
+        h3 { font-size: 16pt !important; color: black !important; }
+        h5 { font-size: 12pt !important; color: black !important; }
         .fs-5 { font-size: 11pt !important; }
 
-        .d-print-none { display: none !important; }
-        .bg-light { background-color: transparent !important; }
-        a { text-decoration: none !important; color: black !important; }
+        /* Прибираємо бейджі, залишаємо просто текст */
+        .badge {
+            border: none !important;
+            background: none !important;
+            color: black !important;
+            padding: 0 !important;
+        }
     }
 </style>
 {% endblock %}
