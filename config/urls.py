@@ -59,6 +59,7 @@ urlpatterns = [
     path('docs/', include('docs.urls')),
     path('staff/', include('staff.urls')),
     path('directory/', include('directory.urls')),
+    path('todo/', include('todo.urls')),
 ]
 
 urlpatterns += [

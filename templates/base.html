@@ -212,5 +212,85 @@
             });
         });
     </script>
+<button class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center d-print-none"
+        type="button" data-bs-toggle="offcanvas" data-bs-target="#todoOffcanvas"
+        style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; z-index: 1050;">
+    <i class="bi bi-check2-square fs-3"></i>
+</button>
+
+<div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="todoOffcanvas" style="width: 350px;">
+    <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title fw-bold"><i class="bi bi-list-check me-2"></i>Завдання</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body bg-light">
+        <div class="input-group mb-3 shadow-sm">
+            <input type="text" id="todo-input" class="form-control border-0" placeholder="Що зробити?">
+            <button class="btn btn-white bg-white border-0 text-primary" type="button" id="todo-add-btn">
+                <i class="bi bi-plus-lg fw-bold"></i>
+            </button>
+        </div>
+        <div id="todo-container">
+            <div class="text-center text-muted mt-5 empty-todo" style="display:none;">
+                <i class="bi bi-clipboard-check display-1 opacity-25"></i>
+                <p class="mt-2">Все зроблено!</p>
+            </div>
+            <div id="todo-items-list"></div>
+        </div>
+    </div>
+    {% csrf_token %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById('todo-input');
+    const list = document.getElementById('todo-items-list');
+    const empty = document.querySelector('.empty-todo');
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function loadTasks() {
+        fetch('/todo/api/get/')
+            .then(res => res.json())
+            .then(data => render(data.tasks));
+    }
+
+    function render(tasks) {
+        list.innerHTML = '';
+        empty.style.display = tasks.length ? 'none' : 'block';
+        tasks.forEach(t => {
+            const div = document.createElement('div');
+            div.className = `p-2 mb-2 bg-white rounded border shadow-sm d-flex align-items-center ${t.done ? 'opacity-50' : ''}`;
+            div.innerHTML = `
+                <input type="checkbox" class="form-check-input me-2" ${t.done ? 'checked' : ''} onclick="toggleTask(${t.id})">
+                <span class="flex-grow-1 ${t.done ? 'text-decoration-line-through' : ''}">${t.text}</span>
+                <i class="bi bi-trash text-danger ms-2" style="cursor:pointer" onclick="deleteTask(${t.id})"></i>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    window.toggleTask = (id) => {
+        fetch(`/todo/api/toggle/${id}/`, { method: 'POST', headers: {'X-CSRFToken': csrftoken} }).then(loadTasks);
+    };
+
+    window.deleteTask = (id) => {
+        if(confirm('Видалити?')) fetch(`/todo/api/delete/${id}/`, { method: 'POST', headers: {'X-CSRFToken': csrftoken} }).then(loadTasks);
+    };
+
+    document.getElementById('todo-add-btn').onclick = () => {
+        const text = input.value.trim();
+        if(!text) return;
+        let fd = new FormData(); fd.append('text', text);
+        fetch('/todo/api/add/', { method: 'POST', headers: {'X-CSRFToken': csrftoken}, body: fd }).then(() => {
+            input.value = ''; loadTasks();
+        });
+    };
+
+    input.onkeypress = (e) => { if(e.key === 'Enter') document.getElementById('todo-add-btn').click(); };
+
+    // Завантажити при відкритті
+    document.getElementById('todoOffcanvas').addEventListener('show.bs.offcanvas', loadTasks);
+});
+</script>
 </body>
 </html>

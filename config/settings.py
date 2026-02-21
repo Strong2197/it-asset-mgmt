@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'docs',
     'staff',
     'directory',
+    'todo',
 ]
 
 MIDDLEWARE = [
