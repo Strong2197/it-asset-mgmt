@@ -1,95 +1,170 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Стилі форми (ідентичні staff_form) */
+    .card-custom { border-radius: 12px; border: none; }
+
+    .form-label-small {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }
+
+    .section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Фонове виділення для блоків контактів */
+    .bg-contact-group { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; }
+</style>
+
 <div class="row justify-content-center">
-  <div class="col-md-10 col-lg-8">
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-primary text-white py-3">
-        <h4 class="mb-0"><i class="bi bi-building-add"></i> {{ title }}</h4>
-      </div>
-      <div class="card-body p-4">
-        <form method="post">
-          {% csrf_token %}
+    <div class="col-md-10 col-lg-8">
 
-          <h6 class="text-muted border-bottom pb-2 mb-3">
-            Загальна інформація
-          </h6>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Назва відділу</label>
-              {{ form.department }}
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-bold">Код відділу</label>
-              {{ form.code }}
-            </div>
-            <div class="col-md-3">
-              <label class="form-label fw-bold">Загальний Email</label>
-              {{ form.email }}
-            </div>
-          </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{% url 'directory_list' %}" class="text-decoration-none text-muted small hover-link">
+                <i class="bi bi-arrow-left me-1"></i>Назад до довідника
+            </a>
+            <h5 class="fw-bold text-dark mb-0">
+                {% if 'update' in request.path %}
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Редагування відділу
+                {% else %}
+                    <i class="bi bi-building-add text-success me-2"></i>Новий відділ
+                {% endif %}
+            </h5>
+            <div style="width: 60px;"></div>
+        </div>
 
-          <h6 class="text-primary border-bottom pb-2 mb-3 mt-4">
-            <i class="bi bi-person-fill-up"></i> Керівник
-          </h6>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold">ПІБ Начальника</label>
-              {{ form.chief_name }}
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold">Посада</label>
-              {{ form.chief_position }}
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-primary">Мобільний</label>
-              {{ form.chief_phone }}
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-success">IP Телефон</label>
-              {{ form.chief_ip }}
-            </div>
-          </div>
+        <div class="card card-custom shadow-sm">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
 
-          <h6 class="text-secondary border-bottom pb-2 mb-3 mt-4">
-            <i class="bi bi-person-fill-down"></i> Заступник
-          </h6>
-          <div class="row mb-3">
-            <div class="col-md-12">
-              <label class="form-label fw-bold">ПІБ Заступника</label>
-              {{ form.deputy_name }}
-            </div>
-          </div>
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-primary">Мобільний</label>
-              {{ form.deputy_phone }}
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-success">IP Телефон</label>
-              {{ form.deputy_ip }}
-            </div>
-          </div>
+                    <div class="section-title text-secondary">
+                        <i class="bi bi-building me-2"></i>Загальна інформація
+                    </div>
 
-          <div class="d-flex justify-content-between pt-3">
-            <a href="{% url 'directory_list' %}" class="btn btn-secondary"
-              >Скасувати</a
-            >
-            <button type="submit" class="btn btn-primary px-5">Зберегти</button>
-          </div>
-        </form>
-      </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label-small">Назва відділу</label>
+                            {{ form.department }}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label-small">Код</label>
+                            {{ form.code }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label-small">Загальний Email</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope-at"></i></span>
+                                {{ form.email }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title text-primary mt-2">
+                        <i class="bi bi-person-fill-up me-2"></i>Керівництво
+                    </div>
+
+                    <div class="bg-contact-group mb-4">
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label-small text-primary">ПІБ Начальника</label>
+                                {{ form.chief_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-small text-muted">Посада</label>
+                                {{ form.chief_position }}
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-small text-muted">Мобільний</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-phone"></i></span>
+                                    {{ form.chief_phone }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-small text-muted">IP Телефон</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-telephone-inbound"></i></span>
+                                    {{ form.chief_ip }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-title text-secondary mt-2">
+                        <i class="bi bi-person-fill-down me-2"></i>Заступник
+                    </div>
+
+                    <div class="bg-light bg-opacity-50 border rounded-3 p-3 mb-3">
+                        <div class="mb-3">
+                            <label class="form-label-small text-dark">ПІБ Заступника</label>
+                            {{ form.deputy_name }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-small text-muted">Мобільний</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-phone"></i></span>
+                                    {{ form.deputy_phone }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-small text-muted">IP Телефон</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-muted border-end-0"><i class="bi bi-telephone-inbound"></i></span>
+                                    {{ form.deputy_ip }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <a href="{% url 'directory_list' %}" class="btn btn-light px-4">
+                            Скасувати
+                        </a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Зберегти
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+
 <script>
-  $(document).ready(function () {
-    $(".phone-mask").inputmask("999-999-99-99", {
-      placeholder: "___-___-__-__",
+    $(document).ready(function () {
+        // 1. Стилізація полів (автоматично додаємо form-control-sm)
+        $('input[type="text"], input[type="email"], select').addClass('form-control form-control-sm');
+
+        // Виправляємо стилі для полів, які потрапили в input-group (прибираємо зайві рамки, якщо треба)
+        $('.input-group input').css('border-left', '0');
+
+        // 2. Маска телефону
+        // Знаходимо поля за стандартними ID Django (id_field_name) або класом
+        $("#id_chief_phone, #id_deputy_phone, .phone-mask").inputmask("999-999-99-99", {
+            placeholder: "___-___-__-__",
+            showMaskOnHover: false,
+            showMaskOnFocus: true
+        });
     });
-  });
 </script>
 {% endblock %}

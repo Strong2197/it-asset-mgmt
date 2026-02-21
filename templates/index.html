@@ -1,166 +1,199 @@
-{% extends 'base.html' %} {% block content %}
-<div class="text-center py-4">
-  <h2 class="fw-light text-secondary">Система обліку IT</h2>
-</div>
+{% extends 'base.html' %}
 
-<div class="row row-cols-1 row-cols-md-3 g-3">
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm position-relative">
-      <div class="card-body">
-        <i class="bi bi-pc-display text-primary" style="font-size: 2.5rem"></i>
-        <h5 class="card-title mt-2">Майно</h5>
+{% block content %}
+<style>
+    /* Ефект підняття картки при наведенні */
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        border-color: var(--bs-primary) !important;
+    }
 
-        <div class="mt-2 mb-2">
-          <span class="badge bg-primary">{{ assets_count }} шт.</span>
-          <div class="text-muted small mt-1" style="font-size: 0.8rem">
-            на обліку
-          </div>
+    /* Стиль для контейнера іконки */
+    .icon-square {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    /* Фонові кольори для іконок */
+    .bg-blue-subtle { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+    .bg-purple-subtle { background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+    .bg-green-subtle { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
+    .bg-orange-subtle { background-color: rgba(253, 126, 20, 0.1); color: #fd7e14; }
+    .bg-teal-subtle { background-color: rgba(32, 201, 151, 0.1); color: #20c997; }
+    .bg-gray-subtle { background-color: #e9ecef; color: #495057; }
+
+    /* Стиль для великих цифр */
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #343a40;
+        line-height: 1.2;
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+</style>
+
+<div class="py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="fw-bold text-dark mb-1">Система обліку активів</h2>
+            <p class="text-muted mb-0">Керування майном та сервісним обслуговуванням</p>
+        </div>
+        <div class="col-auto">
+            <span class="text-muted small">{% now "d.m.Y" %}</span>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-square bg-blue-subtle me-3">
+                            <i class="bi bi-pc-display"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0">Майно</h5>
+                            <span class="text-muted small">Облік техніки</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="stat-value">{{ assets_count }}</div>
+                        <div class="stat-label">одиниць на обліку</div>
+                    </div>
+
+                    <a href="/inventory/" class="stretched-link"></a>
+                </div>
+            </div>
         </div>
 
-        <a
-          href="/inventory/"
-          class="btn btn-sm btn-outline-primary stretched-link mt-2"
-          >Відкрити список</a
-        >
-      </div>
-    </div>
-  </div>
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-square bg-orange-subtle me-3">
+                            <i class="bi bi-tools"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0">Сервіс</h5>
+                            <span class="text-muted small">Ремонт та картриджі</span>
+                        </div>
+                    </div>
 
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm">
-      <div class="card-body">
-        <i class="bi bi-tools text-warning" style="font-size: 2.5rem"></i>
-        <h5 class="card-title mt-2">Сервіс</h5>
-        <p class="text-muted small mb-2" style="font-size: 0.75rem">
-          (статистика по картриджах)
-        </p>
+                    <div class="d-flex justify-content-between mt-3 text-center">
+                        <div>
+                            <div class="fw-bold fs-5 {% if waiting_for_repair > 0 %}text-danger{% else %}text-dark{% endif %}">
+                                {{ waiting_for_repair }}
+                            </div>
+                            <small class="text-muted" style="font-size: 0.7rem; display: block; line-height: 1.1;">Очікують</small>
+                        </div>
+                        <div class="vr bg-secondary opacity-25"></div>
+                        <div>
+                            <div class="fw-bold fs-5 text-primary">
+                                {{ in_repair_process }}
+                            </div>
+                            <small class="text-muted" style="font-size: 0.7rem; display: block; line-height: 1.1;">В роботі</small>
+                        </div>
+                        <div class="vr bg-secondary opacity-25"></div>
+                        <div>
+                            <div class="fw-bold fs-5 text-success">
+                                {{ ready_on_stock }}
+                            </div>
+                            <small class="text-muted" style="font-size: 0.7rem; display: block; line-height: 1.1;">Склад</small>
+                        </div>
+                    </div>
 
-        <div
-          class="mt-2 mb-2 d-flex justify-content-center gap-2 border py-1 rounded bg-light"
-        >
-          <div
-            class="px-2 {% if waiting_for_repair > 0 %}text-danger{% else %}text-muted{% endif %}"
-          >
-            <span class="fw-bold fs-5">{{ waiting_for_repair }}</span><br />
-            <small style="font-size: 0.65em; line-height: 1">очікують</small>
-          </div>
-
-          <div class="vr my-1"></div>
-
-          <div
-            class="px-2 {% if in_repair_process > 0 %}text-primary{% else %}text-muted{% endif %}"
-          >
-            <span class="fw-bold fs-5">{{ in_repair_process }}</span><br />
-            <small style="font-size: 0.65em; line-height: 1">в сервісі</small>
-          </div>
-
-          <div class="vr my-1"></div>
-
-          <div
-            class="px-2 {% if ready_on_stock > 0 %}text-success{% else %}text-muted{% endif %}"
-          >
-            <span class="fw-bold fs-5">{{ ready_on_stock }}</span><br />
-            <small style="font-size: 0.65em; line-height: 1">склад</small>
-          </div>
+                    <a href="/service/" class="stretched-link"></a>
+                </div>
+            </div>
         </div>
 
-        <a
-          href="/service/"
-          class="btn btn-sm btn-outline-warning text-dark stretched-link mt-1"
-          >Журнал робіт</a
-        >
-      </div>
-    </div>
-  </div>
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-square bg-purple-subtle me-3">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0">Персонал</h5>
+                            <span class="text-muted small">Штатний розпис</span>
+                        </div>
+                    </div>
 
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm position-relative">
-      <div class="card-body">
-        <i class="bi bi-people-fill text-info" style="font-size: 2.5rem"></i>
-        <h5 class="card-title mt-2">Штатний розпис</h5>
+                    <div class="mt-3">
+                        <div class="stat-value">{{ employees_count }}</div>
+                        <div class="stat-label">працівників</div>
+                    </div>
 
-        <div class="mt-2 mb-2">
-          <span class="badge bg-info text-dark"
-            >{{ employees_count }} осіб</span
-          >
-          <div class="text-muted small mt-1" style="font-size: 0.8rem">
-            працівників
-          </div>
+                    <a href="{% url 'staff_list' %}" class="stretched-link"></a>
+                </div>
+            </div>
         </div>
 
-        <a
-          href="{% url 'staff_list' %}"
-          class="btn btn-sm btn-outline-info text-dark stretched-link mt-2"
-          >Керувати</a
-        >
-      </div>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm position-relative">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <div class="mb-2">
-          <i class="bi bi-files text-secondary" style="font-size: 2.5rem"></i>
-        </div>
-        <h5 class="card-title">Історія актів</h5>
-        <p class="text-muted small mb-0" style="font-size: 0.8rem">
-          Архів документів
-        </p>
-        <a
-          href="/service/reports/"
-          class="btn btn-sm btn-outline-secondary stretched-link mt-3"
-          >Перейти</a
-        >
-      </div>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm position-relative">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <div class="mb-2">
-          <i
-            class="bi bi-journal-bookmark-fill text-primary"
-            style="font-size: 2.5rem"
-          ></i>
-        </div>
-        <h5 class="card-title">Довідник</h5>
-        <p class="text-muted small mb-0" style="font-size: 0.8rem">
-          Телефонна книга
-        </p>
-        <a
-          href="{% url 'directory_list' %}"
-          class="btn btn-sm btn-outline-primary stretched-link mt-3"
-          >Відкрити</a
-        >
-      </div>
-    </div>
-  </div>
-
-  <div class="col">
-    <div class="card h-100 text-center p-3 shadow-sm position-relative">
-      <div class="card-body">
-        <i
-          class="bi bi-folder2-open text-success"
-          style="font-size: 2.5rem"
-        ></i>
-        <h5 class="card-title mt-2">Файли</h5>
-
-        <div class="mt-2 mb-2">
-          <span class="badge bg-success">Документи</span>
-          <div class="text-muted small mt-1" style="font-size: 0.8rem">
-            інструкції
-          </div>
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="icon-square bg-gray-subtle me-3">
+                        <i class="bi bi-archive"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-title fw-bold mb-1">Архів актів</h6>
+                        <p class="text-muted small mb-0">Історія передачі техніки</p>
+                    </div>
+                    <a href="/service/reports/" class="stretched-link"></a>
+                    <i class="bi bi-chevron-right ms-auto text-muted small"></i>
+                </div>
+            </div>
         </div>
 
-        <a
-          href="/docs/"
-          class="btn btn-sm btn-outline-success stretched-link mt-2"
-          >Перейти</a
-        >
-      </div>
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="icon-square bg-teal-subtle me-3">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-title fw-bold mb-1">Довідник</h6>
+                        <p class="text-muted small mb-0">Контакти та відділи</p>
+                    </div>
+                    <a href="{% url 'directory_list' %}" class="stretched-link"></a>
+                    <i class="bi bi-chevron-right ms-auto text-muted small"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card h-100 border-0 shadow-sm hover-lift position-relative">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="icon-square bg-green-subtle me-3">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                    <div>
+                        <h6 class="card-title fw-bold mb-1">Файли</h6>
+                        <p class="text-muted small mb-0">Інструкції та документи</p>
+                    </div>
+                    <a href="/docs/" class="stretched-link"></a>
+                    <i class="bi bi-chevron-right ms-auto text-muted small"></i>
+                </div>
+            </div>
+        </div>
+
     </div>
-  </div>
 </div>
 {% endblock %}

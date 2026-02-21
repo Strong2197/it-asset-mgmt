@@ -2,88 +2,255 @@
 
 {% block content %}
 <style>
-    /* Стилі для перетворення таблиці в картки на мобільних (менше 768px) */
-    @media (max-width: 767.98px) {
-        /* Ховаємо шапку таблиці */
-        .table-responsive thead {
-            display: none;
-        }
+    /* === Базові стилі === */
+    .card-custom { border-radius: 12px; border: none; }
 
-        /* Робимо кожен рядок схожим на окрему картку */
-        .table-responsive tbody tr {
-            display: block;
-            margin-bottom: 1rem;
-            border: 1px solid #dee2e6;
-            border-radius: 12px;
-            background: #fff;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        /* Кожна комірка стає блоком на всю ширину */
-        .table-responsive tbody td {
-            display: block;
-            width: 100% !important;
-            padding: 8px 12px !important;
-            border: none !important;
-            text-align: left !important;
-        }
-
-        /* Додаємо роздільну лінію між блоками всередині картки */
-        .table-responsive tbody td:not(:last-child) {
-            border-bottom: 1px solid #f8f9fa !important;
-        }
-
-        /* Вирівнюємо кнопки дій */
-        .table-responsive tbody td.text-end {
-            text-align: right !important;
-            background: #f8f9fa;
-            border-radius: 0 0 10px 10px;
-        }
+    /* Іконка відділу (зменшена для акуратності) */
+    .dept-icon-box {
+        width: 38px; height: 38px;
+        background-color: #f0f4ff; color: #0d6efd;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; font-size: 1.1rem;
+        margin-right: 12px; flex-shrink: 0;
+        border: 1px solid #cfe2ff;
     }
 
-    .hover-link:hover { text-decoration: underline !important; color: #0d6efd !important; }
-    .tel-link { font-size: 1.1rem; } /* Трохи більший шрифт для зручності на мобілці */
+    /* Кнопки дій */
+    .btn-light-action {
+        background: #fff; border: 1px solid #dee2e6; color: #6c757d;
+        width: 32px; height: 32px; padding: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 6px; transition: all 0.2s;
+    }
+    .btn-light-action:hover { background: #f8f9fa; border-color: #c1c9d0; color: #000; transform: translateY(-1px); }
+    .btn-light-action.btn-danger-hover:hover { background: #fff5f5; border-color: #ffc9c9; color: #dc3545; }
+
+    /* Стилі для телефонів */
+    .phone-link {
+        text-decoration: none; color: #212529; font-weight: 500;
+        font-size: 0.9rem; transition: color 0.2s;
+        display: inline-flex; align-items: center; white-space: nowrap;
+    }
+    .phone-link:hover { color: #0d6efd; text-decoration: underline; }
+    .phone-link i { margin-right: 5px; }
+
+    /* Специфічні іконки */
+    .icon-mobile { color: #0d6efd; }
+    .icon-ip { color: #198754; }
+
+    /* === АДАПТАЦІЯ === */
+    @media (min-width: 992px) {
+        /* На великих екранах вирівнюємо висоту блоків */
+        .person-block { min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+        .contact-block { min-height: 60px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+    }
+
+    @media (max-width: 991px) {
+        .mobile-table thead { display: none; }
+        .mobile-table tbody, .mobile-table tr, .mobile-table td { display: block; width: 100%; }
+
+        .mobile-table tr {
+            margin-bottom: 1rem; background: #fff;
+            border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow: hidden;
+        }
+
+        /* Заголовок картки */
+        .mobile-table td[data-label="Відділ"] {
+            background-color: #f8f9fa; border-bottom: 1px solid #e9ecef; padding: 12px 15px;
+        }
+        .mobile-table td[data-label="Відділ"] .dept-icon-box { display: none; } /* Ховаємо іконку на мобільному */
+
+        .dept-title-mobile { font-size: 1.1rem; font-weight: 800; display: block; }
+
+        /* Вміст (Керівництво) */
+        .mobile-table td[data-label="Керівництво"] {
+            padding: 15px; border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Ховаємо окрему колонку контактів на мобільному, бо ми перенесли телефони в блок керівництва */
+        .mobile-table td[data-label="Контакти"] { display: none; }
+
+        /* Кнопки */
+        .mobile-table td[data-label="Дії"] {
+            display: flex; justify-content: flex-end; gap: 10px; background: #fff; padding: 10px 15px;
+        }
+
+        /* Відступи для блоків персоналу на мобільному */
+        .person-block { margin-bottom: 15px; }
+        .person-block:last-child { margin-bottom: 0; }
+
+        /* На мобільному контакти відображаються всередині блоку керівництва */
+        .mobile-contacts-view { display: block !important; margin-top: 5px; }
+        .desktop-contacts-view { display: none !important; }
+    }
+
+    @media (min-width: 992px) {
+        .mobile-contacts-view { display: none !important; }
+        .desktop-contacts-view { display: block !important; }
+    }
+
+    .loading-opacity { opacity: 0.5; pointer-events: none; transition: opacity 0.2s ease-in-out; }
 </style>
 
 <div class="row justify-content-center">
-    <div class="col-md-12">
-        <div class="card shadow-sm border-0 bg-transparent">
+    <div class="col-12">
 
-            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <h4 class="mb-0 text-primary">
-                        <i class="bi bi-journal-bookmark-fill"></i> Довідник
-                    </h4>
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center mb-4 gap-3">
+            <div class="text-center text-lg-start">
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="bi bi-building text-primary me-2"></i>Телефонний довідник
+                </h3>
+                <p class="text-muted small mb-0">Контакти відділів та керівництва</p>
+            </div>
 
-                    <div class="d-flex gap-2 w-100 w-md-auto justify-content-md-end">
-                        <div class="d-flex input-group shadow-sm" style="max-width: 300px;">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                            <input type="text" id="liveSearchInput" value="{{ query }}" class="form-control border-start-0" placeholder="Швидкий пошук..." autocomplete="off">
-                        </div>
+            <div class="d-flex flex-column flex-md-row gap-2 align-items-center w-100 w-lg-auto">
+                <div class="input-group input-group-sm shadow-sm" style="min-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="directory-search" value="{{ query }}" class="form-control border-start-0 ps-0" placeholder="Пошук відділу або прізвища..." autocomplete="off">
+                </div>
 
-                        <a href="{% url 'directory_create' %}" class="btn btn-success">
-                            <i class="bi bi-plus-lg"></i>
-                        </a>
-                    </div>
+                <a href="{% url 'directory_create' %}" class="btn btn-primary btn-sm shadow-sm fw-semibold px-3 d-none d-md-flex align-items-center" style="height: 31px;">
+                    <i class="bi bi-plus-lg me-1"></i> Додати
+                </a>
+                <a href="{% url 'directory_create' %}" class="btn btn-primary shadow-sm w-100 d-md-none mt-2">
+                    <i class="bi bi-plus-lg me-1"></i> Додати відділ
+                </a>
+            </div>
+        </div>
+
+        <div class="card card-custom shadow-sm">
+
+            <div id="table-container" class="card-body p-0 position-relative">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 mobile-table">
+                        <thead class="bg-light border-bottom">
+                            <tr>
+                                <th class="ps-4 py-3 text-secondary text-uppercase x-small fw-bold" style="width: 30%; font-size: 0.75rem;">Відділ / Код</th>
+                                <th class="py-3 text-secondary text-uppercase x-small fw-bold" style="width: 35%; font-size: 0.75rem;">Керівництво</th>
+                                <th class="py-3 text-secondary text-uppercase x-small fw-bold" style="width: 25%; font-size: 0.75rem;">Контакти</th>
+                                <th class="pe-4 py-3 text-end text-secondary text-uppercase x-small fw-bold" style="width: 10%; font-size: 0.75rem;">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="directory-tbody">
+                            {% for item in entries %}
+                            <tr>
+                                <td class="ps-4" data-label="Відділ">
+                                    <div class="d-flex align-items-start">
+                                        <div class="dept-icon-box d-none d-lg-flex">
+                                            <i class="bi bi-building"></i>
+                                        </div>
+                                        <div>
+                                            <span class="dept-title-mobile text-dark fw-bold" style="line-height: 1.3;">{{ item.department }}</span>
+
+                                            <div class="mt-1 d-flex flex-column gap-1">
+                                                {% if item.code %}
+                                                    <div><span class="badge bg-light text-secondary border fw-normal">Код: {{ item.code }}</span></div>
+                                                {% endif %}
+                                                {% if item.email %}
+                                                    <div>
+                                                        <a href="mailto:{{ item.email }}" class="text-decoration-none small text-muted">
+                                                            <i class="bi bi-envelope me-1"></i>{{ item.email }}
+                                                        </a>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td data-label="Керівництво">
+                                    <div class="d-flex flex-column gap-3">
+
+                                        {% if item.chief_name %}
+                                        <div class="person-block">
+                                            <div class="fw-bold text-dark">{{ item.chief_name }}</div>
+                                            <div class="small text-muted">{{ item.chief_position|default:"Керівник" }}</div>
+
+                                            <div class="mobile-contacts-view mt-1">
+                                                {% if item.chief_phone %}
+                                                    <div><a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.chief_phone }}</a></div>
+                                                {% endif %}
+                                                {% if item.chief_ip %}
+                                                    <div><span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.chief_ip }}</span></div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if item.deputy_name %}
+                                        <div class="person-block pt-2 border-top border-light-subtle">
+                                            <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Заступник</div>
+                                            <div class="fw-medium text-dark">{{ item.deputy_name }}</div>
+
+                                            <div class="mobile-contacts-view mt-1">
+                                                {% if item.deputy_phone %}
+                                                    <div><a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.deputy_phone }}</a></div>
+                                                {% endif %}
+                                                {% if item.deputy_ip %}
+                                                    <div><span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.deputy_ip }}</span></div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <td class="desktop-contacts-view">
+                                    <div class="d-flex flex-column gap-3">
+                                        {% if item.chief_name %}
+                                        <div class="contact-block">
+                                            {% if item.chief_phone %}
+                                                <div><a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.chief_phone }}</a></div>
+                                            {% endif %}
+                                            {% if item.chief_ip %}
+                                                <div><span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.chief_ip }}</strong></span></div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+
+                                        {% if item.deputy_name %}
+                                        <div class="contact-block pt-2 border-top border-light-subtle">
+                                            {% if item.deputy_phone %}
+                                                <div><a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.deputy_phone }}</a></div>
+                                            {% endif %}
+                                            {% if item.deputy_ip %}
+                                                <div><span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.deputy_ip }}</strong></span></div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
+                                <td class="text-end pe-4" data-label="Дії">
+                                    <div class="d-flex gap-2 justify-content-end w-100">
+                                        <a href="{% url 'directory_update' item.pk %}" class="btn-light-action text-primary flex-fill flex-lg-grow-0" title="Редагувати">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn-light-action btn-danger-hover text-danger flex-fill flex-lg-grow-0" onclick="confirmDelete('{{ item.pk }}', '{{ item.department|escapejs }}')" title="Видалити">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="text-muted mb-2"><i class="bi bi-search fs-1 opacity-25"></i></div>
+                                    <span class="text-muted">Записів не знайдено.</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="card-body p-0 bg-transparent">
-                <div class="table-responsive bg-transparent">
-                    <table class="table table-hover align-middle mb-0 bg-white shadow-sm rounded-3">
-                        <thead class="table-light text-secondary d-none d-md-table-header-group">
-                            <tr>
-                                <th class="ps-4" style="width: 30%;">Відділ / Код</th>
-                                <th style="width: 35%;">Керівництво</th>
-                                <th style="width: 25%;">Контакти</th>
-                                <th class="text-end pe-4" style="width: 10%;">Дії</th>
-                            </tr>
-                        </thead>
-                        <tbody id="directoryTableBody">
-                            {% include 'directory/directory_rows.html' %}
-                        </tbody>
-                    </table>
+            <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-bottom-3">
+                <div class="d-flex justify-content-start align-items-center">
+                    <small class="text-muted">
+                        Всього записів: <strong>{{ entries|length }}</strong>
+                    </small>
                 </div>
             </div>
         </div>
@@ -94,15 +261,19 @@
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="" id="deleteForm">
             {% csrf_token %}
-            <div class="modal-content shadow">
-                <div class="modal-body text-center p-4">
-                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                    <h5 class="mt-3">Видалити запис?</h5>
-                    <p class="text-muted"><strong id="deleteName"></strong> буде видалено назавжди.</p>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Видалення запису</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-footer justify-content-center border-top-0 pb-4">
+                <div class="modal-body p-4 text-center">
+                    <p class="mb-2">Ви впевнені, що хочете видалити відділ:</p>
+                    <h5 class="fw-bold text-danger mb-3" id="deleteName"></h5>
+                    <p class="small text-muted mb-0">Цю дію неможливо скасувати.</p>
+                </div>
+                <div class="modal-footer justify-content-center border-top-0 pt-0 pb-4">
                     <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger px-4">Так, видалити</button>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">Так, видалити</button>
                 </div>
             </div>
         </form>
@@ -110,33 +281,52 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('liveSearchInput');
-    const tableBody = document.getElementById('directoryTableBody');
-    let timeout = null;
-
-    searchInput.addEventListener('input', function() {
-        clearTimeout(timeout);
-        const query = this.value;
-
-        timeout = setTimeout(() => {
-            fetch(`{% url 'directory_list' %}?q=${encodeURIComponent(query)}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.text())
-            .then(html => {
-                tableBody.innerHTML = html;
-            })
-            .catch(err => console.error('Помилка:', err));
-        }, 200);
-    });
-});
-
 function confirmDelete(pk, name) {
     const form = document.getElementById('deleteForm');
     form.action = "{% url 'directory_delete' 0 %}".replace('0', pk);
     document.getElementById('deleteName').textContent = name;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById('directory-search');
+    const tableContainer = document.getElementById('table-container');
+    const tableBody = document.getElementById('directory-tbody');
+    let debounceTimer;
+
+    function fetchResults(query) {
+        const url = `?q=${encodeURIComponent(query)}`;
+        if (tableContainer) tableContainer.classList.add('loading-opacity');
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newTbody = doc.getElementById('directory-tbody');
+                if (newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+                const newCounter = doc.querySelector('#pagination-container strong');
+                const currentCounter = document.querySelector('#pagination-container strong');
+                if (newCounter && currentCounter) {
+                    currentCounter.innerHTML = newCounter.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => {
+                if (tableContainer) tableContainer.classList.remove('loading-opacity');
+            });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchResults(query);
+            }, 300);
+        });
+    }
+});
 </script>
 {% endblock %}

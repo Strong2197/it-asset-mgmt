@@ -2,163 +2,179 @@
 
 {% block content %}
 <style>
-    /* Мобільні стилі */
+    /* === Стилі для мобільної таблиці (ідентичні staff_list) === */
     @media (max-width: 768px) {
         .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
             display: block; width: 100%;
         }
         .mobile-table tr {
-            margin-bottom: 15px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 15px;
+            margin-bottom: 1rem; background: #fff;
+            border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden;
         }
         .mobile-table td {
-            text-align: right;
-            padding-left: 45%;
-            position: relative;
-            border-bottom: 1px solid #f0f0f0;
-            padding-top: 10px; padding-bottom: 10px;
+            text-align: right; padding-left: 1rem; position: relative;
+            border-bottom: 1px solid #f1f5f9; padding: 0.75rem 1rem;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .mobile-table td:last-child {
-            border-bottom: 0;
-            justify-content: flex-end;
-            padding-top: 15px;
-            display: flex; gap: 8px; flex-wrap: wrap; /* Кнопки можуть переноситись */
+            border-bottom: 0; justify-content: flex-end; padding-top: 1rem; gap: 0.5rem;
         }
         .mobile-table td::before {
-            content: attr(data-label);
-            position: absolute; left: 0; width: 40%;
-            padding-left: 0; font-weight: 600; text-align: left;
-            color: #6c757d; font-size: 0.9em; text-transform: uppercase;
+            content: attr(data-label); font-weight: 600; color: #64748b; font-size: 0.85rem;
         }
-
-        /* Виділимо назву файлу на мобільному */
-        .doc-title-mobile {
-            font-size: 1.1em;
-            color: #198754;
-        }
+        .doc-title-mobile { font-size: 1.1rem; color: #198754; font-weight: 700; }
     }
+
+    /* === Десктопні стилі === */
+    .card-custom { border-radius: 12px; border: none; }
+
+    /* Іконка файлу (замість аватара) */
+    .file-icon-box {
+        width: 38px; height: 38px;
+        background-color: #f8f9fa;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 8px; font-size: 1.1rem;
+        margin-right: 12px; flex-shrink: 0;
+        border: 1px solid #e9ecef;
+    }
+
+    /* Кнопки дій */
+    .btn-light-action {
+        background: #fff; border: 1px solid #dee2e6; color: #6c757d;
+        width: 32px; height: 32px; padding: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 6px; transition: all 0.2s;
+    }
+    .btn-light-action:hover { background: #f8f9fa; border-color: #c1c9d0; color: #000; transform: translateY(-1px); }
+    .btn-light-action.btn-danger-hover:hover { background: #fff5f5; border-color: #ffc9c9; color: #dc3545; }
+    .btn-light-action.btn-success-hover:hover { background: #f0fff4; border-color: #bbf7d0; color: #198754; }
 </style>
 
 <div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card shadow-sm border-0 bg-transparent">
+    <div class="col-12">
 
-            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                    <h4 class="mb-0 text-success text-nowrap">
-                        <i class="bi bi-folder2-open"></i> Файлове сховище
-                    </h4>
-                    <div class="d-flex flex-column flex-sm-row gap-2 w-100 justify-content-md-end">
-                        <div class="input-group w-100" style="max-width: 100%; md:max-width: 250px;">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" id="doc-search" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
-                        </div>
-                        <a href="{% url 'doc_create' %}" class="btn btn-success text-nowrap w-100 w-sm-auto">
-                            <i class="bi bi-plus-lg"></i> Додати
-                        </a>
-                    </div>
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center mb-4 gap-3">
+
+            <div class="text-center text-lg-start">
+                <h3 class="fw-bold text-dark mb-1">
+                    <i class="bi bi-folder2-open text-success me-2"></i>Файлове сховище
+                </h3>
+                <p class="text-muted small mb-0">Інструкції, драйвери та шаблони документів</p>
+            </div>
+
+            <div class="d-flex flex-column flex-md-row gap-2 align-items-center w-100 w-lg-auto">
+
+                <div class="input-group input-group-sm shadow-sm" style="min-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0 ps-3"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="doc-search" class="form-control border-start-0 ps-0" placeholder="Пошук файлу..." autocomplete="off">
+                </div>
+
+                <a href="{% url 'doc_create' %}" class="btn btn-success btn-sm shadow-sm fw-semibold px-3 d-none d-md-flex align-items-center" style="height: 31px;">
+                    <i class="bi bi-plus-lg me-1"></i> Додати
+                </a>
+                <a href="{% url 'doc_create' %}" class="btn btn-success shadow-sm w-100 d-md-none mt-2">
+                    <i class="bi bi-plus-lg me-1"></i> Додати файл
+                </a>
+            </div>
+        </div>
+
+        <div class="card card-custom shadow-sm">
+
+            <div class="card-body p-0 position-relative">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 mobile-table">
+                        <thead class="bg-light border-bottom">
+                            <tr>
+                                <th class="ps-4 py-3 text-secondary text-uppercase x-small fw-bold" style="font-size: 0.75rem;">Назва / Посилання</th>
+                                <th class="py-3 text-secondary text-uppercase x-small fw-bold" style="font-size: 0.75rem;">Тип</th>
+                                <th class="py-3 text-secondary text-uppercase x-small fw-bold" style="font-size: 0.75rem;">Опис</th>
+                                <th class="py-3 text-secondary text-uppercase x-small fw-bold" style="font-size: 0.75rem;">Дата</th>
+                                <th class="pe-4 py-3 text-end text-secondary text-uppercase x-small fw-bold" style="font-size: 0.75rem;">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr>
+                                <td class="ps-4" data-label="Файл">
+                                    <div class="d-flex align-items-center justify-content-end justify-content-md-start">
+                                        <div class="file-icon-box d-none d-md-flex">
+                                            {% if doc.doc_type == 'driver' %}<i class="bi bi-hdd-network text-primary"></i>
+                                            {% elif doc.doc_type == 'instruction' %}<i class="bi bi-book text-warning"></i>
+                                            {% elif doc.doc_type == 'template' %}<i class="bi bi-file-earmark-text text-info"></i>
+                                            {% else %}<i class="bi bi-link-45deg text-secondary"></i>{% endif %}
+                                        </div>
+                                        <div>
+                                            <a href="{{ doc.google_drive_link }}" target="_blank" class="doc-title-mobile d-block text-dark text-decoration-none fw-semibold">
+                                                {{ doc.title }} <i class="bi bi-box-arrow-up-right text-muted x-small ms-1"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td data-label="Тип">
+                                    <span class="badge bg-light text-dark border fw-normal">
+                                        {{ doc.get_doc_type_display }}
+                                    </span>
+                                </td>
+
+                                <td data-label="Опис">
+                                    <div class="small text-muted text-truncate" style="max-width: 300px;" title="{{ doc.description }}">
+                                        {{ doc.description|default:"-" }}
+                                    </div>
+                                </td>
+
+                                <td data-label="Дата">
+                                    <div class="small text-secondary">{{ doc.created_at|date:"d.m.Y" }}</div>
+                                </td>
+
+                                <td class="text-end pe-4" data-label="Дії">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <a href="{{ doc.google_drive_link }}" target="_blank" class="btn-light-action btn-success-hover text-success" title="Відкрити">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                        <a href="{% url 'doc_update' doc.pk %}" class="btn-light-action text-primary" title="Редагувати">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button type="button" class="btn-light-action btn-danger-hover text-danger" onclick="openDeleteModal('{{ doc.pk }}', '{{ doc.title }}')" title="Видалити">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-5 text-muted bg-light">Записів немає.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="card-body p-0 bg-transparent">
-                <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
-                    <thead class="table-light text-secondary">
-                        <tr>
-                            <th class="ps-4">Назва / Посилання</th>
-                            <th>Тип</th>
-                            <th>Опис</th>
-                            <th>Дата</th>
-                            <th class="text-end pe-4">Дії</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for doc in documents %}
-                        <tr>
-                            <td class="ps-4" data-label="Файл">
-                                <div class="d-flex align-items-center justify-content-end justify-content-md-start">
-                                    <span class="me-2 d-none d-md-inline">
-                                        {% if doc.doc_type == 'driver' %}<i class="bi bi-hdd-network fs-4 text-primary"></i>
-                                        {% elif doc.doc_type == 'instruction' %}<i class="bi bi-book fs-4 text-warning"></i>
-                                        {% elif doc.doc_type == 'template' %}<i class="bi bi-file-earmark-text fs-4 text-info"></i>
-                                        {% else %}<i class="bi bi-link-45deg fs-4 text-secondary"></i>{% endif %}
-                                    </span>
-
-                                    <a href="{{ doc.google_drive_link }}" target="_blank" class="text-decoration-none fw-bold text-dark doc-title-mobile">
-                                        {{ doc.title }}
-                                        <i class="bi bi-box-arrow-up-right small text-muted ms-1" style="font-size: 0.7em;"></i>
-                                    </a>
-                                </div>
-                            </td>
-
-                            <td data-label="Тип">
-                                <span class="badge bg-light text-dark border">{{ doc.get_doc_type_display }}</span>
-                            </td>
-
-                            <td class="text-muted small" data-label="Опис" style="white-space: pre-wrap;">{{ doc.description|default:"-" }}</td>
-
-                            <td data-label="Дата">
-                                {{ doc.created_at|date:"d.m.Y" }}
-                            </td>
-
-                            <td class="text-end pe-4" data-label="Дії">
-                                <a href="{{ doc.google_drive_link }}" target="_blank" class="btn btn-outline-success btn-sm flex-fill" title="Відкрити">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                </a>
-
-                                <a href="{% url 'doc_update' doc.pk %}" class="btn btn-outline-primary btn-sm flex-fill" title="Редагувати">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
-                                <button type="button"
-                                        class="btn btn-outline-danger btn-sm flex-fill"
-                                        onclick="openDeleteModal('{{ doc.pk }}', '{{ doc.title }}')"
-                                        title="Видалити">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted" data-label="Інфо">
-                                Записів немає.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <small class="text-muted">Всього записів: <span id="file-count">{{ documents.count }}</span></small>
+            <div class="card-footer bg-white border-top-0 py-3 rounded-bottom-3">
+                <small class="text-muted">Всього файлів: <strong id="file-count">{{ documents.count }}</strong></small>
             </div>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="" id="deleteForm">
             {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Видалення файлу</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Видалення</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Ви впевнені, що хочете видалити цей запис?</p>
-                    <p class="fw-bold fs-5 text-danger" id="modalDocTitle"></p>
-                    <p class="small text-muted">Цю дію неможливо скасувати.</p>
+                <div class="modal-body p-4">
+                    <p>Ви впевнені, що хочете видалити файл?</p>
+                    <p class="fw-bold fs-5 text-danger mb-3" id="modalDocTitle"></p>
+                    <p class="small text-muted mb-0">Цю дію неможливо скасувати.</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger">Так, видалити</button>
+                <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-danger shadow-sm fw-bold">Видалити</button>
                 </div>
             </div>
         </form>
@@ -188,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
-                if (row.cells.length < 2) continue;
+                if (row.cells.length < 2) continue; // Skip header or empty rows if structurally different
 
                 const text = row.textContent.toLowerCase();
                 if (text.includes(filter)) {

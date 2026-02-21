@@ -2,175 +2,225 @@
 
 {% block content %}
 <style>
-    /* Мобільні стилі */
+    /* Стилі для мобільної версії таблиці */
     @media (max-width: 768px) {
         .mobile-table thead { display: none; }
         .mobile-table, .mobile-table tbody, .mobile-table tr, .mobile-table td {
             display: block; width: 100%;
         }
         .mobile-table tr {
-            margin-bottom: 15px; background: #fff;
-            border: 1px solid #ddd; border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 15px;
+            margin-bottom: 1rem;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
         .mobile-table td {
-            text-align: right; padding-left: 50%; position: relative;
-            border-bottom: 1px solid #eee; padding-top: 10px; padding-bottom: 10px;
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 0.75rem 1rem;
         }
         .mobile-table td:last-child {
-            border-bottom: 0; display: flex; justify-content: flex-end; gap: 10px; padding-top: 15px;
+            border-bottom: 0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background-color: #f8fafc;
         }
         .mobile-table td::before {
-            content: attr(data-label); position: absolute; left: 0; width: 45%;
-            padding-left: 0; font-weight: bold; text-align: left; color: #6c757d;
+            content: attr(data-label);
+            position: absolute;
+            left: 1rem;
+            width: 45%;
+            font-weight: 600;
+            text-align: left;
+            color: #64748b;
+            font-size: 0.85rem;
         }
-        .asset-name-mobile { font-size: 1.1em; color: #0d6efd; }
+        .asset-main-info {
+            font-weight: 600;
+            color: #334155;
+        }
     }
 
-    /* Ефект завантаження */
-    .loading-opacity {
-        opacity: 0.5;
+    /* Ефект завантаження для таблиці */
+    .loading-overlay {
+        position: relative;
+    }
+    .loading-overlay::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 10;
+        opacity: 0;
         pointer-events: none;
-        transition: opacity 0.2s ease-in-out;
+        transition: opacity 0.2s;
+    }
+    .loading .loading-overlay::after {
+        opacity: 1;
+        pointer-events: all;
     }
 </style>
 
 <div class="row justify-content-center">
-    <div class="col-md-12">
-        <div class="card shadow-sm border-0 bg-transparent">
-            <div class="card-header bg-white py-3 rounded-3 shadow-sm mb-3">
-                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3">
+    <div class="col-12">
 
-                    <h4 class="mb-0 text-nowrap {% if show_archived == 'true' %}text-secondary{% else %}text-primary{% endif %}">
-                        {% if show_archived == 'true' %}
-                            <i class="bi bi-archive"></i> Архів
-                        {% else %}
-                            <i class="bi bi-box-seam"></i> Майно
-                        {% endif %}
-                    </h4>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+            <div>
+                <h2 class="fw-bold mb-1 text-dark">
+                    {% if show_archived == 'true' %}
+                        <i class="bi bi-archive text-secondary me-2"></i>Архів майна
+                    {% else %}
+                        <i class="bi bi-box-seam text-primary me-2"></i>Майно
+                    {% endif %}
+                </h2>
+                <p class="text-muted mb-0 small">Керування матеріальними цінностями</p>
+            </div>
 
-                    <div class="d-flex flex-wrap flex-lg-nowrap align-items-center gap-2 w-100 justify-content-lg-end justify-content-center">
-                        <div class="btn-group flex-fill flex-lg-grow-0" role="group">
-                            <a href="?archived=false" class="btn btn-sm {% if show_archived == 'false' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                                Активні
-                            </a>
-                            <a href="?archived=true" class="btn btn-sm {% if show_archived == 'true' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
-                                Архів
-                            </a>
-                        </div>
+            <div class="bg-white p-1 rounded-3 border shadow-sm d-inline-flex">
+                <a href="?archived=false" class="btn btn-sm px-3 {% if show_archived == 'false' %}btn-primary fw-semibold shadow-sm{% else %}text-muted hover-bg-light{% endif %}" style="border-radius: 8px;">
+                    Активні
+                </a>
+                <a href="?archived=true" class="btn btn-sm px-3 {% if show_archived == 'true' %}btn-secondary fw-semibold shadow-sm{% else %}text-muted hover-bg-light{% endif %}" style="border-radius: 8px;">
+                    Архів
+                </a>
+            </div>
+        </div>
 
-                        <select id="type-filter" class="form-select bg-light flex-fill flex-lg-grow-0" style="min-width: 150px;">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-3">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <select id="type-filter" class="form-select border-0 bg-light">
                             <option value="all" {% if current_category == 'all' %}selected{% endif %}>Всі категорії</option>
                             {% for cat in categories %}
                                 <option value="{{ cat.id }}" {% if current_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
 
-                        <div class="input-group flex-fill flex-lg-grow-0" style="min-width: 200px;">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="bi bi-search"></i>
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 ps-3">
+                                <i class="bi bi-search text-muted"></i>
                             </span>
-                            <input type="text" id="main-search" value="{{ search_query }}" class="form-control border-start-0 bg-light" placeholder="Пошук..." autocomplete="off">
+                            <input type="text" id="main-search" value="{{ search_query }}" class="form-control border-0 bg-light" placeholder="Пошук за назвою, інв. номером..." autocomplete="off">
                         </div>
+                    </div>
 
-                        <div class="d-flex gap-2">
-                            <button onclick="exportData()" class="btn btn-outline-success" title="Excel">
-                                <i class="bi bi-file-earmark-excel"></i>
-                            </button>
+                    <div class="col-md-4 text-md-end d-flex justify-content-md-end gap-2">
+                        <button onclick="exportData()" class="btn btn-outline-success" title="Експорт в Excel">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Excel
+                        </button>
 
-                            {% if show_archived == 'false' %}
-                            <a href="{% url 'asset_create' %}" class="btn btn-primary text-nowrap">
-                                <i class="bi bi-plus-lg"></i> <span class="d-none d-md-inline">Додати</span>
-                            </a>
-                            {% endif %}
-                        </div>
+                        {% if show_archived == 'false' %}
+                        <a href="{% url 'asset_create' %}" class="btn btn-primary shadow-sm">
+                            <i class="bi bi-plus-lg me-1"></i> Додати
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div id="table-container" class="card-body p-0 bg-transparent">
-                <table class="table table-hover align-middle mb-0 mobile-table bg-white rounded-3 shadow-sm" style="overflow: hidden;">
-                    <thead class="table-light text-secondary">
+        <div id="table-container" class="card border-0 shadow-sm loading-overlay">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 mobile-table">
+                    <thead>
                         <tr>
-                            <th class="ps-4">Баркод</th>
-                            <th>Інв. номер</th>
-                            <th>Назва</th>
-                            <th>Рахунок</th>
+                            <th class="ps-4" style="width: 15%;">Баркод / Інв. №</th>
+
+                            <th style="width: 45%;">Назва / Категорія</th>
+
+                            <th class="text-center" style="width: 10%;">Рахунок</th>
+
                             {% if show_archived == 'true' %}
-                                <th>Причина</th>
-                                <th>Дата</th>
+                                <th style="width: 15%;">Причина</th>
+                                <th style="width: 15%;">Дата</th>
                             {% else %}
-                                <th>Розташування</th>
+                                <th class="text-center" style="width: 15%;">Розташування</th>
                             {% endif %}
-                            <th class="text-end pe-4">Дії</th>
+
+                            <th class="text-end pe-4" style="width: 15%;">Дії</th>
                         </tr>
                     </thead>
                     <tbody id="asset-tbody">
                         {% for asset in assets %}
-                        <tr data-type="{{ asset.category.id }}">
-                            <td class="ps-4 font-monospace fw-bold text-dark" data-label="Баркод">
-                                {{ asset.barcode|default:"-" }}
+                        <tr class="position-relative">
+                            <td class="ps-4" data-label="Ідентифікатори">
+                                <div class="d-flex flex-column">
+                                    <span class="font-monospace fw-bold text-dark">{{ asset.inventory_number|default:"-" }}</span>
+                                    {% if asset.barcode %}
+                                        <small class="text-muted"><i class="bi bi-upc-scan me-1"></i>{{ asset.barcode }}</small>
+                                    {% endif %}
+                                </div>
                             </td>
 
-                            <td class="fw-bold text-dark" data-label="Інв. номер">
-                                {{ asset.inventory_number|default:"-" }}
+                            <td data-label="Майно">
+                                <div class="d-flex flex-column">
+                                    <span class="asset-main-info">{{ asset.name }}</span>
+                                    <small class="text-muted">{{ asset.category.name }}</small>
+                                </div>
                             </td>
 
-                            <td data-label="Назва">
-                                <span class="fw-bold text-dark asset-name-mobile">{{ asset.name }}</span>
-                                <div class="small text-muted">{{ asset.category.name }}</div>
-                            </td>
-
-                            <td data-label="Рахунок">
+                            <td class="text-center" data-label="Рахунок">
                                 {% if asset.account == '104' %}
-                                    <span class="badge bg-warning text-dark border border-warning bg-opacity-25">104</span>
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border border-warning-subtle">104</span>
                                 {% elif asset.account == '113' %}
-                                    <span class="badge bg-info text-dark border border-info bg-opacity-25">113</span>
+                                    <span class="badge rounded-pill bg-info-subtle text-info-emphasis border border-info-subtle">113</span>
                                 {% else %}
-                                    <span class="badge bg-light text-dark border">{{ asset.account|default:"-" }}</span>
+                                    <span class="badge rounded-pill bg-light text-dark border">{{ asset.account|default:"-" }}</span>
                                 {% endif %}
                             </td>
 
                             {% if show_archived == 'true' %}
-                                <td class="text-danger small" data-label="Причина">
+                                <td data-label="Причина" class="text-danger small">
                                     {{ asset.archive_reason|default:"-" }}
                                 </td>
-                                <td class="text-muted small" data-label="Дата">
+                                <td data-label="Дата" class="text-muted small">
                                     {{ asset.archive_date|date:"d.m.Y" }}
                                 </td>
                             {% else %}
                                 <td data-label="Розташування">
-                                    <div><i class="bi bi-geo-alt text-danger small"></i> {{ asset.location }}</div>
+                                    <div class="d-flex align-items-center justify-content-center text-secondary">
+                                        <i class="bi bi-geo-alt me-2 text-primary opacity-50"></i>
+                                        {{ asset.location }}
+                                    </div>
                                 </td>
                             {% endif %}
 
-                            <td class="text-end pe-4 text-nowrap" data-label="Дії">
-                                <div class="d-flex justify-content-end gap-2">
+                            <td class="text-end pe-4" data-label="Дії">
+                                <div class="btn-group">
                                     {% if show_archived == 'false' %}
-                                        <button type="button"
-                                                class="btn btn-light text-danger border"
-                                                title="В архів"
-                                                onclick="openArchiveModal('{{ asset.id }}', '{{ asset.name|escapejs }}')">
-                                            <i class="bi bi-box-arrow-in-down"></i>
-                                        </button>
-
-                                        <a href="{% url 'asset_clone' asset.pk %}" class="btn btn-light text-success border" title="Клонувати">
-                                            <i class="bi bi-files"></i>
-                                        </a>
-
-                                        <a href="{% url 'asset_update' asset.pk %}" class="btn btn-light text-primary border" title="Редагувати">
+                                        <a href="{% url 'asset_update' asset.pk %}" class="btn btn-sm btn-light text-primary" title="Редагувати">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        <a href="{% url 'asset_clone' asset.pk %}" class="btn btn-sm btn-light text-success" title="Клонувати">
+                                            <i class="bi bi-copy"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-light text-danger" title="В архів" onclick="openArchiveModal('{{ asset.id }}', '{{ asset.name|escapejs }}')">
+                                            <i class="bi bi-archive"></i>
+                                        </button>
                                     {% else %}
-                                        <span class="badge bg-secondary">Архів</span>
+                                        <span class="badge bg-secondary opacity-50">Архівовано</span>
                                     {% endif %}
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted" data-label="Інфо">
-                                {% if show_archived == 'true' %}Архів порожній.{% else %}Майно відсутнє.{% endif %}
+                            <td colspan="6" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                                    <i class="bi bi-inbox fs-1 mb-2 opacity-25"></i>
+                                    <p class="mb-0">Записів не знайдено</p>
+                                    {% if search_query or current_category != 'all' %}
+                                        <small>Спробуйте змінити параметри пошуку</small>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -178,11 +228,10 @@
                 </table>
             </div>
 
-            <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-3 shadow-sm mt-3">
-                <div class="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
+            <div id="pagination-container" class="card-footer bg-white border-top border-light py-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <small class="text-muted">
-                        Всього записів: <strong>{{ total_count }}</strong>.
-                        Сторінка {{ assets.number }} з {{ assets.paginator.num_pages }}.
+                        Всього: <strong>{{ total_count }}</strong> (Стор. {{ assets.number }} з {{ assets.paginator.num_pages }})
                     </small>
 
                     {% if assets.paginator.num_pages > 1 %}
@@ -190,32 +239,32 @@
                         <ul class="pagination pagination-sm mb-0">
                             {% if assets.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ assets.previous_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
+                                    <a class="page-link border-0 bg-light text-dark rounded-start" href="?page={{ assets.previous_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
                             {% else %}
-                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link border-0 bg-light text-muted rounded-start"><i class="bi bi-chevron-left"></i></span></li>
                             {% endif %}
 
                             {% for i in assets.paginator.page_range %}
                                 {% if assets.number == i %}
-                                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                                    <li class="page-item active"><span class="page-link border-0 bg-primary shadow-sm mx-1 rounded">{{ i }}</span></li>
                                 {% elif i > assets.number|add:'-3' and i < assets.number|add:'3' %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ i }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">{{ i }}</a>
+                                        <a class="page-link border-0 text-dark mx-1 rounded hover-bg-light" href="?page={{ i }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">{{ i }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}
 
                             {% if assets.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ assets.next_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
+                                    <a class="page-link border-0 bg-light text-dark rounded-end" href="?page={{ assets.next_page_number }}&search={{ search_query }}&category={{ current_category }}&archived={{ show_archived }}">
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </li>
                             {% else %}
-                                <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+                                <li class="page-item disabled"><span class="page-link border-0 bg-light text-muted rounded-end"><i class="bi bi-chevron-right"></i></span></li>
                             {% endif %}
                         </ul>
                     </nav>
@@ -227,28 +276,35 @@
 </div>
 
 <div class="modal fade" id="archiveModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="" id="archiveForm">
             {% csrf_token %}
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Архівувати майно</h5>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold">Архівувати майно</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Ви переносите в архів: <strong id="modalAssetName"></strong></p>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning border-0 d-flex align-items-center mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                        <div>
+                            Ви переносите в архів: <br>
+                            <strong id="modalAssetName" class="fs-5"></strong>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Причина / Куди вибуло:</label>
-                        <input type="text" name="archive_reason" class="form-control" placeholder="Наприклад: Списання..." required>
+                        <label class="form-label fw-semibold text-muted small text-uppercase">Причина / Куди вибуло</label>
+                        <input type="text" name="archive_reason" class="form-control bg-light border-0" placeholder="Наприклад: Списання..." required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Дата:</label>
-                        <input type="date" name="archive_date" class="form-control" value="{% now 'Y-m-d' %}" required>
+                        <label class="form-label fw-semibold text-muted small text-uppercase">Дата</label>
+                        <input type="date" name="archive_date" class="form-control bg-light border-0" value="{% now 'Y-m-d' %}" required>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                    <button type="submit" class="btn btn-danger">Підтвердити</button>
+                <div class="modal-footer border-top-0 pt-0 pb-4 pe-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-danger px-4">Підтвердити</button>
                 </div>
             </div>
         </form>
@@ -279,26 +335,20 @@ document.addEventListener("DOMContentLoaded", function() {
     const paginationContainer = document.getElementById('pagination-container');
     let debounceTimer;
 
-    // Головна функція оновлення через AJAX
     function fetchAssets() {
-        // Збираємо параметри
         const searchText = searchInput ? searchInput.value.trim() : '';
         const selectedType = typeFilter ? typeFilter.value : 'all';
         const urlParams = new URLSearchParams(window.location.search);
         const isArchived = urlParams.get('archived') || 'false';
-
-        // Формуємо URL: пошук, категорія, архів, і завжди 1-ша сторінка при фільтрації
         const url = `?search=${encodeURIComponent(searchText)}&category=${selectedType}&archived=${isArchived}&page=1`;
 
-        // Ефект завантаження
-        if (tableContainer) tableContainer.classList.add('loading-opacity');
+        if (tableContainer) tableContainer.classList.add('loading');
 
         fetch(url)
             .then(response => response.text())
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
-
                 const newTbody = doc.getElementById('asset-tbody');
                 const newPagination = doc.getElementById('pagination-container');
 
@@ -308,29 +358,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (newPagination && paginationContainer) {
                     paginationContainer.innerHTML = newPagination.innerHTML;
                 }
-
-                // Оновлюємо URL в адресному рядку
                 window.history.pushState(null, '', url);
             })
-            .catch(error => console.error('Error fetching assets:', error))
+            .catch(error => console.error('Error:', error))
             .finally(() => {
-                if (tableContainer) tableContainer.classList.remove('loading-opacity');
+                if (tableContainer) tableContainer.classList.remove('loading');
             });
     }
 
-    // Слухач для пошуку (input)
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(fetchAssets, 500); // 500мс затримка
+            debounceTimer = setTimeout(fetchAssets, 400);
         });
     }
 
-    // Слухач для категорії (change)
     if (typeFilter) {
-        typeFilter.addEventListener('change', function() {
-            fetchAssets();
-        });
+        typeFilter.addEventListener('change', fetchAssets);
     }
 });
 </script>

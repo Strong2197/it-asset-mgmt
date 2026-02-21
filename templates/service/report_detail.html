@@ -4,94 +4,93 @@
 <div class="container mt-4 mb-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
-        <div>
-            <a href="{% url 'report_list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> До списку актів
-            </a>
-        </div>
+        <a href="{% url 'report_list' %}" class="text-decoration-none text-muted small hover-link">
+            <i class="bi bi-arrow-left me-1"></i>Назад до списку
+        </a>
         <div class="d-flex gap-2">
-            <a href="{% url 'report_edit' pk=report.pk %}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> Редагувати
+            <a href="{% url 'report_edit' pk=report.pk %}" class="btn btn-outline-primary btn-sm shadow-sm rounded-2 px-3">
+                <i class="bi bi-pencil me-1"></i> Редагувати
             </a>
-            <button onclick="window.print()" class="btn btn-success shadow-sm">
-                <i class="bi bi-printer"></i> Друкувати Акт
+            <button onclick="window.print()" class="btn btn-primary btn-sm shadow-sm rounded-2 fw-semibold px-3">
+                <i class="bi bi-printer me-1"></i> Друкувати
             </button>
         </div>
     </div>
 
-    <div class="card shadow-lg border-0" id="print-area">
+    <div class="card shadow border-0 rounded-0" id="print-area">
         <div class="card-body p-5 print-padding">
 
             <div class="text-center mb-5 print-header-margin">
-                <h3 class="fw-bold text-uppercase mb-1">ЗВЕДЕНА ВІДОМІСТЬ № {{ report.id }}</h3>
-                <h5 class="text-muted">на заправку та відновлення картриджів</h5>
-                <div class="mt-2 fs-5">
-                    від <strong>{{ report.created_at|date:"d.m.Y" }}</strong>
+                <h3 class="fw-bold text-uppercase mb-1 text-dark">ЗВЕДЕНА ВІДОМІСТЬ № {{ report.id }}</h3>
+                <h6 class="text-secondary text-uppercase small letter-spacing-1">на заправку та відновлення картриджів</h6>
+                <div class="mt-3 fs-6">
+                    від <strong class="text-decoration-underline">{{ report.created_at|date:"d.m.Y" }}</strong>
                 </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-bordered align-middle custom-bordered-table">
-                    <thead class="text-center" style="background-color: #f8f9fa;">
+                <table class="table table-bordered align-middle custom-table mb-0">
+                    <thead class="text-center bg-light">
                         <tr>
-                            <th style="width: 30%; vertical-align: middle;">Модель картриджа / Пристрій</th>
-                            <th style="width: 8%; vertical-align: middle;">К-ть</th>
-                            <th style="width: 42%; vertical-align: middle;">Деталізація (Відділ — Кількість)</th>
-                            <th style="width: 20%; vertical-align: middle;">Примітка</th>
+                            <th style="width: 30%;" class="text-secondary text-uppercase x-small py-3">Модель / Пристрій</th>
+                            <th style="width: 8%;" class="text-secondary text-uppercase x-small py-3">Всього</th>
+                            <th style="width: 42%;" class="text-secondary text-uppercase x-small py-3">Деталізація (Відділ — Кількість)</th>
+                            <th style="width: 20%;" class="text-secondary text-uppercase x-small py-3">Примітка</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for name, data in stats.items %}
                             {% for dept, dept_data in data.departments.items %}
 
-                            <tr {% if forloop.first %}class="thick-border-top"{% endif %}>
+                            <tr class="{% if forloop.first %}group-start{% endif %}">
 
                                 {% if forloop.first %}
-                                    <td class="fw-bold px-3 align-middle" rowspan="{{ data.departments|length }}">
+                                    <td class="fw-bold px-3 bg-white align-middle text-dark" rowspan="{{ data.departments|length }}">
                                         {{ name }}
                                     </td>
-                                    <td class="text-center fs-5 fw-bold quantity-cell align-middle" rowspan="{{ data.departments|length }}">
+                                    <td class="text-center fs-5 fw-bold bg-white align-middle text-dark" rowspan="{{ data.departments|length }}">
                                         {{ data.total_qty }}
                                     </td>
                                 {% endif %}
 
-                                <td class="px-2 align-middle">
-                                    <div class="d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-end justify-content-between flex-grow-1 me-2">
-                                            <span class="text-wrap me-2">{{ dept }}</span>
-                                            <span class="flex-grow-1 border-bottom border-secondary border-opacity-10 mx-2 mb-1 d-print-none"></span>
-                                            <span class="fw-bold text-nowrap me-2">
+                                <td class="px-3 py-2 align-middle bg-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+
+                                        <div class="text-secondary fw-medium dept-text">
+                                            {{ dept }}
+                                        </div>
+
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="print-dots d-none d-print-inline-block flex-grow-1 mx-2"></span>
+
+                                            <span class="fw-bold text-dark text-nowrap">
                                                 {{ dept_data.sum_qty }} шт.
                                                 {% if dept_data.items|length > 1 %}
-                                                    <span class="text-muted fw-normal small d-print-none" style="font-size: 0.85em;">
+                                                    <span class="text-muted fw-normal small d-print-none" style="font-size: 0.75em;">
                                                         ({% for item in dept_data.items %}{{ item.quantity }}{% if not forloop.last %}+{% endif %}{% endfor %})
                                                     </span>
                                                 {% endif %}
                                             </span>
-                                        </div>
 
-                                        <div class="d-print-none text-end">
-                                            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                                            <div class="d-print-none d-flex gap-1 ms-2" style="justify-content: flex-end;">
                                                 {% for item in dept_data.items %}
                                                     <div id="btn-group-{{ item.pk }}">
                                                         {% if not item.date_back_from_service %}
-                                                            <button class="btn btn-sm btn-outline-secondary py-0 px-1 ajax-btn"
-                                                                    style="font-size: 1rem; line-height: 1.5;"
+                                                            <button class="btn btn-outline-secondary status-btn ajax-btn"
                                                                     data-url="{% url 'item_receive' item.pk %}"
                                                                     data-qty="{{ item.quantity }}"
-                                                                    title="Прийняти на склад">
+                                                                    title="Натисніть, щоб прийняти на склад">
                                                                 #{{ item.id }}
                                                             </button>
                                                         {% elif not item.date_returned_to_user %}
-                                                            <button class="btn btn-sm btn-primary py-0 px-1 ajax-btn"
-                                                                    style="font-size: 1rem; line-height: 1.5;"
+                                                            <button class="btn btn-primary status-btn ajax-btn"
                                                                     data-url="{% url 'item_return' item.pk %}"
-                                                                    title="Видати">
-                                                                <i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #{{ item.id }}
+                                                                    title="Натисніть, щоб видати">
+                                                                <i class="bi bi-arrow-right me-1"></i>#{{ item.id }}
                                                             </button>
                                                         {% else %}
-                                                            <span class="badge bg-success py-0 px-1" style="font-size: 1rem; line-height: 1.5;">
-                                                                <i class="bi bi-check"></i> {{ item.id }}
+                                                            <span class="badge bg-success-subtle text-success border border-success-subtle status-btn">
+                                                                <i class="bi bi-check me-1"></i>{{ item.id }}
                                                             </span>
                                                         {% endif %}
                                                     </div>
@@ -101,43 +100,42 @@
                                     </div>
                                 </td>
 
-                                <td class="small px-2 note-cell align-middle text-center">
+                                <td class="small px-2 align-middle text-center text-muted bg-white note-cell" style="font-style: normal !important;">
                                     {% for item in dept_data.items %}
                                         {% if item.note %}
-                                            <div class="text-start"><i class="bi bi-dot"></i> {{ item.note }}</div>
+                                            <div>{{ item.note }}</div>
                                         {% endif %}
                                         {% if item.item_name == 'Інше' and item.task.description %}
-                                            <div class="text-start fst-italic text-muted">({{ item.task.description|truncatechars:30 }})</div>
+                                            <div class="text-truncate" style="max-width: 150px;" title="{{ item.task.description }}">
+                                                {{ item.task.description }}
+                                            </div>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
                             </tr>
                             {% endfor %}
                         {% empty %}
-                        <tr><td colspan="4" class="text-center py-4 text-muted">Дані відсутні</td></tr>
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Дані відсутні</td></tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
-                        <tr class="fw-bold fs-5 total-row">
-                            <td class="text-end px-3">ВСЬОГО (шт):</td>
-                            <td class="text-center bg-light">{{ grand_total }}</td>
-                            <td></td>
-                            <td></td>
+                        <tr class="total-row bg-light">
+                            <td class="text-end px-3 py-3 fw-bold text-uppercase text-secondary x-small">Всього до оплати / видачі:</td>
+                            <td class="text-center fs-5 fw-bold text-dark">{{ grand_total }}</td>
+                            <td colspan="2"></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
 
-            <div class="mt-5 text-center text-muted small d-print-none">
-                <hr>
-                <p>Документ згенеровано системою IT Asset Management System</p>
+            <div class="mt-5 text-center text-muted x-small d-print-none">
+                <p>IT Asset Management System &copy; {% now "Y" %}</p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// ... (Ваш JavaScript код залишається без змін) ...
 document.addEventListener("DOMContentLoaded", function() {
     function getCookie(name) {
         let cookieValue = null;
@@ -168,15 +166,15 @@ document.addEventListener("DOMContentLoaded", function() {
                 let input = prompt(`Всього у заявці: ${quantity} шт.\nСкільки повернулось з ремонту?`, quantity);
                 if (input === null) return;
                 qtyToReceive = parseInt(input);
-                if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) {
-                    alert("Некоректна кількість!"); return;
-                }
+                if (isNaN(qtyToReceive) || qtyToReceive <= 0 || qtyToReceive > quantity) { alert("Помилка"); return; }
                 url += `?qty=${qtyToReceive}`;
             }
 
             const container = btn.closest('div[id^="btn-group-"]');
             const originalContent = btn.innerHTML;
-            btn.innerHTML = '..';
+
+            // Спінер замість контенту
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
             btn.classList.add('disabled');
 
             fetch(url, {
@@ -186,85 +184,107 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    if (data.is_split) {
-                        window.location.reload();
-                    } else {
+                    if (data.is_split) { window.location.reload(); }
+                    else {
                         const itemId = data.item_id || btn.closest('div').id.replace('btn-group-', '');
+                        // Тут ми використовуємо клас status-btn, щоб нові кнопки теж були гарними
                         if (data.new_state === 'stocked') {
-                            container.innerHTML = `<button class="btn btn-sm btn-primary py-0 px-1 ajax-btn animation-fade-in" style="font-size: 1rem; line-height: 1.5;" data-url="${data.return_url}"><i class="bi bi-arrow-right" style="font-size: 1rem;"></i> #${itemId}</button>`;
+                            container.innerHTML = `<button class="btn btn-primary status-btn ajax-btn animation-fade-in" data-url="${data.return_url}"><i class="bi bi-arrow-right me-1"></i>#${itemId}</button>`;
                         } else if (data.new_state === 'issued') {
-                            container.innerHTML = `<span class="badge bg-success py-0 px-1 animation-fade-in" style="font-size: 1rem; line-height: 1.5;"><i class="bi bi-check"></i> #${itemId}</span>`;
+                            container.innerHTML = `<span class="badge bg-success-subtle text-success border border-success-subtle status-btn animation-fade-in"><i class="bi bi-check me-1"></i>{{ item.id }}</span>`;
                         }
                     }
-                } else {
-                    btn.innerHTML = originalContent;
-                    btn.classList.remove('disabled');
-                }
+                } else { btn.innerHTML = originalContent; btn.classList.remove('disabled'); }
             })
-            .catch(error => {
-                btn.innerHTML = originalContent;
-                btn.classList.remove('disabled');
-            });
+            .catch(error => { btn.innerHTML = originalContent; btn.classList.remove('disabled'); });
         }
     });
 });
 </script>
 
 <style>
+    /* === ЕКРАННІ СТИЛІ === */
+    .x-small { font-size: 0.75rem; letter-spacing: 0.5px; }
+    .letter-spacing-1 { letter-spacing: 1px; }
+    .hover-link:hover { text-decoration: underline !important; color: var(--bs-primary) !important; }
     .animation-fade-in { animation: fadeIn 0.5s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* === СТИЛІ ТАБЛИЦІ === */
-
-    /* Робимо всі межі чорними (замість сірих) і чіткими */
-    .custom-bordered-table,
-    .custom-bordered-table th,
-    .custom-bordered-table td {
-        border: 1px solid #000 !important;
+    /* === СТИЛІ ДЛЯ КНОПОК (НОВЕ) === */
+    .status-btn {
+        min-width: 60px;      /* Фіксована ширина для всіх станів */
+        height: 28px;         /* Фіксована висота */
+        padding: 0 8px;       /* Відступи */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem !important; /* Розмір шрифту */
+        line-height: 1;
+        border-radius: 4px;   /* Легке заокруглення */
+        transition: all 0.2s;
+        text-decoration: none;
     }
 
-    /* Верхня межа для розділення груп картриджів (Зменшено до 2px) */
-    .thick-border-top {
-        border-top: 2px solid #000 !important;
+    .status-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* Нижня жирна лінія для підсумків */
-    .total-row {
-        border-top: 2px solid #000 !important;
+    /* Таблиця на екрані */
+    .custom-table { border-collapse: collapse; }
+    .custom-table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        border-top: 1px solid #dee2e6;
     }
+    .custom-table td { border: 1px solid #dee2e6; }
+    .group-start td { border-top: 2px solid #adb5bd !important; }
+    .total-row td { border-top: 2px solid #adb5bd !important; background-color: #f8f9fa; }
+    .note-cell { font-style: normal !important; }
 
-    /* Стилі для друку */
+    /* === СТИЛІ ДЛЯ ДРУКУ (ВИПРАВЛЕНО КУТИ) === */
     @media print {
-        @page { margin: 1cm; }
-        body * { visibility: hidden; }
-        #print-area, #print-area * { visibility: visible; }
-        #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; border: none !important; box-shadow: none !important; background-color: white !important; }
+        @page { size: auto; margin: 5mm; }
 
+        body { visibility: hidden; background: white !important; -webkit-print-color-adjust: exact; color: #000 !important; }
+
+        /* Показуємо область друку */
+        #print-area {
+            visibility: visible !important;
+            position: absolute !important;
+            left: 0; top: 0; width: 100%; margin: 0; padding: 20px;
+            border: none !important; box-shadow: none !important; background: white !important;
+        }
+        #print-area * { visibility: visible; }
+* { border-radius: 0 !important; }
+        /* === ВАЖЛИВО: ПРЯМІ КУТИ ПРИ ДРУЦІ === */
+        .table, .table-bordered, .table th, .table td, .card, .card-body, tr, thead, tbody {
+            border-radius: 0 !important;
+            border-collapse: collapse !important;
+        }
+
+        /* Чорні рамки */
         .table td, .table th {
+            border: 1px solid #000 !important;
+            padding: 4px 8px !important;
             font-size: 10pt !important;
-            padding: 4px !important;
-            border: 1px solid #000 !important; /* Гарантуємо чорні межі при друці */
-        }
-
-        .thick-border-top { border-top: 2px solid #000 !important; }
-        .total-row { border-top: 2px solid #000 !important; }
-
-        .quantity-cell { font-size: 12pt !important; }
-        .dept-row { padding-top: 1px !important; padding-bottom: 1px !important; border-bottom: 1px solid #ddd !important; }
-
-        .note-cell {
-            font-size: 9pt !important;
             color: #000 !important;
-
-            line-height: 1.1;
         }
 
-        h3 { font-size: 16pt !important; margin-bottom: 5px !important; }
-        h5 { font-size: 12pt !important; margin-bottom: 10px !important; }
-        .fs-5 { font-size: 11pt !important; }
+        thead th, .bg-light, .bg-white, .table-light { background-color: transparent !important; }
+        .group-start td { border-top: 2px solid #000 !important; }
+        .total-row td { border-top: 2px solid #000 !important; font-weight: bold !important; }
 
-        .d-print-none { display: none !important; }
-        .bg-light { background-color: transparent !important; }
+        .print-dots {
+            display: inline-block !important;
+            border-bottom: 1px dotted #000;
+            margin-bottom: 4px;
+        }
+
+        .d-print-none, .btn, .badge, .status-btn { display: none !important; }
+
+        h3 { font-size: 14pt !important; margin-bottom: 5px !important; color: #000 !important; }
+        h6 { font-size: 10pt !important; margin-bottom: 10px !important; text-transform: none !important; color: #000 !important; }
         a { text-decoration: none !important; color: black !important; }
     }
 </style>

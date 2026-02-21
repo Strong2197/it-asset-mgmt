@@ -1,33 +1,127 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    /* Стилі аналогічні staff_form */
+    .card-custom { border-radius: 12px; border: none; }
+
+    .form-label-small {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 0.3rem;
+    }
+
+    /* Робимо поля вводу трохи акуратнішими */
+    .form-control, .form-select {
+        border-color: #dee2e6;
+        font-size: 0.9rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">{{ title }}</h4>
+    <div class="col-md-8 col-lg-6">
+
+        <div class="mb-3">
+            <a href="{% url 'doc_list' %}" class="text-decoration-none text-muted small hover-link">
+                <i class="bi bi-arrow-left me-1"></i>Назад до списку
+            </a>
+        </div>
+
+        <div class="card card-custom shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 p-2 rounded-3 me-3">
+                        <i class="bi bi-file-earmark-plus text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">
+                            {% if 'update' in request.path %}Редагування файлу{% else %}Новий файл{% endif %}
+                        </h5>
+                        <div class="small text-muted">Додавання інструкції або драйверу</div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
+
+            <div class="card-body p-4 pt-2">
                 <form method="post">
                     {% csrf_token %}
 
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <div class="text-danger small">{{ field.errors.0 }}</div>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 small">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
 
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'doc_list' %}" class="btn btn-secondary">Скасувати</a>
-                        <button type="submit" class="btn btn-success">💾 Зберегти</button>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label-small">Назва файлу</label>
+                            <div class="input-group">
+                                {{ form.title }}
+                            </div>
+                            {% if form.title.errors %}<div class="text-danger x-small mt-1">{{ form.title.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label-small">Тип документа</label>
+                            {{ form.doc_type }}
+                            {% if form.doc_type.errors %}<div class="text-danger x-small mt-1">{{ form.doc_type.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label-small text-success">
+                            <i class="bi bi-link-45deg me-1"></i>Посилання (Google Drive / Sharepoint)
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-globe"></i></span>
+                            {{ form.google_drive_link }}
+                        </div>
+                        <div class="form-text x-small text-muted">Вставте повне посилання на файл</div>
+                        {% if form.google_drive_link.errors %}<div class="text-danger x-small mt-1">{{ form.google_drive_link.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label-small">Опис / Примітки</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="text-danger x-small mt-1">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                        <a href="{% url 'doc_list' %}" class="btn btn-light text-secondary px-4">
+                            Скасувати
+                        </a>
+                        <button type="submit" class="btn btn-success px-5 fw-semibold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Зберегти
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Додаємо класи Bootstrap до полів форми автоматично, якщо вони не задані в forms.py
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll('input[type="text"], input[type="url"], select, textarea');
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-control') && !input.classList.contains('form-select')) {
+                if (input.tagName === 'SELECT') {
+                    input.classList.add('form-select');
+                } else {
+                    input.classList.add('form-control');
+                }
+            }
+        });
+
+        // Збільшуємо textarea
+        const textareas = document.querySelectorAll('textarea');
+        textareas.forEach(ta => ta.rows = 3);
+    });
+</script>
 {% endblock %}

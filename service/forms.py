@@ -8,7 +8,7 @@ common_widgets = {
     'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'style': 'width: 80px;'}),
     'custom_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Уточнення...', 'style': 'display:none;'}),
     # НОВИЙ ВІДЖЕТ ПРИМІТКИ
-    'note': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Примітка (напр. "маже")...'}),
+    'note': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Примітка'}),
 }
 
 class ServiceTaskForm(forms.ModelForm):

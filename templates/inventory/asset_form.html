@@ -2,33 +2,58 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">{{ title }}</h4>
-            </div>
-            <div class="card-body">
-                <form method="post">
+    <div class="col-md-10 col-lg-8">
+
+        <div class="mb-2">
+            <a href="{% url 'asset_list' %}" class="text-decoration-none text-muted small hover-link">
+                <i class="bi bi-arrow-left me-1"></i>Назад до списку
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-4">
+                    <h4 class="fw-bold text-dark mb-0">
+                        {% if 'update' in request.path %}Редагування майна{% else %}Додати майно{% endif %}
+                    </h4>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
 
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">{{ field.label }}</label>
-                        {{ field }}
+                    <div class="form-grid">
+                        {% for field in form %}
+                        <div class="form-group-item" data-field-name="{{ field.name }}">
+                            <label class="form-label fw-bold text-secondary x-small text-uppercase mb-1" for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
 
-                        {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                        {% endif %}
+                            {{ field }}
 
-                        {% if field.errors %}
-                            <div class="text-danger small">{{ field.errors.0 }}</div>
-                        {% endif %}
+                            {% if field.help_text %}
+                                <div class="form-text text-muted x-small mt-1 lh-1">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+
+                            {% if field.errors %}
+                                <div class="text-danger x-small mt-1">
+                                    {{ field.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
 
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'asset_list' %}" class="btn btn-secondary">Скасувати</a>
-                        <button type="submit" class="btn btn-success">💾 Зберегти</button>
+                    <hr class="my-4 border-secondary opacity-10">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'asset_list' %}" class="btn btn-light px-4">Скасувати</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-check-lg me-1"></i> Зберегти
+                        </button>
                     </div>
                 </form>
             </div>
@@ -36,23 +61,68 @@
     </div>
 </div>
 
+<style>
+    /* Сітка форми */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Дві рівні колонки */
+        gap: 1rem; /* Відступ між полями */
+        align-items: start;
+    }
+
+    /* На мобільних - одна колонка */
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Дуже маленький текст для підказок */
+    .x-small {
+        font-size: 0.75rem;
+    }
+
+    .bg-primary-subtle { background-color: #eff6ff !important; }
+    .text-primary { color: #2563eb !important; }
+
+    .hover-link:hover {
+        color: var(--bs-primary) !important;
+        text-decoration: underline !important;
+    }
+</style>
+
 <script>
-    // Скрипт для авторозширення текстового поля
     document.addEventListener('DOMContentLoaded', function() {
-        const textareas = document.querySelectorAll('textarea.auto-expand');
+        const inputs = document.querySelectorAll('input, select, textarea');
 
+        inputs.forEach(input => {
+            // 1. Стилізація Bootstrap
+            if (!['checkbox', 'radio'].includes(input.type)) {
+                input.classList.add(input.tagName === 'SELECT' ? 'form-select' : 'form-control');
+            }
+
+            // 2. Логіка "На всю ширину"
+            // Знаходимо батьківський блок поля
+            const wrapper = input.closest('.form-group-item');
+            const fieldName = wrapper.getAttribute('data-field-name');
+
+            // Список полів, які мають бути широкими (Назва, Примітки, Опис)
+            // АБО якщо це textarea
+            if (['name', 'notes', 'description', 'archive_reason'].includes(fieldName) || input.tagName === 'TEXTAREA') {
+                wrapper.style.gridColumn = "1 / -1"; // Розтягнути на всю ширину (2 колонки)
+            }
+        });
+
+        // 3. Авто-висота для Textarea
+        const textareas = document.querySelectorAll('textarea');
         textareas.forEach(textarea => {
-            // Функція зміни висоти
-            const adjustHeight = () => {
-                textarea.style.height = 'auto'; // Скидаємо висоту
-                textarea.style.height = textarea.scrollHeight + 'px'; // Встановлюємо по контенту
-            };
+            textarea.style.height = 'auto'; // Скидання
+            if(textarea.value) textarea.style.height = (textarea.scrollHeight + 2) + 'px'; // Встановлення
 
-            // Слухаємо введення тексту
-            textarea.addEventListener('input', adjustHeight);
-
-            // Викликаємо один раз при завантаженні (якщо ми редагуємо запис з довгим текстом)
-            adjustHeight();
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight + 2) + 'px';
+            });
         });
     });
 </script>
