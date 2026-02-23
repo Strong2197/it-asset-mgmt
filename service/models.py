@@ -33,7 +33,7 @@ class ServiceTask(models.Model):
     department = models.CharField(max_length=100, verbose_name="Відділ")
     date_received = models.DateField(default=timezone.now, verbose_name="Дата отримання")
     date_sent = models.DateField(null=True, blank=True, verbose_name="Дата відправки (Акт)")
-    date_back_from_service = models.DateField(null=True, blank=True, verbose_name="Повернуто з сервісу (Загальне)")
+    date_back_from_service = models.DateField(null=True, blank=True, verbose_name="Повернуто з сервісу")
     date_returned = models.DateField(null=True, blank=True, verbose_name="Дата закриття заявки")
     description = models.TextField(blank=True, verbose_name="Опис проблеми")
     is_completed = models.BooleanField(default=False, verbose_name="Виконано")

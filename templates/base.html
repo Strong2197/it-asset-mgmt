@@ -216,6 +216,9 @@
         type="button" data-bs-toggle="offcanvas" data-bs-target="#todoOffcanvas"
         style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; z-index: 1050;">
     <i class="bi bi-check2-square fs-3"></i>
+    <span id="todo-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="display: none; font-size: 0.75rem;">
+        0
+    </span>
 </button>
 
 <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="todoOffcanvas" style="width: 350px;">
@@ -276,29 +279,41 @@
         }
 
         function render(tasks) {
-            if (!wrapper) return;
+    if (!wrapper) return;
 
-            wrapper.innerHTML = '';
+    wrapper.innerHTML = '';
 
-            if (!tasks || tasks.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-                tasks.forEach(t => {
-                    const item = document.createElement('div');
-                    item.className = `todo-item p-2 d-flex align-items-center shadow-sm ${t.done ? 'completed' : ''}`;
-                    item.innerHTML = `
-                        <div class="form-check m-0 flex-grow-1 d-flex align-items-center">
-                            <input class="form-check-input mt-0" type="checkbox" ${t.done ? 'checked' : ''}
-                                   onclick="toggleTask(${t.id})">
-                            <span class="ms-2 task-text text-break small">${t.text}</span>
-                        </div>
-                        <i class="bi bi-trash text-danger ms-2 px-2" style="cursor:pointer" onclick="deleteTask(${t.id})"></i>
-                    `;
-                    wrapper.appendChild(item);
-                });
-            }
-        }
+    // Підрахунок невиконаних завдань
+    const uncompletedCount = tasks.filter(t => !t.done).length;
+    const badge = document.getElementById('todo-badge');
+
+    if (uncompletedCount > 0) {
+        badge.innerText = uncompletedCount;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+
+    if (!tasks || tasks.length === 0) {
+        emptyState.style.display = 'block';
+    } else {
+        emptyState.style.display = 'none';
+        tasks.forEach(t => {
+            // ... ваш існуючий код створення елементів (item) ...
+            const item = document.createElement('div');
+            item.className = `todo-item p-2 d-flex align-items-center shadow-sm ${t.done ? 'completed' : ''}`;
+            item.innerHTML = `
+                <div class="form-check m-0 flex-grow-1 d-flex align-items-center">
+                    <input class="form-check-input mt-0" type="checkbox" ${t.done ? 'checked' : ''}
+                           onclick="toggleTask(${t.id})">
+                    <span class="ms-2 task-text text-break small">${t.text}</span>
+                </div>
+                <i class="bi bi-trash text-danger ms-2 px-2" style="cursor:pointer" onclick="deleteTask(${t.id})"></i>
+            `;
+            wrapper.appendChild(item);
+        });
+    }
+}
 
         window.toggleTask = (id) => {
             fetch(`/todo/api/toggle/${id}/`, {
@@ -336,6 +351,7 @@
 
         offcanvasEl.addEventListener('show.bs.offcanvas', loadTasks);
         loadTasks();
+
     });
 </script>
 </body>
