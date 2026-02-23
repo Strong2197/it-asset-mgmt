@@ -162,7 +162,7 @@
                                                 {{ emp.appointment_date|date:"d.m.Y"|default:"-" }}
                                             </span>
                                             {% if emp.appointment_order_number %}
-                                                <div class="x-small text-muted fst-italic">{{ emp.appointment_order_number }}</div>
+                                                <div class="x-small text-muted fw-semibold">{{ emp.appointment_order_number }}</div>
                                             {% endif %}
                                             {% if emp.appointment_order_file %}
                                                 <a href="{% url 'open_order_file' emp.pk 'appointment' %}" target="_blank" class="text-decoration-none x-small mt-1 text-primary">
