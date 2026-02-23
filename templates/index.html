@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
 <style>
     #secret-match3-wrapper { font-family: sans-serif; line-height: 1.5; }
     #secret-match3-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -104,7 +103,6 @@
     }
     #secret-match3-wrapper .m3g-close-btn:hover { color: #fff; }
 </style>
-
 <style>
     /* Ефект підняття картки при наведенні */
     .hover-lift {
@@ -318,14 +316,19 @@
     </div>
 </div>
 
+
+
 <script>
     (function() {
-       const secretCodes = ['чудо', 'xelj'];
+        // --- ОНОВЛЕНО: Список кодів ---
+        // 'чудо' - кирилиця
+        // 'xelj' - ті самі клавіші на англійській розкладці
+        const secretCodes = ['чудо', 'xelj'];
         let inputBuffer = '';
 
         // --- Налаштування ---
         const width = 8;
-        const totalCells = width * width; // 64
+        const totalCells = width * width;
         const targetScore = 250;
         const initialTime = 120;
         const candyColors = ['🍎', '🍊', '🍇', '🥥', '🥝', '🍪'];
@@ -351,11 +354,19 @@
         const closeBtn = document.getElementById('m3g-close');
         const messageDisplay = document.getElementById('m3g-message');
 
-        // --- 1. ВВЕДЕННЯ КОДУ ---
+        // --- 1. ОНОВЛЕНИЙ ОБРОБНИК ВВОДУ ---
         document.addEventListener('keydown', (e) => {
+            // Додаємо символ, ігноруємо регістр
             inputBuffer += e.key;
-            if (inputBuffer.length > secretCode.length) inputBuffer = inputBuffer.slice(-secretCode.length);
-            if (inputBuffer.toLowerCase() === secretCode) {
+
+            // Тримаємо буфер не довшим за найдовше слово (безпечний запас 10 символів)
+            if (inputBuffer.length > 10) inputBuffer = inputBuffer.slice(-10);
+
+            // Перевіряємо, чи закінчується буфер на одне з секретних слів
+            const bufferLower = inputBuffer.toLowerCase();
+            const matchFound = secretCodes.some(code => bufferLower.endsWith(code));
+
+            if (matchFound) {
                 openGame();
                 inputBuffer = '';
             }
@@ -401,7 +412,6 @@
                 if (timeLeft <= 0) endGame(false);
             }, 1000);
 
-            // Основний цикл: Перевірка 5, потім 4, потім 3
             gameLoopId = setInterval(() => {
                 if (!isShuffling && !isProcessingMove) {
                     checkLinearMatch(5, 10);
@@ -412,7 +422,6 @@
                 }
             }, 100);
 
-            // Перевірка на відсутність ходів
             shuffleCheckId = setInterval(() => {
                 if (!isShuffling && !isProcessingMove && isBoardStable() && !hasPossibleMoves()) {
                     shuffleBoard();
@@ -509,9 +518,7 @@
             return squares.every(sq => sq.innerText !== '');
         }
 
-        // --- ВИПРАВЛЕНА ФУНКЦІЯ ВАЛІДАЦІЇ ---
         function checkForMatchesPreview() {
-            // Перевірка рядків
             for (let i = 0; i < 64; i++) {
                 let rowOfThree = [i, i + 1, i + 2];
                 let decidedColor = squares[i].innerText;
@@ -519,9 +526,7 @@
                 if (i % width > width - 3) continue;
                 if (rowOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) return true;
             }
-            // Перевірка колонок
-            // ТУТ БУЛА ПОМИЛКА: було i < 47, тепер i < 48 (або просто <= 47)
-            // Це дозволяє перевірити індекс 47 (початок останньої вертикальної трійки: 47-55-63)
+            // Перевіряємо всі можливі вертикальні трійки
             for (let i = 0; i < 48; i++) {
                 let columnOfThree = [i, i + width, i + width * 2];
                 let decidedColor = squares[i].innerText;
@@ -562,14 +567,12 @@
             }, 1000);
         }
 
-        // --- УНІВЕРСАЛЬНА ФУНКЦІЯ (ВИДАЛЕННЯ) ---
         function checkLinearMatch(length, points) {
             // Рядки
             for (let i = 0; i < 64; i++) {
                 if (i % width > width - length) continue;
                 let rowGroup = [];
                 for(let k=0; k<length; k++) rowGroup.push(i + k);
-
                 let decidedColor = squares[i].innerText;
                 const isBlank = squares[i].innerText === '';
                 if (!isBlank && rowGroup.every(index => squares[index].innerText === decidedColor)) {
@@ -578,13 +581,11 @@
                     rowGroup.forEach(index => squares[index].innerText = '');
                 }
             }
-
             // Колонки
             for (let i = 0; i < 64; i++) {
                 if (i + (length - 1) * width >= 64) continue;
                 let colGroup = [];
                 for(let k=0; k<length; k++) colGroup.push(i + k * width);
-
                 let decidedColor = squares[i].innerText;
                 const isBlank = squares[i].innerText === '';
                 if (!isBlank && colGroup.every(index => squares[index].innerText === decidedColor)) {
