@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
 <style>
-    /* Стилі ізольовані всередині #secret-match3-wrapper */
     #secret-match3-wrapper { font-family: sans-serif; line-height: 1.5; }
     #secret-match3-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,7 +38,7 @@
     }
 
     #secret-match3-wrapper .m3g-msg {
-        display: none; /* Приховано за замовчуванням */
+        display: none;
         background: rgba(255, 0, 0, 0.8);
         color: white;
         padding: 5px;
@@ -78,6 +78,19 @@
         transition: transform 0.2s, background-color 0.2s;
     }
 
+    #secret-match3-wrapper .m3g-cell.shake {
+        animation: shake 0.3s;
+        border: 2px solid red;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+        100% { transform: translateX(0); }
+    }
+
     #secret-match3-wrapper .m3g-cell.selected {
         background-color: #666;
         border: 2px solid #ffcc00;
@@ -91,6 +104,7 @@
     }
     #secret-match3-wrapper .m3g-close-btn:hover { color: #fff; }
 </style>
+
 <style>
     /* Ефект підняття картки при наведенні */
     .hover-lift {
@@ -293,7 +307,7 @@
             <h2 class="m3g-title">Три в ряд</h2>
 
             <div class="m3g-stats">
-                <div class="m3g-stat-box">Рахунок: <span id="m3g-score">0</span> / 300</div>
+                <div class="m3g-stat-box">Рахунок: <span id="m3g-score">0</span> / 250</div>
                 <div class="m3g-stat-box">Час: <span id="m3g-timer">120</span> сек</div>
             </div>
 
@@ -303,26 +317,31 @@
         </div>
     </div>
 </div>
+
 <script>
     (function() {
         const secretCode = 'чудо';
         let inputBuffer = '';
 
-        // Налаштування гри
+        // --- Налаштування ---
         const width = 8;
+        const totalCells = width * width; // 64
         const targetScore = 250;
         const initialTime = 120;
         const candyColors = ['🍎', '🍊', '🍇', '🥥', '🥝', '🍪'];
 
-        // Змінні стану
+        // --- Стан гри ---
         let score = 0;
         let timeLeft = initialTime;
-        let timerId = null;
-        let gameIntervalId = null;
-        let shuffleCheckIntervalId = null;
         let squares = [];
         let selectedSquareIndex = null;
+
+        let isProcessingMove = false;
         let isShuffling = false;
+
+        let timerId = null;
+        let gameLoopId = null;
+        let shuffleCheckId = null;
 
         // Елементи DOM
         const overlay = document.getElementById('m3g-overlay');
@@ -332,7 +351,7 @@
         const closeBtn = document.getElementById('m3g-close');
         const messageDisplay = document.getElementById('m3g-message');
 
-        // --- ВВЕДЕННЯ КОДУ ---
+        // --- 1. ВВЕДЕННЯ КОДУ ---
         document.addEventListener('keydown', (e) => {
             inputBuffer += e.key;
             if (inputBuffer.length > secretCode.length) inputBuffer = inputBuffer.slice(-secretCode.length);
@@ -351,22 +370,23 @@
 
         function closeGame() {
             overlay.style.display = 'none';
-            stopGameLoops();
+            stopAllLoops();
         }
 
-        function stopGameLoops() {
+        function stopAllLoops() {
             clearInterval(timerId);
-            clearInterval(gameIntervalId);
-            clearInterval(shuffleCheckIntervalId);
+            clearInterval(gameLoopId);
+            clearInterval(shuffleCheckId);
         }
 
         function resetGame() {
-            stopGameLoops();
+            stopAllLoops();
             gridDisplay.innerHTML = '';
             squares = [];
             score = 0;
             timeLeft = initialTime;
             selectedSquareIndex = null;
+            isProcessingMove = false;
             isShuffling = false;
             messageDisplay.style.display = 'none';
 
@@ -375,53 +395,46 @@
 
             createBoard();
 
-            // Запускаємо таймер
             timerId = setInterval(() => {
                 timeLeft--;
                 timerDisplay.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    endGame(false);
-                }
+                if (timeLeft <= 0) endGame(false);
             }, 1000);
 
-            // Основний цикл гри (100мс)
-            gameIntervalId = setInterval(() => {
-                if (!isShuffling) {
-                    checkRowForThree();
-                    checkColumnForThree();
+            // Основний цикл: Перевірка 5, потім 4, потім 3
+            gameLoopId = setInterval(() => {
+                if (!isShuffling && !isProcessingMove) {
+                    checkLinearMatch(5, 10);
+                    checkLinearMatch(4, 5);
+                    checkLinearMatch(3, 3);
                     moveDown();
                     checkWin();
                 }
             }, 100);
 
-            // Окремий цикл для перевірки на відсутність ходів (рідше, кожні 1с)
-            shuffleCheckIntervalId = setInterval(() => {
-                if (!isShuffling && isBoardStable() && !hasPossibleMoves()) {
+            // Перевірка на відсутність ходів
+            shuffleCheckId = setInterval(() => {
+                if (!isShuffling && !isProcessingMove && isBoardStable() && !hasPossibleMoves()) {
                     shuffleBoard();
                 }
-            }, 1000);
+            }, 1500);
         }
 
         function endGame(isWin) {
-            stopGameLoops();
+            stopAllLoops();
             setTimeout(() => {
-                if (isWin) {
-                    alert(`🎉 Перемога! Ви набрали ${score} очок!`);
-                } else {
-                    alert(`⏰ Час вийшов! Ваш рахунок: ${score}`);
-                }
+                if (isWin) alert(`🎉 Перемога! Ви набрали ${score} очок!`);
+                else alert(`⏰ Час вийшов! Ваш рахунок: ${score}`);
                 closeGame();
             }, 100);
         }
 
         function checkWin() {
-            if (score >= targetScore) {
-                endGame(true);
-            }
+            if (score >= targetScore) endGame(true);
         }
 
         function createBoard() {
-            for (let i = 0; i < width * width; i++) {
+            for (let i = 0; i < totalCells; i++) {
                 const square = document.createElement('div');
                 square.classList.add('m3g-cell');
                 square.setAttribute('id', i);
@@ -429,13 +442,18 @@
                 square.innerText = candyColors[randomColor];
                 gridDisplay.appendChild(square);
                 squares.push(square);
-
                 square.addEventListener('click', () => clickItem(i));
             }
         }
 
         function clickItem(index) {
-            if (isShuffling) return; // Блокуємо кліки під час перемішування
+            if (isShuffling || isProcessingMove || !isBoardStable()) return;
+
+            if (index === selectedSquareIndex) {
+                squares[index].classList.remove('selected');
+                selectedSquareIndex = null;
+                return;
+            }
 
             if (selectedSquareIndex === null) {
                 selectedSquareIndex = index;
@@ -454,16 +472,30 @@
                 if (index === selectedSquareIndex - 1 && isLeftEdge) { selectedSquareIndex = null; return; }
 
                 if (validMoves.includes(index)) {
+                    isProcessingMove = true;
                     swapColors(selectedSquareIndex, index);
 
-                    // Перевірка валідності ходу
                     const isMoveValid = checkForMatchesPreview();
 
-                    if (!isMoveValid) {
-                        setTimeout(() => swapColors(selectedSquareIndex, index), 150);
+                    if (isMoveValid) {
+                        isProcessingMove = false;
+                        selectedSquareIndex = null;
+                    } else {
+                        squares[selectedSquareIndex].classList.add('shake');
+                        squares[index].classList.add('shake');
+
+                        setTimeout(() => {
+                            swapColors(selectedSquareIndex, index);
+                            squares[selectedSquareIndex].classList.remove('shake');
+                            squares[index].classList.remove('shake');
+                            isProcessingMove = false;
+                            selectedSquareIndex = null;
+                        }, 250);
                     }
+                } else {
+                    selectedSquareIndex = index;
+                    squares[index].classList.add('selected');
                 }
-                selectedSquareIndex = null;
             }
         }
 
@@ -473,68 +505,13 @@
             squares[index2].innerText = temp;
         }
 
-        // --- ЛОГІКА ПЕРЕВІРКИ ХОДІВ ---
-
-        // 1. Чи стабільна дошка? (Чи немає пустих клітинок, що падають)
         function isBoardStable() {
             return squares.every(sq => sq.innerText !== '');
         }
 
-        // 2. Симуляція всіх можливих ходів
-        function hasPossibleMoves() {
-            // Проходимо по кожній клітинці
-            for (let i = 0; i < 64; i++) {
-                // Спробувати хід ВПРАВО
-                if ((i % width) < width - 1) {
-                    swapColors(i, i + 1); // Тимчасовий свап
-                    if (checkForMatchesPreview()) {
-                        swapColors(i, i + 1); // Повертаємо назад
-                        return true; // Знайшли можливий хід!
-                    }
-                    swapColors(i, i + 1); // Повертаємо назад
-                }
-
-                // Спробувати хід ВНИЗ
-                if (i < 56) {
-                    swapColors(i, i + width); // Тимчасовий свап
-                    if (checkForMatchesPreview()) {
-                        swapColors(i, i + width);
-                        return true;
-                    }
-                    swapColors(i, i + width);
-                }
-            }
-            return false; // Жодного ходу не знайдено
-        }
-
-        // 3. Перемішування
-        function shuffleBoard() {
-            isShuffling = true;
-            messageDisplay.style.display = 'block'; // Показати напис
-
-            // Затримка для ефекту
-            setTimeout(() => {
-                // Збираємо всі кольори
-                let allColors = squares.map(sq => sq.innerText);
-
-                // Алгоритм перемішування Фішера-Єйтса
-                for (let i = allColors.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allColors[i], allColors[j]] = [allColors[j], allColors[i]];
-                }
-
-                // Записуємо назад
-                squares.forEach((sq, i) => {
-                    sq.innerText = allColors[i];
-                });
-
-                messageDisplay.style.display = 'none'; // Приховати напис
-                isShuffling = false;
-            }, 1000);
-        }
-
-        // Допоміжна функція: чи є на дошці лінія з 3 (не видаляючи їх)
+        // --- ВИПРАВЛЕНА ФУНКЦІЯ ВАЛІДАЦІЇ ---
         function checkForMatchesPreview() {
+            // Перевірка рядків
             for (let i = 0; i < 64; i++) {
                 let rowOfThree = [i, i + 1, i + 2];
                 let decidedColor = squares[i].innerText;
@@ -542,7 +519,10 @@
                 if (i % width > width - 3) continue;
                 if (rowOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) return true;
             }
-            for (let i = 0; i < 47; i++) {
+            // Перевірка колонок
+            // ТУТ БУЛА ПОМИЛКА: було i < 47, тепер i < 48 (або просто <= 47)
+            // Це дозволяє перевірити індекс 47 (початок останньої вертикальної трійки: 47-55-63)
+            for (let i = 0; i < 48; i++) {
                 let columnOfThree = [i, i + width, i + width * 2];
                 let decidedColor = squares[i].innerText;
                 const isBlank = squares[i].innerText === '';
@@ -551,32 +531,66 @@
             return false;
         }
 
-        // Основні функції видалення (game loop)
-        function checkRowForThree() {
+        function hasPossibleMoves() {
             for (let i = 0; i < 64; i++) {
-                let rowOfThree = [i, i + 1, i + 2];
-                let decidedColor = squares[i].innerText;
-                const isBlank = squares[i].innerText === '';
-                if (i % width > width - 3) continue;
-
-                if (rowOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) {
-                    score += 3;
-                    scoreDisplay.innerText = score;
-                    rowOfThree.forEach(index => squares[index].innerText = '');
+                if ((i % width) < width - 1) {
+                    swapColors(i, i + 1);
+                    if (checkForMatchesPreview()) { swapColors(i, i + 1); return true; }
+                    swapColors(i, i + 1);
+                }
+                if (i < 56) {
+                    swapColors(i, i + width);
+                    if (checkForMatchesPreview()) { swapColors(i, i + width); return true; }
+                    swapColors(i, i + width);
                 }
             }
+            return false;
         }
 
-        function checkColumnForThree() {
-            for (let i = 0; i < 47; i++) {
-                let columnOfThree = [i, i + width, i + width * 2];
+        function shuffleBoard() {
+            isShuffling = true;
+            messageDisplay.style.display = 'block';
+            setTimeout(() => {
+                let allColors = squares.map(sq => sq.innerText);
+                for (let i = allColors.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [allColors[i], allColors[j]] = [allColors[j], allColors[i]];
+                }
+                squares.forEach((sq, i) => sq.innerText = allColors[i]);
+                messageDisplay.style.display = 'none';
+                isShuffling = false;
+            }, 1000);
+        }
+
+        // --- УНІВЕРСАЛЬНА ФУНКЦІЯ (ВИДАЛЕННЯ) ---
+        function checkLinearMatch(length, points) {
+            // Рядки
+            for (let i = 0; i < 64; i++) {
+                if (i % width > width - length) continue;
+                let rowGroup = [];
+                for(let k=0; k<length; k++) rowGroup.push(i + k);
+
                 let decidedColor = squares[i].innerText;
                 const isBlank = squares[i].innerText === '';
-
-                if (columnOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) {
-                    score += 3;
+                if (!isBlank && rowGroup.every(index => squares[index].innerText === decidedColor)) {
+                    score += points;
                     scoreDisplay.innerText = score;
-                    columnOfThree.forEach(index => squares[index].innerText = '');
+                    rowGroup.forEach(index => squares[index].innerText = '');
+                }
+            }
+
+            // Колонки
+            for (let i = 0; i < 64; i++) {
+                if (i + (length - 1) * width >= 64) continue;
+                let colGroup = [];
+                for(let k=0; k<length; k++) colGroup.push(i + k * width);
+
+                let decidedColor = squares[i].innerText;
+                const isBlank = squares[i].innerText === '';
+                if (!isBlank && colGroup.every(index => squares[index].innerText === decidedColor)) {
+                    score += points;
+                    scoreDisplay.innerText = score;
+                    colGroup.forEach(index => squares[index].innerText = '');
                 }
             }
         }
@@ -603,4 +617,5 @@
         }
     })();
 </script>
+
 {% endblock %}
