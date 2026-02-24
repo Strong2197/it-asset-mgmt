@@ -354,5 +354,26 @@
 
     });
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Перевіряємо, чи підключено jQuery (Select2 працює на ньому)
+        if (typeof $ !== 'undefined') {
+
+            // Слухаємо подію "відкриття" будь-якого select2 на сторінці
+            $(document).on('select2:open', function(e) {
+
+                // Знаходимо поле пошуку у відкритому списку
+                // Клас .select2-container--open з'являється автоматично при відкритті
+                const searchField = document.querySelector('.select2-container--open .select2-search__field');
+
+                // Якщо поле знайдене — ставимо туди фокус
+                if (searchField) {
+                    // Інколи потрібна мікро-затримка (0-10мс), щоб анімація завершилась
+                    setTimeout(() => searchField.focus(), 10);
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

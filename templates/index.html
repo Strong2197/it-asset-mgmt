@@ -1,108 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<style>
-    #secret-match3-wrapper { font-family: sans-serif; line-height: 1.5; }
-    #secret-match3-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    #secret-match3-wrapper .m3g-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background: rgba(0, 0, 0, 0.85);
-        z-index: 2147483647;
-        justify-content: center; align-items: center;
-        backdrop-filter: blur(5px);
-    }
-
-    #secret-match3-wrapper .m3g-container {
-        background: #222;
-        padding: 25px;
-        border-radius: 15px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        text-align: center;
-        color: white;
-        position: relative;
-    }
-
-    #secret-match3-wrapper .m3g-stats {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #ffcc00;
-        gap: 20px;
-    }
-
-    #secret-match3-wrapper .m3g-msg {
-        display: none;
-        background: rgba(255, 0, 0, 0.8);
-        color: white;
-        padding: 5px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-        font-size: 0.9rem;
-        font-weight: bold;
-        animation: pulse 1s infinite;
-    }
-
-    @keyframes pulse {
-        0% { opacity: 0.7; }
-        50% { opacity: 1; }
-        100% { opacity: 0.7; }
-    }
-
-    #secret-match3-wrapper .m3g-grid {
-        display: grid;
-        grid-template-columns: repeat(8, 50px);
-        grid-template-rows: repeat(8, 50px);
-        gap: 5px;
-        background-color: #333;
-        padding: 5px;
-        border-radius: 5px;
-        margin: 0 auto;
-    }
-
-    #secret-match3-wrapper .m3g-cell {
-        width: 50px; height: 50px;
-        background-color: #444;
-        border-radius: 8px;
-        display: flex;
-        justify-content: center; align-items: center;
-        font-size: 30px;
-        cursor: pointer;
-        user-select: none;
-        transition: transform 0.2s, background-color 0.2s;
-    }
-
-    #secret-match3-wrapper .m3g-cell.shake {
-        animation: shake 0.3s;
-        border: 2px solid red;
-    }
-
-    @keyframes shake {
-        0% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        50% { transform: translateX(5px); }
-        75% { transform: translateX(-5px); }
-        100% { transform: translateX(0); }
-    }
-
-    #secret-match3-wrapper .m3g-cell.selected {
-        background-color: #666;
-        border: 2px solid #ffcc00;
-        transform: scale(1.1);
-    }
-
-    #secret-match3-wrapper .m3g-close-btn {
-        position: absolute; top: 10px; right: 15px;
-        font-size: 28px; color: #888;
-        background: none; border: none; cursor: pointer;
-    }
-    #secret-match3-wrapper .m3g-close-btn:hover { color: #fff; }
-</style>
 <style>
     /* Ефект підняття картки при наведенні */
     .hover-lift {
@@ -298,325 +197,726 @@
 
     </div>
 </div>
+### Секретна гра
+<style>
+    /* --- БАЗА --- */
+    #secret-match3-wrapper { font-family: 'Segoe UI', sans-serif; line-height: 1.5; }
+    #secret-match3-wrapper * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    #secret-match3-wrapper .m3g-overlay {
+        display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.95); z-index: 2147483647;
+        justify-content: center; align-items: center;
+        backdrop-filter: blur(8px);
+    }
+
+    #secret-match3-wrapper .m3g-container {
+        background: #181818; padding: 25px; border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 0 1px #333;
+        text-align: center; color: white; position: relative;
+        max-width: 95vw;
+    }
+
+    #secret-match3-wrapper .m3g-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding: 0 10px;
+    }
+
+    #secret-match3-wrapper .m3g-stats {
+        font-size: 1.5rem; font-weight: bold; color: #ffcc00;
+        display: flex; gap: 40px; justify-content: center; margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(255, 204, 0, 0.3);
+    }
+
+    #secret-match3-wrapper .m3g-grid-container {
+        position: relative;
+        background-color: #252525;
+        padding: 10px; border-radius: 15px;
+        border: 4px solid #3a3a3a;
+        margin: 0 auto;
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    }
+
+    /* --- КЛІТИНКА --- */
+    #secret-match3-wrapper .m3g-cell {
+        position: absolute;
+        width: 50px; height: 50px;
+        background-color: #353535;
+        border-radius: 12px;
+        display: flex; justify-content: center; align-items: center;
+        font-size: 32px; cursor: pointer; user-select: none;
+        transition: transform 0.15s ease-out, top 0.2s cubic-bezier(0.5, 0, 0.5, 1);
+        z-index: 10;
+        box-shadow: inset 0 -3px 0 rgba(0,0,0,0.4);
+        overflow: hidden;
+    }
+
+    #secret-match3-wrapper .m3g-cell.selected {
+        filter: brightness(1.3);
+        transform: scale(1.1);
+        background-color: #505050;
+        box-shadow: 0 0 0 3px #ffcc00;
+        z-index: 20;
+    }
+
+    /* АКТИВНА ВЕСЕЛКА (Вибір цілі) */
+    #secret-match3-wrapper .m3g-cell.active-bonus {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 3px #fff, 0 0 30px #ff00de;
+        z-index: 100;
+        animation: activePulse 0.5s infinite alternate;
+    }
+    @keyframes activePulse { from { filter: brightness(1); } to { filter: brightness(1.4); } }
+    #secret-match3-wrapper .m3g-cell.new-spawn { animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* --- БОНУСИ: Структура --- */
+    .m3g-bonus-bg {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1;
+    }
+    .m3g-bonus-icon {
+        position: relative; z-index: 2;
+        width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center; /* Flexbox центрування */
+        padding-top: 3px;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        line-height: 0;
+    }
+
+    /* --- СТИЛІ БОНУСІВ --- */
+
+    /* СТРІЛКИ */
+    .bonus-row .m3g-bonus-bg, .bonus-col .m3g-bonus-bg {
+        background: linear-gradient(135deg, #007bff, #00d4ff);
+        animation: arrowPulseBg 1s infinite alternate;
+    }
+    /* Блік */
+    .bonus-row .m3g-bonus-bg::after, .bonus-col .m3g-bonus-bg::after {
+        content: ''; position: absolute; top: 0; left: -150%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+        transform: skewX(-25deg);
+        animation: arrowShine 1.5s infinite;
+    }
+
+    .bonus-row .m3g-bonus-icon { font-size: 34px; font-weight: 900; }
+    .bonus-col .m3g-bonus-icon { font-size: 34px; font-weight: 900; }
+
+    /* БОМБА */
+    .bonus-bomb .m3g-bonus-bg {
+        background: radial-gradient(circle, #ff3333, #660000);
+        animation: bombPanic 0.5s infinite alternate;
+    }
+    .bonus-bomb .m3g-bonus-icon {
+        font-size: 28px;
+        animation: bombShake 0.2s infinite;
+    }
+
+    /* ВЕСЕЛКА */
+    .bonus-rainbow .m3g-bonus-bg {
+        background: conic-gradient(#ff0000, #ff9900, #ffff00, #33ff00, #0099ff, #6633ff, #ff0000);
+        animation: rainbowSpin 2s linear infinite;
+    }
+    .bonus-rainbow .m3g-bonus-icon {
+        font-size: 32px;
+        text-shadow: 0 0 10px rgba(255,255,255,0.8);
+    }
+
+    /* Анімації */
+    @keyframes arrowPulseBg { from { filter: brightness(1); } to { filter: brightness(1.3); } }
+    @keyframes arrowShine { 0% { left: -150%; } 40% { left: 150%; } 100% { left: 150%; } }
+
+    @keyframes bombPanic { from { transform: scale(1); box-shadow: inset 0 0 10px #000; } to { transform: scale(1.05); box-shadow: inset 0 0 20px #ff0000; } }
+    @keyframes bombShake { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-1px, 1px) rotate(-2deg); } 50% { transform: translate(1px, -1px) rotate(2deg); } 75% { transform: translate(-1px, -1px) rotate(-1deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+
+    @keyframes rainbowSpin { from { transform: scale(1.4) rotate(0deg); } to { transform: scale(1.4) rotate(360deg); } }
+
+    #secret-match3-wrapper .m3g-close-btn { background: none; border: none; color: #666; font-size: 32px; cursor: pointer; transition: color 0.2s;}
+    #secret-match3-wrapper .m3g-close-btn:hover { color: #ff5555; }
+
+    #m3g-msg { height: 24px; color: #ff6b6b; font-weight: bold; font-size: 0.9rem; margin-top: 5px; min-width: 200px; }
+</style>
+
 <div id="secret-match3-wrapper">
     <div class="m3g-overlay" id="m3g-overlay">
         <div class="m3g-container">
-            <button class="m3g-close-btn" id="m3g-close">×</button>
-            <h2 class="m3g-title">Три в ряд</h2>
-
-            <div class="m3g-stats">
-                <div class="m3g-stat-box">Рахунок: <span id="m3g-score">0</span> / 250</div>
-                <div class="m3g-stat-box">Час: <span id="m3g-timer">120</span> сек</div>
+            <div class="m3g-header">
+                <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-weight:900;">Три в ряд</h2>
+                <button class="m3g-close-btn" id="m3g-close">×</button>
             </div>
-
-            <div id="m3g-message" class="m3g-msg">ХОДІВ НЕМАЄ! ПЕРЕМІШУЮ...</div>
-
-            <div class="m3g-grid" id="m3g-grid"></div>
+            <div class="m3g-stats">
+                <div>🎯 <span id="m3g-score">0</span> / 350</div>
+                <div>⏳ <span id="m3g-timer">120</span>s</div>
+            </div>
+            <div class="m3g-grid-container" id="m3g-grid"></div>
+            <div id="m3g-msg"></div>
         </div>
     </div>
 </div>
 
-
-
 <script>
-    (function() {
-        // --- ОНОВЛЕНО: Список кодів ---
-        // 'чудо' - кирилиця
-        // 'xelj' - ті самі клавіші на англійській розкладці
-        const secretCodes = ['чудо', 'xelj'];
-        let inputBuffer = '';
+(function() {
+    // --- НАЛАШТУВАННЯ ---
+    const TARGET_SCORE = 350;
+    const INITIAL_TIME = 120;
+    const COLS = 8;
+    const ROWS = 8;
+    const CELL_SIZE = 50;
+    const GAP = 6;
+    const COLORS = ['🍎', '🍊', '🍇', '🥥', '🥝', '🍪'];
+    const SECRET_CODES = ['чудо', 'xelj'];
 
-        // --- Налаштування ---
-        const width = 8;
-        const totalCells = width * width;
-        const targetScore = 250;
-        const initialTime = 120;
-        const candyColors = ['🍎', '🍊', '🍇', '🥥', '🥝', '🍪'];
+    // --- СТАН ---
+    let grid = [];
+    let score = 0;
+    let timeLeft = INITIAL_TIME;
+    let timerId = null;
+    let isBusy = false;
+    let selectedCell = null;
+    let activeRainbow = null;
+    let inputBuffer = '';
+    let lastSwappedPair = [];
 
-        // --- Стан гри ---
-        let score = 0;
-        let timeLeft = initialTime;
-        let squares = [];
-        let selectedSquareIndex = null;
+    // DOM
+    const overlay = document.getElementById('m3g-overlay');
+    const gridEl = document.getElementById('m3g-grid');
+    const scoreEl = document.getElementById('m3g-score');
+    const timerEl = document.getElementById('m3g-timer');
+    const msgEl = document.getElementById('m3g-msg');
 
-        let isProcessingMove = false;
-        let isShuffling = false;
+    // --- GAME ENGINE ---
+    function init() {
+        const w = COLS * CELL_SIZE + (COLS - 1) * GAP + 20;
+        const h = ROWS * CELL_SIZE + (ROWS - 1) * GAP + 20;
+        gridEl.style.width = w + 'px';
+        gridEl.style.height = h + 'px';
+        document.addEventListener('keydown', handleKeyInput);
+        document.getElementById('m3g-close').addEventListener('click', closeGame);
+    }
 
-        let timerId = null;
-        let gameLoopId = null;
-        let shuffleCheckId = null;
+    function handleKeyInput(e) {
+        inputBuffer += e.key;
+        if (inputBuffer.length > 10) inputBuffer = inputBuffer.slice(-10);
+        if (SECRET_CODES.some(code => inputBuffer.toLowerCase().endsWith(code))) {
+            openGame();
+            inputBuffer = '';
+        }
+    }
 
-        // Елементи DOM
-        const overlay = document.getElementById('m3g-overlay');
-        const gridDisplay = document.getElementById('m3g-grid');
-        const scoreDisplay = document.getElementById('m3g-score');
-        const timerDisplay = document.getElementById('m3g-timer');
-        const closeBtn = document.getElementById('m3g-close');
-        const messageDisplay = document.getElementById('m3g-message');
+    function openGame() { overlay.style.display = 'flex'; startGame(); }
+    function closeGame() { overlay.style.display = 'none'; stopGame(); }
+    function stopGame() { clearInterval(timerId); gridEl.innerHTML = ''; grid = []; }
 
-        // --- 1. ОНОВЛЕНИЙ ОБРОБНИК ВВОДУ ---
-        document.addEventListener('keydown', (e) => {
-            // Додаємо символ, ігноруємо регістр
-            inputBuffer += e.key;
+    function startGame() {
+        stopGame();
+        score = 0; timeLeft = INITIAL_TIME; isBusy = false;
+        selectedCell = null; activeRainbow = null;
+        updateUI(); msgEl.innerText = ""; lastSwappedPair = [];
 
-            // Тримаємо буфер не довшим за найдовше слово (безпечний запас 10 символів)
-            if (inputBuffer.length > 10) inputBuffer = inputBuffer.slice(-10);
+        do { createGridData(); } while (findMatches().matched.length > 0);
+        renderGrid();
 
-            // Перевіряємо, чи закінчується буфер на одне з секретних слів
-            const bufferLower = inputBuffer.toLowerCase();
-            const matchFound = secretCodes.some(code => bufferLower.endsWith(code));
+        timerId = setInterval(() => {
+            timeLeft--; updateUI();
+            if (timeLeft <= 0) endGame(false);
+        }, 1000);
+    }
 
-            if (matchFound) {
-                openGame();
-                inputBuffer = '';
+    function updateUI() {
+        scoreEl.innerText = score;
+        timerEl.innerText = timeLeft;
+        if(score >= TARGET_SCORE) scoreEl.style.color = '#00ff00';
+        else scoreEl.style.color = '#ffcc00';
+    }
+
+    function createGridData() {
+        grid = []; gridEl.innerHTML = '';
+        for (let r = 0; r < ROWS; r++) {
+            let row = [];
+            for (let c = 0; c < COLS; c++) {
+                const type = COLORS[Math.floor(Math.random() * COLORS.length)];
+                row.push({ r, c, type, bonus: null, el: createCellEl(r, c, type) });
+            }
+            grid.push(row);
+        }
+    }
+
+    function createCellEl(r, c, type) {
+        const el = document.createElement('div');
+        el.classList.add('m3g-cell');
+        el.innerText = type;
+        el.style.left = (c * (CELL_SIZE + GAP)) + 'px';
+        el.style.top = (r * (CELL_SIZE + GAP)) + 'px';
+        el.onclick = () => handleCellClick(r, c);
+        gridEl.appendChild(el);
+        return el;
+    }
+
+    // --- ВІЗУАЛІЗАЦІЯ ---
+    function updateCellVisuals(cell) {
+        cell.el.classList.remove('bonus-row', 'bonus-col', 'bonus-bomb', 'bonus-rainbow');
+
+        if (cell.bonus) {
+            let icon = '';
+            let className = '';
+
+            if (cell.bonus === 'row') { icon = '↔'; className = 'bonus-row'; }
+            else if (cell.bonus === 'col') { icon = '↕'; className = 'bonus-col'; }
+            else if (cell.bonus === 'bomb') { icon = '💣'; className = 'bonus-bomb'; }
+            else if (cell.bonus === 'rainbow') { icon = '✨'; className = 'bonus-rainbow'; }
+
+            cell.el.classList.add(className);
+            cell.el.innerHTML = `<div class="m3g-bonus-bg"></div><div class="m3g-bonus-icon">${icon}</div>`;
+        } else {
+            cell.el.innerHTML = cell.type;
+        }
+    }
+
+    function renderGrid() {
+        grid.forEach(row => {
+            row.forEach(cell => {
+                if (!cell) return;
+                cell.el.style.left = (cell.c * (CELL_SIZE + GAP)) + 'px';
+                cell.el.style.top = (cell.r * (CELL_SIZE + GAP)) + 'px';
+
+                updateCellVisuals(cell);
+
+                cell.el.onclick = () => handleCellClick(cell.r, cell.c);
+                cell.el.classList.remove('selected', 'active-bonus');
+
+                if (selectedCell === cell) cell.el.classList.add('selected');
+                if (activeRainbow === cell) cell.el.classList.add('active-bonus');
+            });
+        });
+    }
+
+    // --- ЛОГІКА ---
+    async function handleCellClick(r, c) {
+        if (isBusy || timeLeft <= 0 || !grid[r][c]) return;
+        const clicked = grid[r][c];
+        msgEl.innerText = "";
+
+        if (activeRainbow) {
+            if (clicked === activeRainbow) {
+                activeRainbow = null; renderGrid(); return;
+            }
+            if (clicked.bonus) {
+                activeRainbow = null; renderGrid();
+            } else {
+                isBusy = true;
+                activeRainbow.el.classList.remove('active-bonus');
+
+                // Якщо клікнули на звичайний фрукт - колір беремо з нього
+                // Якщо це бонус (але ми домовились що бонуси не клікабельні для веселки)
+                // Але про всяк випадок - веселка не спалює бонуси
+                if (!clicked.bonus) {
+                    let targetColor = clicked.type;
+                    await explodeColor(targetColor, activeRainbow);
+                }
+
+                activeRainbow = null; selectedCell = null;
+                await applyGravity();
+                isBusy = false;
+                return;
+            }
+        }
+
+        if (clicked.bonus === 'rainbow') {
+            activeRainbow = clicked;
+            selectedCell = null;
+            msgEl.innerText = "Оберіть колір!";
+            renderGrid();
+            return;
+        }
+
+        if (clicked.bonus) {
+            isBusy = true;
+            clicked.el.style.transform = "scale(1.2)";
+            await wait(100);
+
+            let targets = new Set();
+            activateBonusEffect(r, c, clicked.bonus, targets);
+
+            // Сам бонус теж зникає
+            targets.add(`${r},${c}`);
+
+            let destroyedCount = targets.size;
+            score += destroyedCount * 2;
+            updateUI();
+
+            await destroyTargets(targets);
+            selectedCell = null;
+            renderGrid();
+            await applyGravity();
+            isBusy = false;
+            return;
+        }
+
+        if (!selectedCell) {
+            selectedCell = clicked;
+            renderGrid();
+        } else {
+            const first = selectedCell;
+            selectedCell = null;
+            renderGrid();
+
+            if (first === clicked) return;
+
+            const isAdj = Math.abs(first.r - clicked.r) + Math.abs(first.c - clicked.c) === 1;
+            if (isAdj) {
+                await swap(first, clicked);
+            } else {
+                selectedCell = clicked;
+                renderGrid();
+            }
+        }
+    }
+
+    async function swap(cellA, cellB) {
+        isBusy = true;
+        lastSwappedPair = [cellA, cellB];
+
+        const tempType = cellA.type; const tempBonus = cellA.bonus;
+        cellA.type = cellB.type; cellA.bonus = cellB.bonus;
+        cellB.type = tempType; cellB.bonus = tempBonus;
+
+        const ax = cellA.c * (CELL_SIZE + GAP); const ay = cellA.r * (CELL_SIZE + GAP);
+        const bx = cellB.c * (CELL_SIZE + GAP); const by = cellB.r * (CELL_SIZE + GAP);
+
+        cellA.el.style.transform = `translate(${bx - ax}px, ${by - ay}px)`;
+        cellB.el.style.transform = `translate(${ax - bx}px, ${ay - by}px)`;
+
+        await wait(150);
+        cellA.el.style.transform = ''; cellB.el.style.transform = '';
+        renderGrid();
+
+        const matches = findMatches(lastSwappedPair);
+        if (matches.matched.length > 0) {
+            await processMatches(matches);
+        } else {
+            msgEl.innerText = "Хід неможливий";
+            const tT = cellA.type; const tB = cellA.bonus;
+            cellA.type = cellB.type; cellA.bonus = cellB.bonus;
+            cellB.type = tT; cellB.bonus = tB;
+
+            cellA.el.style.transition = 'transform 0.15s'; cellB.el.style.transition = 'transform 0.15s';
+            cellA.el.style.transform = `translate(${bx - ax}px, ${by - ay}px)`;
+            cellB.el.style.transform = `translate(${ax - bx}px, ${ay - by}px)`;
+
+            await wait(20);
+            cellA.el.style.transform = ''; cellB.el.style.transform = '';
+            await wait(150);
+            renderGrid();
+        }
+        lastSwappedPair = [];
+        isBusy = false;
+    }
+
+    function findMatches(priorityCells = []) {
+        let matchedSet = new Set();
+        let bonuses = [];
+
+        const isPriority = (r, c) => priorityCells.some(cell => cell.r === r && cell.c === c);
+
+        // Горизонталь
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS - 2; c++) {
+                // ІГНОРУЄМО БОНУСИ У ЗБІГАХ
+                if (!grid[r][c] || grid[r][c].bonus) continue;
+
+                let matchLen = 1;
+                while (c + matchLen < COLS &&
+                       grid[r][c + matchLen] &&
+                       !grid[r][c + matchLen].bonus &&
+                       grid[r][c].type === grid[r][c + matchLen].type) {
+                    matchLen++;
+                }
+
+                if (matchLen >= 3) {
+                    let bType = null;
+                    if (matchLen >= 5) bType = 'rainbow';
+                    else if (matchLen === 4) bType = 'row';
+
+                    let spawnR = r, spawnC = c + Math.floor(matchLen / 2);
+                    if (bType) {
+                        for(let k=0; k<matchLen; k++) if (isPriority(r, c + k)) { spawnC = c + k; break; }
+                        bonuses.push({ r: spawnR, c: spawnC, type: bType });
+                    }
+                    for(let k=0; k<matchLen; k++) matchedSet.add(`${r},${c+k}`);
+                    c += matchLen - 1;
+                }
+            }
+        }
+
+        // Вертикаль
+        for (let c = 0; c < COLS; c++) {
+            for (let r = 0; r < ROWS - 2; r++) {
+                if (!grid[r][c] || grid[r][c].bonus) continue;
+
+                let matchLen = 1;
+                while (r + matchLen < ROWS &&
+                       grid[r + matchLen][c] &&
+                       !grid[r + matchLen][c].bonus &&
+                       grid[r][c].type === grid[r + matchLen][c].type) {
+                    matchLen++;
+                }
+
+                if (matchLen >= 3) {
+                    let bType = null;
+                    if (matchLen >= 5) bType = 'rainbow';
+                    else if (matchLen === 4) bType = 'col';
+
+                    let spawnR = r + Math.floor(matchLen / 2), spawnC = c;
+                    let existingBonus = bonuses.find(b => b.r === spawnR && b.c === spawnC);
+
+                    if (bType) {
+                        for(let k=0; k<matchLen; k++) if (isPriority(r + k, c)) { spawnR = r + k; break; }
+                        if (bType === 'rainbow') {
+                            bonuses = bonuses.filter(b => !(b.r === spawnR && b.c === spawnC));
+                            bonuses.push({ r: spawnR, c: spawnC, type: 'rainbow' });
+                        } else if (!existingBonus) {
+                             bonuses.push({ r: spawnR, c: spawnC, type: bType });
+                        }
+                    }
+                    for(let k=0; k<matchLen; k++) matchedSet.add(`${r+k},${c}`);
+                    r += matchLen - 1;
+                }
+            }
+        }
+
+        // Квадрати
+        for (let r = 0; r < ROWS - 1; r++) {
+            for (let c = 0; c < COLS - 1; c++) {
+                if (!grid[r][c] || !grid[r+1][c] || !grid[r][c+1] || !grid[r+1][c+1]) continue;
+                // Ігноруємо бонуси
+                if (grid[r][c].bonus || grid[r+1][c].bonus || grid[r][c+1].bonus || grid[r+1][c+1].bonus) continue;
+
+                let t = grid[r][c].type;
+                if (t === grid[r+1][c].type && t === grid[r][c+1].type && t === grid[r+1][c+1].type) {
+                    matchedSet.add(`${r},${c}`); matchedSet.add(`${r+1},${c}`);
+                    matchedSet.add(`${r},${c+1}`); matchedSet.add(`${r+1},${c+1}`);
+
+                    let conflict = bonuses.find(b => (b.r >= r && b.r <= r+1 && b.c >= c && b.c <= c+1 && b.type === 'rainbow'));
+                    if (!conflict) {
+                         let bonusPos = {r, c};
+                         if (isPriority(r, c)) bonusPos = {r, c};
+                         else if (isPriority(r+1, c)) bonusPos = {r: r+1, c: c};
+                         else if (isPriority(r, c+1)) bonusPos = {r: r, c: c+1};
+                         else if (isPriority(r+1, c+1)) bonusPos = {r: r+1, c: c+1};
+
+                         bonuses = bonuses.filter(b => !(b.r === bonusPos.r && b.c === bonusPos.c));
+                         bonuses.push({ r: bonusPos.r, c: bonusPos.c, type: 'bomb' });
+                    }
+                }
+            }
+        }
+
+        return { matched: Array.from(matchedSet), bonuses };
+    }
+
+    async function processMatches(matchData) {
+        const { matched, bonuses } = matchData;
+
+        score += matched.length * 1;
+        score += bonuses.length * 10;
+        updateUI();
+
+        let allTargets = new Set(matched);
+
+        matched.forEach(key => {
+            let [r, c] = key.split(',').map(Number);
+            let cell = grid[r][c];
+            if (cell && cell.bonus) {
+                activateBonusEffect(r, c, cell.bonus, allTargets);
             }
         });
 
-        closeBtn.addEventListener('click', closeGame);
+        await destroyTargets(allTargets);
 
-        function openGame() {
-            overlay.style.display = 'flex';
-            resetGame();
-        }
+        bonuses.forEach(b => {
+            if (!grid[b.r][b.c]) {
+                let type = COLORS[Math.floor(Math.random() * COLORS.length)];
+                let el = createCellEl(b.r, b.c, type);
 
-        function closeGame() {
-            overlay.style.display = 'none';
-            stopAllLoops();
-        }
-
-        function stopAllLoops() {
-            clearInterval(timerId);
-            clearInterval(gameLoopId);
-            clearInterval(shuffleCheckId);
-        }
-
-        function resetGame() {
-            stopAllLoops();
-            gridDisplay.innerHTML = '';
-            squares = [];
-            score = 0;
-            timeLeft = initialTime;
-            selectedSquareIndex = null;
-            isProcessingMove = false;
-            isShuffling = false;
-            messageDisplay.style.display = 'none';
-
-            scoreDisplay.innerText = score;
-            timerDisplay.innerText = timeLeft;
-
-            createBoard();
-
-            timerId = setInterval(() => {
-                timeLeft--;
-                timerDisplay.innerText = timeLeft;
-                if (timeLeft <= 0) endGame(false);
-            }, 1000);
-
-            gameLoopId = setInterval(() => {
-                if (!isShuffling && !isProcessingMove) {
-                    checkLinearMatch(5, 10);
-                    checkLinearMatch(4, 5);
-                    checkLinearMatch(3, 3);
-                    moveDown();
-                    checkWin();
-                }
-            }, 100);
-
-            shuffleCheckId = setInterval(() => {
-                if (!isShuffling && !isProcessingMove && isBoardStable() && !hasPossibleMoves()) {
-                    shuffleBoard();
-                }
-            }, 1500);
-        }
-
-        function endGame(isWin) {
-            stopAllLoops();
-            setTimeout(() => {
-                if (isWin) alert(`🎉 Перемога! Ви набрали ${score} очок!`);
-                else alert(`⏰ Час вийшов! Ваш рахунок: ${score}`);
-                closeGame();
-            }, 100);
-        }
-
-        function checkWin() {
-            if (score >= targetScore) endGame(true);
-        }
-
-        function createBoard() {
-            for (let i = 0; i < totalCells; i++) {
-                const square = document.createElement('div');
-                square.classList.add('m3g-cell');
-                square.setAttribute('id', i);
-                let randomColor = Math.floor(Math.random() * candyColors.length);
-                square.innerText = candyColors[randomColor];
-                gridDisplay.appendChild(square);
-                squares.push(square);
-                square.addEventListener('click', () => clickItem(i));
-            }
-        }
-
-        function clickItem(index) {
-            if (isShuffling || isProcessingMove || !isBoardStable()) return;
-
-            if (index === selectedSquareIndex) {
-                squares[index].classList.remove('selected');
-                selectedSquareIndex = null;
-                return;
-            }
-
-            if (selectedSquareIndex === null) {
-                selectedSquareIndex = index;
-                squares[index].classList.add('selected');
+                // СТВОРЕННЯ БОНУСА (ТИП ЗМІНЮЄТЬСЯ НА НЕЙТРАЛЬНИЙ)
+                grid[b.r][b.c] = { r: b.r, c: b.c, type: 'BONUS_ENTITY', bonus: b.type, el };
+                updateCellVisuals(grid[b.r][b.c]);
+                el.classList.add('new-spawn');
             } else {
-                squares[selectedSquareIndex].classList.remove('selected');
+                grid[b.r][b.c].bonus = b.type;
+                grid[b.r][b.c].type = 'BONUS_ENTITY'; // Видаляємо фрукт з-під капоту
+                updateCellVisuals(grid[b.r][b.c]);
+            }
+        });
 
-                let validMoves = [
-                    selectedSquareIndex - 1, selectedSquareIndex - width,
-                    selectedSquareIndex + 1, selectedSquareIndex + width
-                ];
+        await applyGravity();
+    }
 
-                const isRightEdge = (selectedSquareIndex % width) === width - 1;
-                const isLeftEdge = (selectedSquareIndex % width) === 0;
-                if (index === selectedSquareIndex + 1 && isRightEdge) { selectedSquareIndex = null; return; }
-                if (index === selectedSquareIndex - 1 && isLeftEdge) { selectedSquareIndex = null; return; }
+    async function destroyTargets(targetSet) {
+        targetSet.forEach(key => {
+            let [r, c] = key.split(',').map(Number);
+            if(grid[r][c]) {
+                grid[r][c].el.style.transform = 'scale(0)';
+                grid[r][c].el.style.opacity = '0';
+            }
+        });
+        await wait(150);
+        targetSet.forEach(key => {
+            let [r, c] = key.split(',').map(Number);
+            if(grid[r][c]) { grid[r][c].el.remove(); grid[r][c] = null; }
+        });
+    }
 
-                if (validMoves.includes(index)) {
-                    isProcessingMove = true;
-                    swapColors(selectedSquareIndex, index);
+    function activateBonusEffect(r, c, type, targetSet) {
+        // ДОДАТКОВА ПЕРЕВІРКА: БОНУСИ НЕ СПАЛЮЮТЬ ІНШІ БОНУСИ
+        const safeAdd = (tr, tc) => {
+            if (tr >= 0 && tr < ROWS && tc >= 0 && tc < COLS) {
+                // Якщо це не поточний бонус (самознищення) і це клітинка з іншим бонусом - пропускаємо
+                if ((tr !== r || tc !== c) && grid[tr][tc] && grid[tr][tc].bonus) return;
+                targetSet.add(`${tr},${tc}`);
+            }
+        };
 
-                    const isMoveValid = checkForMatchesPreview();
+        if (type === 'row') for(let i=0; i<COLS; i++) safeAdd(r, i);
+        if (type === 'col') for(let i=0; i<ROWS; i++) safeAdd(i, c);
+        if (type === 'bomb') {
+            for(let i=r-1; i<=r+1; i++)
+                for(let j=c-1; j<=c+1; j++) safeAdd(i, j);
+        }
+    }
 
-                    if (isMoveValid) {
-                        isProcessingMove = false;
-                        selectedSquareIndex = null;
-                    } else {
-                        squares[selectedSquareIndex].classList.add('shake');
-                        squares[index].classList.add('shake');
+    async function applyGravity() {
+        let moves = false;
+        for (let c = 0; c < COLS; c++) {
+            let emptyCount = 0;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (grid[r][c] === null) {
+                    emptyCount++;
+                } else if (emptyCount > 0) {
+                    let cell = grid[r][c];
+                    grid[r + emptyCount][c] = cell;
+                    grid[r][c] = null;
+                    cell.r += emptyCount;
+                    cell.el.style.top = (cell.r * (CELL_SIZE + GAP)) + 'px';
+                    moves = true;
+                }
+            }
+            for (let r = 0; r < emptyCount; r++) {
+                let type = COLORS[Math.floor(Math.random() * COLORS.length)];
+                let el = createCellEl(r - emptyCount, c, type);
+                grid[r][c] = { r, c, type, bonus: null, el };
+                void el.offsetWidth;
+                el.style.top = (r * (CELL_SIZE + GAP)) + 'px';
+            }
+        }
 
-                        setTimeout(() => {
-                            swapColors(selectedSquareIndex, index);
-                            squares[selectedSquareIndex].classList.remove('shake');
-                            squares[index].classList.remove('shake');
-                            isProcessingMove = false;
-                            selectedSquareIndex = null;
-                        }, 250);
+        await wait(200);
+        renderGrid();
+
+        const newMatches = findMatches();
+        if (newMatches.matched.length > 0) {
+            await processMatches(newMatches);
+        } else {
+            if (!hasPossibleMoves()) {
+                msgEl.innerText = "ПЕРЕМІШУЮ...";
+                await wait(500);
+                shuffleBoard();
+            }
+            if (score >= TARGET_SCORE) endGame(true);
+        }
+    }
+
+    async function explodeColor(type, rainbowCell) {
+        let targets = [];
+        for(let r=0; r<ROWS; r++)
+            for(let c=0; c<COLS; c++) {
+                // ВЕСЕЛКА НЕ ЧІПАЄ БОНУСИ
+                if(grid[r][c] && !grid[r][c].bonus && grid[r][c].type === type) {
+                    targets.push(grid[r][c]);
+                }
+            }
+
+        targets.forEach(c => {
+            c.el.style.transition = 'all 0.2s';
+            c.el.style.transform = 'scale(0) rotate(180deg)';
+        });
+        if(rainbowCell) rainbowCell.el.style.transform = 'scale(0)';
+
+        await wait(200);
+
+        targets.forEach(c => { c.el.remove(); grid[c.r][c.c] = null; });
+        if(rainbowCell && grid[rainbowCell.r][rainbowCell.c]) {
+            rainbowCell.el.remove(); grid[rainbowCell.r][rainbowCell.c] = null;
+        }
+        score += targets.length * 2;
+        updateUI();
+    }
+
+    function hasPossibleMoves() {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                if (c < COLS - 1 && checkSwap(r, c, r, c+1)) return true;
+                if (r < ROWS - 1 && checkSwap(r, c, r+1, c)) return true;
+                if (grid[r][c] && grid[r][c].bonus) return true;
+            }
+        }
+        return false;
+    }
+
+    function checkSwap(r1, c1, r2, c2) {
+        if(!grid[r1][c1] || !grid[r2][c2]) return false;
+        let t = grid[r1][c1].type; grid[r1][c1].type = grid[r2][c2].type; grid[r2][c2].type = t;
+        let matches = findMatches().matched.length > 0;
+        t = grid[r1][c1].type; grid[r1][c1].type = grid[r2][c2].type; grid[r2][c2].type = t;
+        return matches;
+    }
+
+    async function shuffleBoard() {
+        isBusy = true;
+        let items = [];
+        for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) if(grid[r][c]) items.push(grid[r][c].type);
+        items.sort(() => Math.random() - 0.5);
+        let i = 0;
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                if(grid[r][c]) {
+                    grid[r][c].type = items[i++];
+
+                    if(grid[r][c].bonus) {
+                        // Якщо ми перемішуємо бонус - він залишається бонусом без типу
+                        grid[r][c].type = 'BONUS_ENTITY';
                     }
-                } else {
-                    selectedSquareIndex = index;
-                    squares[index].classList.add('selected');
-                }
-            }
-        }
 
-        function swapColors(index1, index2) {
-            let temp = squares[index1].innerText;
-            squares[index1].innerText = squares[index2].innerText;
-            squares[index2].innerText = temp;
+                    updateCellVisuals(grid[r][c]);
+                    grid[r][c].el.classList.remove('new-spawn');
+                    void grid[r][c].el.offsetWidth;
+                    grid[r][c].el.classList.add('new-spawn');
+                }
+            }
         }
+        msgEl.innerText = "";
+        await wait(400);
+        if (findMatches().matched.length > 0) {
+            await processMatches(findMatches());
+        } else if (!hasPossibleMoves()) {
+             shuffleBoard();
+        } else {
+             isBusy = false;
+        }
+    }
 
-        function isBoardStable() {
-            return squares.every(sq => sq.innerText !== '');
-        }
+    function endGame(win) {
+        clearInterval(timerId); isBusy = true;
+        setTimeout(() => {
+            if(win) alert(`🎉 Перемога! Ви набрали ${score} очок!`);
+            else alert(`⏰ Час вийшов! Ваш рахунок: ${score}`);
+            closeGame();
+        }, 100);
+    }
 
-        function checkForMatchesPreview() {
-            for (let i = 0; i < 64; i++) {
-                let rowOfThree = [i, i + 1, i + 2];
-                let decidedColor = squares[i].innerText;
-                const isBlank = squares[i].innerText === '';
-                if (i % width > width - 3) continue;
-                if (rowOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) return true;
-            }
-            // Перевіряємо всі можливі вертикальні трійки
-            for (let i = 0; i < 48; i++) {
-                let columnOfThree = [i, i + width, i + width * 2];
-                let decidedColor = squares[i].innerText;
-                const isBlank = squares[i].innerText === '';
-                if (columnOfThree.every(index => squares[index].innerText === decidedColor && !isBlank)) return true;
-            }
-            return false;
-        }
-
-        function hasPossibleMoves() {
-            for (let i = 0; i < 64; i++) {
-                if ((i % width) < width - 1) {
-                    swapColors(i, i + 1);
-                    if (checkForMatchesPreview()) { swapColors(i, i + 1); return true; }
-                    swapColors(i, i + 1);
-                }
-                if (i < 56) {
-                    swapColors(i, i + width);
-                    if (checkForMatchesPreview()) { swapColors(i, i + width); return true; }
-                    swapColors(i, i + width);
-                }
-            }
-            return false;
-        }
-
-        function shuffleBoard() {
-            isShuffling = true;
-            messageDisplay.style.display = 'block';
-            setTimeout(() => {
-                let allColors = squares.map(sq => sq.innerText);
-                for (let i = allColors.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allColors[i], allColors[j]] = [allColors[j], allColors[i]];
-                }
-                squares.forEach((sq, i) => sq.innerText = allColors[i]);
-                messageDisplay.style.display = 'none';
-                isShuffling = false;
-            }, 1000);
-        }
-
-        function checkLinearMatch(length, points) {
-            // Рядки
-            for (let i = 0; i < 64; i++) {
-                if (i % width > width - length) continue;
-                let rowGroup = [];
-                for(let k=0; k<length; k++) rowGroup.push(i + k);
-                let decidedColor = squares[i].innerText;
-                const isBlank = squares[i].innerText === '';
-                if (!isBlank && rowGroup.every(index => squares[index].innerText === decidedColor)) {
-                    score += points;
-                    scoreDisplay.innerText = score;
-                    rowGroup.forEach(index => squares[index].innerText = '');
-                }
-            }
-            // Колонки
-            for (let i = 0; i < 64; i++) {
-                if (i + (length - 1) * width >= 64) continue;
-                let colGroup = [];
-                for(let k=0; k<length; k++) colGroup.push(i + k * width);
-                let decidedColor = squares[i].innerText;
-                const isBlank = squares[i].innerText === '';
-                if (!isBlank && colGroup.every(index => squares[index].innerText === decidedColor)) {
-                    score += points;
-                    scoreDisplay.innerText = score;
-                    colGroup.forEach(index => squares[index].innerText = '');
-                }
-            }
-        }
-
-        function moveDown() {
-            for (let i = 0; i < 56; i++) {
-                if (squares[i + width].innerText === '') {
-                    squares[i + width].innerText = squares[i].innerText;
-                    squares[i].innerText = '';
-                    const firstRow = [0, 1, 2, 3, 4, 5, 6, 7];
-                    const isFirstRow = firstRow.includes(i);
-                    if (isFirstRow && squares[i].innerText === '') {
-                        let randomColor = Math.floor(Math.random() * candyColors.length);
-                        squares[i].innerText = candyColors[randomColor];
-                    }
-                }
-            }
-            for (let i = 0; i < width; i++) {
-                if(squares[i].innerText === '') {
-                   let randomColor = Math.floor(Math.random() * candyColors.length);
-                   squares[i].innerText = candyColors[randomColor];
-                }
-            }
-        }
-    })();
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+    init();
+})();
 </script>
-
 {% endblock %}
