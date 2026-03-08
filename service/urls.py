@@ -18,4 +18,5 @@ urlpatterns = [
     path('reports/<int:pk>/edit/', views.report_edit, name='report_edit'),
     path('item/<int:pk>/receive/', views.item_receive, name='item_receive'),
     path('item/<int:pk>/return/', views.item_return, name='item_return'),
+    path('webhook/telegram-secret-bot-url/', views.telegram_webhook, name='telegram_webhook'),
 ]

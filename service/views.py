@@ -5,6 +5,13 @@ from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
+import json
+import requests
+import google.generativeai as genai
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+
 
 
 # --- ДОПОМІЖНІ ФУНКЦІЇ ---
@@ -274,3 +281,134 @@ def report_edit(request, pk):
     else:
         form = ServiceReportForm(instance=report)
     return render(request, 'service/report_form.html', {'form': form, 'title': f'Редагування акту №{report.id}'})
+
+# Налаштовуємо доступ до ШІ
+genai.configure(api_key=settings.GEMINI_API_KEY)
+
+def send_telegram_message(chat_id, text):
+    """Допоміжна функція для відправки повідомлень назад у Telegram"""
+    url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+    requests.post(url, json={'chat_id': chat_id, 'text': text})
+
+@csrf_exempt
+def telegram_webhook(request):
+    """Головний обробник повідомлень від Telegram"""
+    if request.method == 'POST':
+        try:
+            # Отримуємо дані від Telegram
+            data = json.loads(request.body)
+
+            # Якщо це звичайне текстове повідомлення
+            if 'message' in data and 'text' in data['message']:
+                chat_id = data['message']['chat']['id']
+                user_text = data['message']['text']
+
+                # === НОВИЙ БЛОК: ФІЛЬТР КОМАНД ===
+                if user_text.startswith('/'):
+                    if user_text == '/start':
+                        welcome_msg = (
+                            "👋 Привіт! Я ваш розумний IT-асистент.\n\n"
+                            "Просто напишіть мені, що у вас сталося або що потрібно заправити, і я сам створю заявку в системі.\n\n"
+                            "💡 *Приклад:* 'Це бухгалтерія, зажувало папір у принтері hp 1102' або '2610, потрібно два картриджі 85a'."
+                        )
+                        send_telegram_message(chat_id, welcome_msg)
+                    else:
+                        send_telegram_message(chat_id, "🤖 Я поки що не розумію спеціальних команд. Просто опишіть проблему звичайним текстом.")
+
+                    return JsonResponse({'status': 'ok'}) # Зупиняємо виконання, щоб не йти до ШІ
+                # === КІНЕЦЬ НОВОГО БЛОКУ ===
+
+                send_telegram_message(chat_id, "⏳ Думаю... Формую заявку та підбираю картриджі...")
+                # Перетворюємо ваш список картриджів на текст для ШІ
+                cartridges_text = "\n".join([f"- {c[0]}" for c in CARTRIDGE_CHOICES])
+
+                # 1. Автоматичний пошук доступної моделі
+                available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                model_name = next((m for m in available_models if 'flash' in m), available_models[0])
+                model = genai.GenerativeModel(model_name)
+
+                # РОЗУМНИЙ ПРОМПТ ДЛЯ ШІ
+                # РОЗУМНИЙ ПРОМПТ ДЛЯ ШІ
+                prompt = f"""
+                Ти розумний IT-асистент. Витягни дані з повідомлення і поверни ТІЛЬКИ валідний JSON.
+                Повідомлення: "{user_text}"
+
+                Ось точний список можливих позицій (item_name):
+                {cartridges_text}
+                - Інше
+
+                Правила розбору:
+                1. Проаналізуй повідомлення. Якщо це просто привітання ("Привіт", "Дякую"), розмова або в тексті НЕМАЄ скарги на техніку чи прохання щось заправити/відремонтувати — встанови поле "is_valid_request" у false.
+                2. Якщо це реальна заявка — встанови "is_valid_request" у true і заповни дані:
+                3. Зістав назву картриджа з найближчим аналогом зі списку.
+                4. Якщо вказано ПРИНТЕР або пристрій — створюй ОКРЕМУ позицію. Для принтерів став "item_name": "Інше", а назву пиши в "custom_name".
+                5. Якщо є скарга (наприклад "гуде", "не бере папір"), обов'язково запиши це в поле "note" для цієї позиції.
+                6. "task_type" обирай 'refill' (якщо є картриджі) або 'repair'.
+
+                Формат JSON:
+                {{
+                    "is_valid_request": true,
+                    "task_type": "refill",
+                    "requester_name": "Ім'я або номер",
+                    "department": "Назва відділу",
+                    "description": "",
+                    "items": [
+                        {{
+                            "item_name": "Точна назва зі списку або 'Інше'",
+                            "quantity": 1,
+                            "custom_name": "Назва пристрою (якщо Інше)",
+                            "note": "Скарга на пристрій (якщо є)"
+                        }}
+                    ]
+                }}
+                """
+
+                response = model.generate_content(prompt)
+                cleaned_text = response.text.strip().removeprefix('```json').removesuffix('```').strip()
+                ai_data = json.loads(cleaned_text)
+
+                # === НОВИЙ ЗАПОБІЖНИК ВІД ПОРОЖНІХ ЗАЯВОК ===
+                if not ai_data.get('is_valid_request', True):
+                    send_telegram_message(chat_id, "🤷‍♂️ Я не знайшов у вашому повідомленні інформації для створення заявки (наприклад, опису проблеми чи назви картриджа). Будь ласка, уточніть, що саме сталося.")
+                    return JsonResponse({'status': 'ok'})
+                # ============================================
+
+
+
+                # 3. Створюємо шапку заявки
+                task = ServiceTask.objects.create(
+                    task_type=ai_data.get('task_type', 'refill'),
+                    requester_name=ai_data.get('requester_name', ''),
+                    department=ai_data.get('department', 'Не вказано'),
+                    description=ai_data.get('description', '')
+                )
+
+                # 4. Створюємо позиції (картриджі та принтери) в заявці
+                items_data = ai_data.get('items', [])
+                items_text_for_reply = ""
+                for item in items_data:
+                    ServiceTaskItem.objects.create(
+                        task=task,
+                        item_name=item.get('item_name') or 'Інше',
+                        quantity=item.get('quantity') or 1,
+                        custom_name=item.get('custom_name') or '',
+                        note=item.get('note') or ''
+                    )
+
+                    # Формуємо текст для відповіді в Телеграм
+                    display_name = (item.get('custom_name') or '') if item.get('item_name') == 'Інше' else item.get('item_name')
+                    note_text = f" ({item.get('note')})" if item.get('note') else ""
+                    items_text_for_reply += f"\n🖨 {display_name} - {item.get('quantity')} шт.{note_text}"
+
+                # 5. Звітуємо в Telegram
+                reply_text = f"✅ Заявку №{task.id} успішно створено!\n🏢 Відділ: {task.department}\n👤 Замовник: {task.requester_name}\n{items_text_for_reply}"
+                send_telegram_message(chat_id, reply_text)
+
+        except Exception as e:
+            # Якщо щось пішло не так (наприклад, ШІ повернув кривий JSON)
+            print(f"Помилка Webhook: {e}")
+            if 'chat_id' in locals():
+                send_telegram_message(chat_id, f"❌ Сталася помилка при обробці: {str(e)}")
+
+    # Завжди повертаємо 200 OK, інакше Telegram буде дублювати повідомлення
+    return JsonResponse({'status': 'ok'})

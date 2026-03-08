@@ -135,3 +135,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+TELEGRAM_BOT_TOKEN = ('8687460746:AAFRBje-VmkKZW51riqbZRBKWHGRlDv5U70')
+GEMINI_API_KEY = ('AIzaSyCpJUHTewSw6RLnWk2h1O3OWzP0Qger7KE')
