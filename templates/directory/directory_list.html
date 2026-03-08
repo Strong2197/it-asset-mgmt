@@ -214,6 +214,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     return;
                 }
 
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
                 if (tableBody) {
                     tableBody.innerHTML = data.rows_html;
                 }
