@@ -2,35 +2,37 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import PhonebookEntry
 from .forms import PhonebookForm
 from django.db.models import Q
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 
 def directory_list(request):
-    query = request.GET.get('q', '').strip().lower()  # Перетворюємо запит у нижній регістр
+    query = request.GET.get('q', '').strip()
 
-    # Отримуємо всі записи (воно відсортується по коду, як ми писали раніше)
-    all_entries = PhonebookEntry.objects.all()
+    entries = PhonebookEntry.objects.all()
 
     if query:
-        # Фільтруємо список вручну засобами Python
-        filtered_entries = []
-        for item in all_entries:
-            # Збираємо всі текстові поля в один рядок для пошуку
-            search_content = f"{item.department} {item.code} {item.chief_name} {item.chief_phone} {item.deputy_name} {item.deputy_phone}".lower()
+        entries = entries.filter(
+            Q(department__icontains=query)
+            | Q(code__icontains=query)
+            | Q(chief_name__icontains=query)
+            | Q(chief_phone__icontains=query)
+            | Q(deputy_name__icontains=query)
+            | Q(deputy_phone__icontains=query)
+            | Q(email__icontains=query)
+        )
 
-            if query in search_content:
-                filtered_entries.append(item)
-
-        entries = filtered_entries
-    else:
-        entries = all_entries
+    total_count = entries.count()
 
     # Логіка для AJAX (живого пошуку)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return render(request, 'directory/directory_rows.html', {'entries': entries})
+        rows_html = render_to_string('directory/directory_rows.html', {'entries': entries}, request=request)
+        return JsonResponse({'rows_html': rows_html, 'total_count': total_count})
 
     return render(request, 'directory/directory_list.html', {
         'entries': entries,
-        'query': query
+        'query': query,
+        'total_count': total_count,
     })
 
 # ... інші функції (create, update, delete) залишаються без змін ...
