@@ -282,6 +282,9 @@ def report_edit(request, pk):
 
 def send_telegram_message(chat_id, text):
     """Допоміжна функція для відправки повідомлень назад у Telegram"""
+    if not settings.TELEGRAM_BOT_TOKEN:
+        return
+
     import requests
 
     url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
