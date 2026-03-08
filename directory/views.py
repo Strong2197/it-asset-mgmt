@@ -43,7 +43,7 @@ def directory_list(request):
     # Додаємо підтримку query-прапорця, бо деякі проксі можуть зрізати X-Requested-With.
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
     if is_ajax:
-            matched_ids = [
+            matched_ids = []
                 item.pk
                 for item in PhonebookEntry.objects.all()
             entries = [
