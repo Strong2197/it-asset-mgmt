@@ -248,7 +248,7 @@
             <div id="pagination-container" class="card-footer bg-white border-top-0 py-3 rounded-bottom-3">
                 <div class="d-flex justify-content-start align-items-center">
                     <small class="text-muted">
-                        Всього записів: <strong>{{ entries|length }}</strong>
+                        Всього записів: <strong>{{ total_count }}</strong>
                     </small>
                 </div>
             </div>
@@ -296,19 +296,17 @@ document.addEventListener("DOMContentLoaded", function() {
     function fetchResults(query) {
         const url = `?q=${encodeURIComponent(query)}`;
         if (tableContainer) tableContainer.classList.add('loading-opacity');
-        fetch(url)
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newTbody = doc.getElementById('directory-tbody');
-                if (newTbody && tableBody) {
-                    tableBody.innerHTML = newTbody.innerHTML;
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (tableBody) {
+                    tableBody.innerHTML = data.rows_html;
                 }
-                const newCounter = doc.querySelector('#pagination-container strong');
                 const currentCounter = document.querySelector('#pagination-container strong');
-                if (newCounter && currentCounter) {
-                    currentCounter.innerHTML = newCounter.innerHTML;
+                if (currentCounter) {
+                    currentCounter.textContent = data.total_count;
                 }
             })
             .catch(error => console.error('Error:', error))
