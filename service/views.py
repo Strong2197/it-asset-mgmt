@@ -6,6 +6,7 @@ from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOIC
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 import json
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
@@ -293,6 +294,8 @@ def send_telegram_message(chat_id, text):
 def telegram_webhook(request):
     """Головний обробник повідомлень від Telegram"""
     if request.method == 'POST':
+        if not settings.GEMINI_API_KEY:
+            return JsonResponse({'status': 'ok'})
         try:
             # Отримуємо дані від Telegram
             data = json.loads(request.body)

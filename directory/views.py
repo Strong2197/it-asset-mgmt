@@ -35,6 +35,7 @@ def directory_list(request):
             ]
 
     total_count = len(entries) if isinstance(entries, list) else entries.count()
+    total_count = entries.count()
 
     # Логіка для AJAX (живого пошуку)
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':

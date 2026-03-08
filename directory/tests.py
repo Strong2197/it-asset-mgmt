@@ -20,6 +20,7 @@ class DirectoryViewsTests(TestCase):
             code='2618',
             email='kalush@example.com',
             chief_name='Петро Зінич',
+            chief_name='Петро Калуський',
             chief_phone='067-000-00-00',
         )
 
