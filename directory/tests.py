@@ -66,6 +66,15 @@ class DirectoryViewsTests(TestCase):
         self.assertIn('Калуський відділ', payload['rows_html'])
         self.assertEqual(payload['total_count'], 1)
 
+
+    def test_directory_list_ajax_via_query_param(self):
+        response = self.client.get(reverse('directory_list'), {'q': 'калусь', 'ajax': '1'})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn('Калуський відділ', payload['rows_html'])
+        self.assertEqual(payload['total_count'], 1)
+
     def test_directory_create_update_delete(self):
         create_response = self.client.post(
             reverse('directory_create'),

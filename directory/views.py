@@ -35,6 +35,11 @@ def directory_list(request):
             ]
 
     total_count = len(entries) if isinstance(entries, list) else entries.count()
+
+    # Логіка для AJAX (живого пошуку).
+    # Додаємо підтримку query-прапорця, бо деякі проксі можуть зрізати X-Requested-With.
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
+    if is_ajax:
     total_count = entries.count()
 
     # Логіка для AJAX (живого пошуку)

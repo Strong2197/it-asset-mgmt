@@ -185,10 +185,35 @@ document.addEventListener("DOMContentLoaded", function() {
     const tableContainer = document.getElementById('table-container');
     const tableBody = document.getElementById('directory-tbody');
     let debounceTimer;
+    let currentRequestId = 0;
 
     function fetchResults(query) {
-        const url = `?q=${encodeURIComponent(query)}`;
+        const url = `?q=${encodeURIComponent(query)}&ajax=1`;
         if (tableContainer) tableContainer.classList.add('loading-opacity');
+        const requestId = ++currentRequestId;
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(response => {
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) return response.json();
+                return response.text().then(html => ({ html_fallback: html }));
+            })
+            .then(data => {
+                if (requestId !== currentRequestId) return;
+
+                if (data.html_fallback) {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(data.html_fallback, 'text/html');
+                    const newTbody = doc.getElementById('directory-tbody');
+                    const newCounter = doc.querySelector('#pagination-container strong');
+                    if (tableBody && newTbody) tableBody.innerHTML = newTbody.innerHTML;
+                    const currentCounter = document.querySelector('#pagination-container strong');
+                    if (currentCounter && newCounter) currentCounter.textContent = newCounter.textContent;
+                    return;
+                }
+
         fetch(url, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
