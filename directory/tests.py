@@ -53,6 +53,19 @@ class DirectoryViewsTests(TestCase):
         self.assertIn('Івано-Франківський відділ', payload['rows_html'])
         self.assertEqual(payload['total_count'], 1)
 
+
+    def test_directory_list_ajax_finds_cyrillic_text(self):
+        response = self.client.get(
+            reverse('directory_list'),
+            {'q': 'зінич'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn('Калуський відділ', payload['rows_html'])
+        self.assertEqual(payload['total_count'], 1)
+
     def test_directory_create_update_delete(self):
         create_response = self.client.post(
             reverse('directory_create'),
