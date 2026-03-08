@@ -317,6 +317,10 @@ def telegram_webhook(request):
                     return JsonResponse({'status': 'ok'}) # Зупиняємо виконання, щоб не йти до ШІ
                 # === КІНЕЦЬ НОВОГО БЛОКУ ===
 
+                if not settings.GEMINI_API_KEY:
+                    send_telegram_message(chat_id, "⚠️ Gemini API ключ не налаштовано. Зверніться до адміністратора.")
+                    return JsonResponse({'status': 'ok'})
+
                 send_telegram_message(chat_id, "⏳ Думаю... Формую заявку та підбираю картриджі...")
                 # Перетворюємо ваш список картриджів на текст для ШІ
                 cartridges_text = "\n".join([f"- {c[0]}" for c in CARTRIDGE_CHOICES])
