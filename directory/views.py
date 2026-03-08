@@ -26,6 +26,9 @@ def directory_list(request):
         # тому робимо fallback на Python casefold.
         if not entries.exists():
             query_cf = query.casefold()
+            matched_ids = [
+                item.pk
+                for item in PhonebookEntry.objects.all()
             entries = [
                 item for item in PhonebookEntry.objects.all()
                 if query_cf in (
@@ -33,6 +36,14 @@ def directory_list(request):
                     f"{item.chief_phone} {item.deputy_name} {item.deputy_phone} {item.email}"
                 ).casefold()
             ]
+            entries = PhonebookEntry.objects.filter(pk__in=matched_ids)
+
+    total_count = entries.count()
+
+    # Логіка для AJAX (живого пошуку).
+    # Додаємо підтримку query-прапорця, бо деякі проксі можуть зрізати X-Requested-With.
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
+    if is_ajax:
 
     total_count = len(entries) if isinstance(entries, list) else entries.count()
 
