@@ -22,6 +22,19 @@ def directory_list(request):
             | Q(email__icontains=query)
         )
 
+        # SQLite може некоректно порівнювати регістр для кирилиці в icontains,
+        # тому робимо fallback на Python casefold.
+        if not entries.exists():
+            query_cf = query.casefold()
+            entries = [
+                item for item in PhonebookEntry.objects.all()
+                if query_cf in (
+                    f"{item.department} {item.code} {item.chief_name} "
+                    f"{item.chief_phone} {item.deputy_name} {item.deputy_phone} {item.email}"
+                ).casefold()
+            ]
+
+    total_count = len(entries) if isinstance(entries, list) else entries.count()
     total_count = entries.count()
 
     # Логіка для AJAX (живого пошуку)

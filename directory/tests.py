@@ -19,12 +19,21 @@ class DirectoryViewsTests(TestCase):
             department='Калуський відділ',
             code='2618',
             email='kalush@example.com',
+            chief_name='Петро Зінич',
             chief_name='Петро Калуський',
             chief_phone='067-000-00-00',
         )
 
     def test_directory_list_filters_with_query(self):
         response = self.client.get(reverse('directory_list'), {'q': '2618'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Калуський відділ')
+        self.assertNotContains(response, 'Івано-Франківський відділ')
+
+
+    def test_directory_list_case_insensitive_for_cyrillic(self):
+        response = self.client.get(reverse('directory_list'), {'q': 'ЗІНИЧ'})
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Калуський відділ')
