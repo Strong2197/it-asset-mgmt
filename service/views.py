@@ -291,6 +291,8 @@ def send_telegram_message(chat_id, text):
 def telegram_webhook(request):
     """Головний обробник повідомлень від Telegram"""
     if request.method == 'POST':
+        if not settings.GEMINI_API_KEY:
+            return JsonResponse({'status': 'ok'})
         try:
             # Отримуємо дані від Telegram
             data = json.loads(request.body)
