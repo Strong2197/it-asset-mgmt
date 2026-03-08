@@ -6,8 +6,6 @@ from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOIC
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 import json
-import requests
-import google.generativeai as genai
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -282,11 +280,10 @@ def report_edit(request, pk):
         form = ServiceReportForm(instance=report)
     return render(request, 'service/report_form.html', {'form': form, 'title': f'Редагування акту №{report.id}'})
 
-# Налаштовуємо доступ до ШІ
-genai.configure(api_key=settings.GEMINI_API_KEY)
-
 def send_telegram_message(chat_id, text):
     """Допоміжна функція для відправки повідомлень назад у Telegram"""
+    import requests
+
     url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
     requests.post(url, json={'chat_id': chat_id, 'text': text})
 
@@ -323,6 +320,9 @@ def telegram_webhook(request):
                 cartridges_text = "\n".join([f"- {c[0]}" for c in CARTRIDGE_CHOICES])
 
                 # 1. Автоматичний пошук доступної моделі
+                import google.generativeai as genai
+
+                genai.configure(api_key=settings.GEMINI_API_KEY)
                 available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
                 model_name = next((m for m in available_models if 'flash' in m), available_models[0])
                 model = genai.GenerativeModel(model_name)
