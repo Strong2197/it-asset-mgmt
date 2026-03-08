@@ -1,7 +1,0 @@
-tunnel: e59a4f80-4bbb-492d-8f17-a2749888ea88
-credentials-file: /home/user/.cloudflared/e59a4f80-4bbb-492d-8f17-a2749888ea88.json
-
-ingress:
-  - hostname: itif.duckdns.org  # Ваша бажана адреса
-    service: http://localhost:8000 # Порт вашого Django
-  - service: http_status:404       # Обробка інших запитів
