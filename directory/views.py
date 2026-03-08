@@ -40,6 +40,10 @@ def directory_list(request):
     # Додаємо підтримку query-прапорця, бо деякі проксі можуть зрізати X-Requested-With.
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1'
     if is_ajax:
+    total_count = entries.count()
+
+    # Логіка для AJAX (живого пошуку)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         rows_html = render_to_string('directory/directory_rows.html', {'entries': entries}, request=request)
         return JsonResponse({'rows_html': rows_html, 'total_count': total_count})
 
