@@ -1,12 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
+from django.db.models import Sum, Case, When, Value, IntegerField, Q
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 import json
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
@@ -74,56 +73,40 @@ def service_list(request):
     })
 
 
-# --- СТВОРЕННЯ ЗАЯВКИ ---
-def service_create(request):
-    departments = get_all_departments()
-    requesters = get_all_requesters()
-
-    if request.method == 'POST':
-        form = ServiceTaskForm(request.POST)
-        formset = ServiceItemFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
-            task = form.save()
-            formset.instance = task
-            formset.save()
-            return redirect('service_list')
-    else:
-        form = ServiceTaskForm()
-        formset = ServiceItemFormSet()
-
-    return render(request, 'service/service_form.html', {
-        'form': form,
-        'formset': formset,
-        'departments': departments,
-        'requesters': requesters,
-        'title': 'Створення комплексної заявки'
-    })
-
-
-# --- РЕДАГУВАННЯ ЗАЯВКИ ---
-def service_update(request, pk):
-    task = get_object_or_404(ServiceTask, pk=pk)
+def _save_service_task_form(request, *, task=None, formset_class=ServiceItemFormSet, title=''):
     departments = get_all_departments()
     requesters = get_all_requesters()
 
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST, instance=task)
-        formset = ServiceItemEditFormSet(request.POST, instance=task)
+        formset = formset_class(request.POST, instance=task)
         if form.is_valid() and formset.is_valid():
-            form.save()
+            saved_task = form.save()
+            formset.instance = saved_task
             formset.save()
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
-        formset = ServiceItemEditFormSet(instance=task)
+        formset = formset_class(instance=task)
 
     return render(request, 'service/service_form.html', {
         'form': form,
         'formset': formset,
         'departments': departments,
         'requesters': requesters,
-        'title': 'Редагування заявки'
+        'title': title
     })
+
+
+# --- СТВОРЕННЯ ЗАЯВКИ ---
+def service_create(request):
+    return _save_service_task_form(request, formset_class=ServiceItemFormSet, title='Створення комплексної заявки')
+
+
+# --- РЕДАГУВАННЯ ЗАЯВКИ ---
+def service_update(request, pk):
+    task = get_object_or_404(ServiceTask, pk=pk)
+    return _save_service_task_form(request, task=task, formset_class=ServiceItemEditFormSet, title='Редагування заявки')
 
 
 # --- ІНШІ ФУНКЦІЇ ---
@@ -290,6 +273,22 @@ def send_telegram_message(chat_id, text):
     url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
     requests.post(url, json={'chat_id': chat_id, 'text': text})
 
+def _handle_telegram_command(chat_id, user_text):
+    if not user_text.startswith('/'):
+        return False
+
+    if user_text == '/start':
+        welcome_msg = (
+            "👋 Привіт! Я ваш розумний IT-асистент.\n\n"
+            "Просто напишіть мені, що у вас сталося або що потрібно заправити, і я сам створю заявку в системі.\n\n"
+            "💡 *Приклад:* 'Це бухгалтерія, зажувало папір у принтері hp 1102' або '2610, потрібно два картриджі 85a'."
+        )
+        send_telegram_message(chat_id, welcome_msg)
+    else:
+        send_telegram_message(chat_id, "🤖 Я поки що не розумію спеціальних команд. Просто опишіть проблему звичайним текстом.")
+
+    return True
+
 @csrf_exempt
 def telegram_webhook(request):
     """Головний обробник повідомлень від Telegram"""
@@ -305,24 +304,8 @@ def telegram_webhook(request):
                 chat_id = data['message']['chat']['id']
                 user_text = data['message']['text']
 
-                # === НОВИЙ БЛОК: ФІЛЬТР КОМАНД ===
-                if user_text.startswith('/'):
-                    if user_text == '/start':
-                        welcome_msg = (
-                            "👋 Привіт! Я ваш розумний IT-асистент.\n\n"
-                            "Просто напишіть мені, що у вас сталося або що потрібно заправити, і я сам створю заявку в системі.\n\n"
-                            "💡 *Приклад:* 'Це бухгалтерія, зажувало папір у принтері hp 1102' або '2610, потрібно два картриджі 85a'."
-                        )
-                        send_telegram_message(chat_id, welcome_msg)
-                    else:
-                        send_telegram_message(chat_id, "🤖 Я поки що не розумію спеціальних команд. Просто опишіть проблему звичайним текстом.")
-
-                    return JsonResponse({'status': 'ok'}) # Зупиняємо виконання, щоб не йти до ШІ
-                # === КІНЕЦЬ НОВОГО БЛОКУ ===
-
-                if not settings.GEMINI_API_KEY:
-                    send_telegram_message(chat_id, "⚠️ Gemini API ключ не налаштовано. Зверніться до адміністратора.")
-                    return JsonResponse({'status': 'ok'})
+                if _handle_telegram_command(chat_id, user_text):
+                    return JsonResponse({'status': 'ok'})  # Зупиняємо виконання, щоб не йти до ШІ
 
                 send_telegram_message(chat_id, "⏳ Думаю... Формую заявку та підбираю картриджі...")
                 # Перетворюємо ваш список картриджів на текст для ШІ

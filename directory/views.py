@@ -4,6 +4,7 @@ from .forms import PhonebookForm
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
+from config.view_helpers import save_model_form, delete_on_post
 
 
 def directory_list(request):
@@ -55,22 +56,27 @@ def directory_list(request):
 
 # ... інші функції (create, update, delete) залишаються без змін ...
 def directory_create(request):
-    if request.method == 'POST':
-        form = PhonebookForm(request.POST)
-        if form.is_valid(): form.save(); return redirect('directory_list')
-    else:
-        form = PhonebookForm()
-    return render(request, 'directory/directory_form.html', {'form': form, 'title': 'Додати відділ'})
+    return save_model_form(
+        request,
+        form_class=PhonebookForm,
+        template_name='directory/directory_form.html',
+        success_url='directory_list',
+        title='Додати відділ',
+    )
+
 
 def directory_update(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
-    if request.method == 'POST':
-        form = PhonebookForm(request.POST, instance=entry)
-        if form.is_valid(): form.save(); return redirect('directory_list')
-    else: form = PhonebookForm(instance=entry)
-    return render(request, 'directory/directory_form.html', {'form': form, 'title': 'Редагувати відділ'})
+    return save_model_form(
+        request,
+        form_class=PhonebookForm,
+        template_name='directory/directory_form.html',
+        success_url='directory_list',
+        instance=entry,
+        title='Редагувати відділ',
+    )
+
 
 def directory_delete(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
-    if request.method == 'POST': entry.delete()
-    return redirect('directory_list')
+    return delete_on_post(request, obj=entry, success_url='directory_list')
