@@ -32,27 +32,25 @@ def doc_list(request):
 
 
 # Решта функцій (create, update, delete) залишаються без змін
-def doc_create(request):
+def _save_document_form(request, *, instance=None, title=''):
     if request.method == 'POST':
-        form = DocumentForm(request.POST)
+        form = DocumentForm(request.POST, instance=instance)
         if form.is_valid():
             form.save()
             return redirect('doc_list')
     else:
-        form = DocumentForm()
-    return render(request, 'docs/doc_form.html', {'form': form, 'title': 'Додати посилання'})
+        form = DocumentForm(instance=instance)
+
+    return render(request, 'docs/doc_form.html', {'form': form, 'title': title})
+
+
+def doc_create(request):
+    return _save_document_form(request, title='Додати посилання')
 
 
 def doc_update(request, pk):
     doc = get_object_or_404(Document, pk=pk)
-    if request.method == 'POST':
-        form = DocumentForm(request.POST, instance=doc)
-        if form.is_valid():
-            form.save()
-            return redirect('doc_list')
-    else:
-        form = DocumentForm(instance=doc)
-    return render(request, 'docs/doc_form.html', {'form': form, 'title': 'Редагувати посилання'})
+    return _save_document_form(request, instance=doc, title='Редагувати посилання')
 
 
 def doc_delete(request, pk):
