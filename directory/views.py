@@ -54,23 +54,32 @@ def directory_list(request):
 
 
 # ... інші функції (create, update, delete) залишаються без змін ...
-def directory_create(request):
+def _save_directory_form(request, *, instance=None, title=''):
     if request.method == 'POST':
-        form = PhonebookForm(request.POST)
-        if form.is_valid(): form.save(); return redirect('directory_list')
+        form = PhonebookForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect('directory_list')
     else:
-        form = PhonebookForm()
-    return render(request, 'directory/directory_form.html', {'form': form, 'title': 'Додати відділ'})
+        form = PhonebookForm(instance=instance)
+
+    return render(request, 'directory/directory_form.html', {'form': form, 'title': title})
+
+
+def directory_create(request):
+    return _save_directory_form(request, title='Додати відділ')
+
 
 def directory_update(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
+    return _save_directory_form(request, instance=entry, title='Редагувати відділ')
+
+def _delete_directory_entry(request, entry):
     if request.method == 'POST':
-        form = PhonebookForm(request.POST, instance=entry)
-        if form.is_valid(): form.save(); return redirect('directory_list')
-    else: form = PhonebookForm(instance=entry)
-    return render(request, 'directory/directory_form.html', {'form': form, 'title': 'Редагувати відділ'})
+        entry.delete()
+    return redirect('directory_list')
+
 
 def directory_delete(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
-    if request.method == 'POST': entry.delete()
-    return redirect('directory_list')
+    return _delete_directory_entry(request, entry)
