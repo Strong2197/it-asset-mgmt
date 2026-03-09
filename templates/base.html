@@ -12,17 +12,37 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+
     <style>
         :root {
             --bs-font-sans-serif: 'Inter', system-ui, -apple-system, sans-serif;
 
             /* === ОНОВЛЕНІ КОЛЬОРИ === */
-            /* Більш глибокий, "корпоративний" синій (Royal Blue) замість дефолтного */
             --bs-primary: #2563eb;
-            /* Світлий сіро-блакитний фон, легший для очей */
             --bs-body-bg: #f1f5f9;
-            /* Темний колір тексту (не чорний, а грифельний) */
             --bs-body-color: #334155;
+
+            --surface-bg: #ffffff;
+            --surface-muted: #f8fafc;
+            --border-color: #e2e8f0;
+            --nav-link-color: #64748b;
+            --footer-bg: #ffffff;
+        }
+
+        html[data-theme="dark"] {
+            --bs-body-bg: #0f172a;
+            --bs-body-color: #cbd5e1;
+            --surface-bg: #111827;
+            --surface-muted: #1f2937;
+            --border-color: #334155;
+            --nav-link-color: #94a3b8;
+            --footer-bg: #0b1220;
         }
 
         body {
@@ -33,8 +53,8 @@
 
         /* Навігація */
         .navbar {
-            background: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
+            background: var(--surface-bg);
+            border-bottom: 1px solid var(--border-color);
             padding-top: 0.8rem;
             padding-bottom: 0.8rem;
         }
@@ -48,7 +68,7 @@
         /* Посилання меню */
         .nav-link {
             font-weight: 500;
-            color: #64748b !important; /* Спокійний сірий колір */
+            color: var(--nav-link-color) !important; /* Спокійний сірий колір */
             transition: all 0.2s ease;
             position: relative;
         }
@@ -74,39 +94,57 @@
 
         /* Картки */
         .card {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); /* Тінь Tailwind style */
-            background: #fff;
+            background: var(--surface-bg);
         }
 
         /* Таблиці */
         .table-responsive {
             border-radius: 12px;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
-            background-color: #fff;
+            border: 1px solid var(--border-color);
+            background-color: var(--surface-bg);
         }
         .table thead th {
-            background-color: #f8fafc;
+            background-color: var(--surface-muted);
             text-transform: uppercase;
             font-size: 0.75rem;
             font-weight: 700;
-            color: #64748b;
+            color: var(--nav-link-color);
             letter-spacing: 0.05em;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-color);
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
 
         /* Footer */
         .footer {
-            background-color: #fff;
-            border-top: 1px solid #e2e8f0;
+            background-color: var(--surface-bg);
+            border-top: 1px solid var(--border-color);
             margin-top: auto;
         }
 
         /* Стилі для друку */
+        .dropdown-menu {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color) !important;
+        }
+        .dropdown-item { color: var(--bs-body-color); }
+        .dropdown-item:hover { background-color: var(--surface-muted); }
+        .offcanvas, .offcanvas-header { border-color: var(--border-color) !important; }
+        .input-group .form-control {
+            background-color: var(--surface-bg);
+            color: var(--bs-body-color);
+            border-color: var(--border-color);
+        }
+        .input-group-text {
+            background-color: var(--surface-bg);
+            color: var(--bs-body-color);
+            border-color: var(--border-color);
+        }
+
         @media print {
             .navbar, footer, .d-print-none, .btn, .alert { display: none !important; }
             body { background-color: white !important; }
@@ -144,6 +182,12 @@
                         </ul>
                     </li>
 
+                    <li class="nav-item ms-lg-2">
+                        <button id="theme-toggle" type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" aria-label="Перемкнути тему">
+                            <i class="bi bi-moon-stars"></i>
+                        </button>
+                    </li>
+
                 </ul>
             </div>
         </div>
@@ -175,7 +219,7 @@
                     <div class="small fw-semibold mb-2">&copy; {% now "Y" %} IT Asset Management System</div>
 
                     {% if disk_usage %}
-                    <div class="bg-light rounded p-2 border">
+                    <div class="rounded p-2 border" style="background-color: var(--surface-muted); border-color: var(--border-color) !important;">
                         <div class="d-flex justify-content-between align-items-center mb-1" style="font-size: 0.75rem;">
                             <span><i class="bi bi-hdd-network"></i> PythonAnywhere</span>
                             <span class="fw-bold {% if disk_usage.is_critical %}text-danger{% else %}text-success{% endif %}">
@@ -212,6 +256,31 @@
             });
         });
     </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn = document.getElementById('theme-toggle');
+            const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+            function refreshThemeIcon() {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                if (!icon) return;
+                icon.className = currentTheme === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+            }
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', nextTheme);
+                    localStorage.setItem('theme', nextTheme);
+                    refreshThemeIcon();
+                });
+            }
+
+            refreshThemeIcon();
+        });
+    </script>
 <button class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center d-print-none"
         type="button" data-bs-toggle="offcanvas" data-bs-target="#todoOffcanvas"
         style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; z-index: 1050;">
@@ -226,7 +295,7 @@
         <h5 class="offcanvas-title fw-bold"><i class="bi bi-list-check me-2"></i>Завдання</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
     </div>
-    <div class="offcanvas-body bg-light">
+    <div class="offcanvas-body" style="background-color: var(--surface-muted);">
         <div class="input-group mb-3 shadow-sm">
             <input type="text" id="todo-input" class="form-control border-0" placeholder="Що зробити?">
             <button class="btn btn-white bg-white border-0 text-primary" type="button" id="todo-add-btn">
@@ -247,11 +316,11 @@
 <style>
     /* Додамо стилі для елементів, щоб вони виглядали гарно */
     .todo-item {
-        background: white;
+        background: var(--surface-bg);
         border-radius: 8px;
         margin-bottom: 8px;
         transition: all 0.2s;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
     }
     .todo-item.completed {
         opacity: 0.6;
