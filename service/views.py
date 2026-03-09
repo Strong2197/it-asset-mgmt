@@ -273,6 +273,22 @@ def send_telegram_message(chat_id, text):
     url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
     requests.post(url, json={'chat_id': chat_id, 'text': text})
 
+def _handle_telegram_command(chat_id, user_text):
+    if not user_text.startswith('/'):
+        return False
+
+    if user_text == '/start':
+        welcome_msg = (
+            "👋 Привіт! Я ваш розумний IT-асистент.\n\n"
+            "Просто напишіть мені, що у вас сталося або що потрібно заправити, і я сам створю заявку в системі.\n\n"
+            "💡 *Приклад:* 'Це бухгалтерія, зажувало папір у принтері hp 1102' або '2610, потрібно два картриджі 85a'."
+        )
+        send_telegram_message(chat_id, welcome_msg)
+    else:
+        send_telegram_message(chat_id, "🤖 Я поки що не розумію спеціальних команд. Просто опишіть проблему звичайним текстом.")
+
+    return True
+
 @csrf_exempt
 def telegram_webhook(request):
     """Головний обробник повідомлень від Telegram"""
@@ -288,20 +304,8 @@ def telegram_webhook(request):
                 chat_id = data['message']['chat']['id']
                 user_text = data['message']['text']
 
-                # === НОВИЙ БЛОК: ФІЛЬТР КОМАНД ===
-                if user_text.startswith('/'):
-                    if user_text == '/start':
-                        welcome_msg = (
-                            "👋 Привіт! Я ваш розумний IT-асистент.\n\n"
-                            "Просто напишіть мені, що у вас сталося або що потрібно заправити, і я сам створю заявку в системі.\n\n"
-                            "💡 *Приклад:* 'Це бухгалтерія, зажувало папір у принтері hp 1102' або '2610, потрібно два картриджі 85a'."
-                        )
-                        send_telegram_message(chat_id, welcome_msg)
-                    else:
-                        send_telegram_message(chat_id, "🤖 Я поки що не розумію спеціальних команд. Просто опишіть проблему звичайним текстом.")
-
-                    return JsonResponse({'status': 'ok'}) # Зупиняємо виконання, щоб не йти до ШІ
-                # === КІНЕЦЬ НОВОГО БЛОКУ ===
+                if _handle_telegram_command(chat_id, user_text):
+                    return JsonResponse({'status': 'ok'})  # Зупиняємо виконання, щоб не йти до ШІ
 
                 send_telegram_message(chat_id, "⏳ Думаю... Формую заявку та підбираю картриджі...")
                 # Перетворюємо ваш список картриджів на текст для ШІ
