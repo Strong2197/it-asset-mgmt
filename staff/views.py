@@ -5,6 +5,7 @@ from django.http import FileResponse, Http404
 from urllib.parse import quote
 from django.core.paginator import Paginator
 import os
+from config.view_helpers import delete_on_post
 
 
 # Допоміжні функції залишаємо без змін
@@ -135,15 +136,13 @@ def staff_dismiss(request, pk):
 
 def staff_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    if request.method == 'POST': employee.delete()
-    return redirect('staff_list')
+    return delete_on_post(request, obj=employee, success_url='staff_list')
 
 
 def cert_delete(request, pk):
     cert = get_object_or_404(KepCertificate, pk=pk)
     employee_id = cert.employee.id
-    cert.delete()
-    return redirect('staff_update', pk=employee_id)
+    return delete_on_post(request, obj=cert, success_url='staff_update', pk=employee_id)
 
 
 def open_order_file(request, pk, order_type):

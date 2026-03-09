@@ -13,7 +13,7 @@ def save_model_form(request, *, form_class, template_name, success_url, instance
     return render(request, template_name, {'form': form, 'title': title})
 
 
-def delete_on_post(request, *, obj, success_url):
+def delete_on_post(request, *, obj, success_url, **redirect_kwargs):
     if request.method == 'POST':
         obj.delete()
-    return redirect(success_url)
+    return redirect(success_url, **redirect_kwargs)
