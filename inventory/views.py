@@ -9,6 +9,7 @@ from django.utils import timezone
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from config.view_helpers import save_model_form
 
 
 def export_assets_xlsx(request):
@@ -211,26 +212,27 @@ def asset_archive(request, pk):
     return redirect('asset_list')
 
 
-def _save_asset_form(request, *, instance=None, title=''):
-    if request.method == 'POST':
-        form = AssetForm(request.POST, instance=instance)
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')
-    else:
-        form = AssetForm(instance=instance)
-
-    return render(request, 'inventory/asset_form.html', {'form': form, 'title': title})
-
-
 # --- 2. Створення майна ---
 def asset_create(request):
     """Створення нового майна"""
-    return _save_asset_form(request, title='Додати майно')
+    return save_model_form(
+        request,
+        form_class=AssetForm,
+        template_name='inventory/asset_form.html',
+        success_url='asset_list',
+        title='Додати майно',
+    )
 
 
 # --- 3. Редагування майна ---
 def asset_update(request, pk):
     """Редагування існуючого майна"""
     asset = get_object_or_404(Asset, pk=pk)  # Шукаємо запис по ID (pk)
-    return _save_asset_form(request, instance=asset, title='Редагувати майно')
+    return save_model_form(
+        request,
+        form_class=AssetForm,
+        template_name='inventory/asset_form.html',
+        success_url='asset_list',
+        instance=asset,
+        title='Редагувати майно',
+    )
