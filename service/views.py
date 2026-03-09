@@ -1,12 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Sum, Case, When, Value, IntegerField, Q, Count
+from django.db.models import Sum, Case, When, Value, IntegerField, Q
 from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOICES
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 import json
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
@@ -74,56 +73,40 @@ def service_list(request):
     })
 
 
-# --- СТВОРЕННЯ ЗАЯВКИ ---
-def service_create(request):
-    departments = get_all_departments()
-    requesters = get_all_requesters()
-
-    if request.method == 'POST':
-        form = ServiceTaskForm(request.POST)
-        formset = ServiceItemFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
-            task = form.save()
-            formset.instance = task
-            formset.save()
-            return redirect('service_list')
-    else:
-        form = ServiceTaskForm()
-        formset = ServiceItemFormSet()
-
-    return render(request, 'service/service_form.html', {
-        'form': form,
-        'formset': formset,
-        'departments': departments,
-        'requesters': requesters,
-        'title': 'Створення комплексної заявки'
-    })
-
-
-# --- РЕДАГУВАННЯ ЗАЯВКИ ---
-def service_update(request, pk):
-    task = get_object_or_404(ServiceTask, pk=pk)
+def _save_service_task_form(request, *, task=None, formset_class=ServiceItemFormSet, title=''):
     departments = get_all_departments()
     requesters = get_all_requesters()
 
     if request.method == 'POST':
         form = ServiceTaskForm(request.POST, instance=task)
-        formset = ServiceItemEditFormSet(request.POST, instance=task)
+        formset = formset_class(request.POST, instance=task)
         if form.is_valid() and formset.is_valid():
-            form.save()
+            saved_task = form.save()
+            formset.instance = saved_task
             formset.save()
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
-        formset = ServiceItemEditFormSet(instance=task)
+        formset = formset_class(instance=task)
 
     return render(request, 'service/service_form.html', {
         'form': form,
         'formset': formset,
         'departments': departments,
         'requesters': requesters,
-        'title': 'Редагування заявки'
+        'title': title
     })
+
+
+# --- СТВОРЕННЯ ЗАЯВКИ ---
+def service_create(request):
+    return _save_service_task_form(request, formset_class=ServiceItemFormSet, title='Створення комплексної заявки')
+
+
+# --- РЕДАГУВАННЯ ЗАЯВКИ ---
+def service_update(request, pk):
+    task = get_object_or_404(ServiceTask, pk=pk)
+    return _save_service_task_form(request, task=task, formset_class=ServiceItemEditFormSet, title='Редагування заявки')
 
 
 # --- ІНШІ ФУНКЦІЇ ---
