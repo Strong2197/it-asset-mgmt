@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from config.view_helpers import save_model_form, delete_on_post
+from config.search_helpers import filter_by_text_query
 
 
 def directory_list(request):
@@ -26,17 +27,15 @@ def directory_list(request):
         # SQLite може некоректно порівнювати регістр для кирилиці в icontains,
         # тому робимо fallback на Python casefold.
         if not entries.exists():
-            query_cf = query.casefold()
-            matched_ids = []
-            for item in PhonebookEntry.objects.all():
-                searchable_text = (
+            matched_items = filter_by_text_query(
+                PhonebookEntry.objects.all(),
+                query,
+                lambda item: (
                     f"{item.department} {item.code} {item.chief_name} "
                     f"{item.chief_phone} {item.deputy_name} {item.deputy_phone} {item.email}"
-                ).casefold()
-                if query_cf in searchable_text:
-                    matched_ids.append(item.pk)
-
-            entries = PhonebookEntry.objects.filter(pk__in=matched_ids)
+                ),
+            )
+            entries = PhonebookEntry.objects.filter(pk__in=[item.pk for item in matched_items])
 
     total_count = entries.count()
 

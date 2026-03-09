@@ -10,6 +10,7 @@ from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from config.view_helpers import save_model_form
+from config.search_helpers import filter_by_text_query
 
 
 def export_assets_xlsx(request):
@@ -170,12 +171,14 @@ def asset_list(request):
 
     # Пошук через Python
     if search_query:
-        assets_list = []
-        for asset in assets_queryset:
-            acc = asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)
-            content = f"{asset.name} {asset.inventory_number} {asset.barcode} {asset.location} {acc}".lower()
-            if search_query in content:
-                assets_list.append(asset)
+        assets_list = filter_by_text_query(
+            assets_queryset,
+            search_query,
+            lambda asset: (
+                f"{asset.name} {asset.inventory_number} {asset.barcode} "
+                f"{asset.location} {asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)}"
+            ),
+        )
     else:
         assets_list = list(assets_queryset)
 

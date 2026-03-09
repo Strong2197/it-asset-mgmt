@@ -6,6 +6,7 @@ from urllib.parse import quote
 from django.core.paginator import Paginator
 import os
 from config.view_helpers import delete_on_post
+from config.search_helpers import filter_by_text_query
 
 
 # Допоміжні функції залишаємо без змін
@@ -55,11 +56,11 @@ def staff_list(request):
         employees_qs = Employee.objects.filter(is_dismissed=False).prefetch_related('certificates')
 
     if query:
-        emp_list = []
-        for emp in employees_qs:
-            content = f"{emp.full_name} {emp.position} {emp.department} {emp.rnokpp or ''}".lower()
-            if query in content:
-                emp_list.append(emp)
+        emp_list = filter_by_text_query(
+            employees_qs,
+            query,
+            lambda emp: f"{emp.full_name} {emp.position} {emp.department} {emp.rnokpp or ''}",
+        )
     else:
         emp_list = list(employees_qs)
 

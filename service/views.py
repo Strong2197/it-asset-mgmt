@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from config.search_helpers import filter_by_text_query
 
 
 
@@ -52,12 +53,14 @@ def service_list(request):
     search_query = request.GET.get('q', '').strip().lower()
 
     if search_query:
-        tasks_list = []
-        for task in tasks_queryset:
-            items_text = " ".join([f"{i.get_item_name_display()} {i.custom_name or ''}" for i in task.items.all()])
-            content = f"{task.department} {task.requester_name} {task.description} {items_text}".lower()
-            if search_query in content:
-                tasks_list.append(task)
+        tasks_list = filter_by_text_query(
+            tasks_queryset,
+            search_query,
+            lambda task: (
+                f"{task.department} {task.requester_name} {task.description} "
+                + " ".join(i.get_item_name_display() + " " + (i.custom_name or "") for i in task.items.all())
+            ),
+        )
     else:
         tasks_list = list(tasks_queryset)
 

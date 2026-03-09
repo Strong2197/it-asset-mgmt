@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Document
 from .forms import DocumentForm
 from config.view_helpers import save_model_form, delete_on_post
+from config.search_helpers import filter_by_text_query
 
 
 def doc_list(request):
@@ -13,16 +14,11 @@ def doc_list(request):
 
     if query:
         # Фільтруємо список засобами Python, щоб уникнути проблем SQLite з регістром кирилиці
-        filtered_docs = []
-        for doc in all_documents:
-            # Збираємо заголовок та опис, переводимо в нижній регістр
-            title = (doc.title or "").lower()
-            description = (doc.description or "").lower()
-
-            if query in title or query in description:
-                filtered_docs.append(doc)
-
-        documents = filtered_docs
+        documents = filter_by_text_query(
+            all_documents,
+            query,
+            lambda doc: f"{doc.title or ''} {doc.description or ''}",
+        )
     else:
         documents = all_documents
 
