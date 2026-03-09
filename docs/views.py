@@ -7,7 +7,7 @@ from config.search_helpers import filter_by_text_query
 
 def doc_list(request):
     # Отримуємо запит і переводимо його в нижній регістр для порівняння
-    query = request.GET.get('q', '').strip().lower()
+    query = request.GET.get('q', '').strip()
 
     # Сортування по created_at (нові зверху)
     all_documents = Document.objects.all().order_by('-created_at')

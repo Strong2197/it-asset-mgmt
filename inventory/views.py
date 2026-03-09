@@ -157,7 +157,7 @@ def asset_clone(request, pk):
 
 # --- 1. Список майна (Цієї функції не вистачало) ---
 def asset_list(request):
-    search_query = request.GET.get('search', '').strip().lower()
+    search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
 

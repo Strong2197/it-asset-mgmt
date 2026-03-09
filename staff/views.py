@@ -47,7 +47,7 @@ def _save_kep_certificates(employee, files):
 
 # --- СПИСОК ПРАЦІВНИКІВ (БЕЗ ПАГІНАЦІЇ ТА З ПОШУКОМ БЕЗ РЕГІСТРУ) ---
 def staff_list(request):
-    query = request.GET.get('q', '').strip().lower()
+    query = request.GET.get('q', '').strip()
     show_dismissed = request.GET.get('dismissed', 'false')
 
     if show_dismissed == 'true':
@@ -78,48 +78,56 @@ def staff_list(request):
 
 
 # Решта функцій залишається без змін (staff_create, staff_update, staff_dismiss тощо)
-def staff_create(request):
-    positions = get_all_positions()
-    departments = get_all_departments()
+def _staff_form_context(form, *, title, employee=None):
+    context = {
+        'form': form,
+        'title': title,
+        'positions': get_all_positions(),
+        'departments': get_all_departments(),
+    }
+    if employee is not None:
+        context['employee'] = employee
+    return context
+
+
+def _save_employee_form(request, *, employee=None, title=''):
+    old_position = employee.position if employee else None
+    old_department = employee.department if employee else None
+
     if request.method == 'POST':
-        form = EmployeeForm(request.POST, request.FILES)
+        form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
-            employee = form.save(commit=False)
-            _attach_order_original_names(employee, request.FILES)
-            employee.save()
-            _save_kep_certificates(employee, request.FILES)
+            saved_employee = form.save(commit=False)
+            if employee and (old_position != saved_employee.position or old_department != saved_employee.department):
+                CareerHistory.objects.create(
+                    employee=employee,
+                    previous_position=old_position,
+                    new_position=saved_employee.position,
+                    previous_department=old_department,
+                    new_department=saved_employee.department,
+                    notes="Зміна кадрових даних",
+                )
+            _attach_order_original_names(saved_employee, request.FILES)
+            saved_employee.save()
+            _save_kep_certificates(saved_employee, request.FILES)
             return redirect('staff_list')
     else:
-        form = EmployeeForm()
-    return render(request, 'staff/staff_form.html',
-                  {'form': form, 'title': 'Додати працівника', 'positions': positions, 'departments': departments})
+        form = EmployeeForm(instance=employee)
+
+    return render(
+        request,
+        'staff/staff_form.html',
+        _staff_form_context(form, title=title, employee=employee),
+    )
+
+
+def staff_create(request):
+    return _save_employee_form(request, title='Додати працівника')
 
 
 def staff_update(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    old_position = employee.position
-    old_department = employee.department
-    positions = get_all_positions()
-    departments = get_all_departments()
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, request.FILES, instance=employee)
-        if form.is_valid():
-            updated_employee = form.save(commit=False)
-            if old_position != updated_employee.position or old_department != updated_employee.department:
-                CareerHistory.objects.create(
-                    employee=employee, previous_position=old_position, new_position=updated_employee.position,
-                    previous_department=old_department, new_department=updated_employee.department,
-                    notes="Зміна кадрових даних"
-                )
-            _attach_order_original_names(updated_employee, request.FILES)
-            updated_employee.save()
-            _save_kep_certificates(employee, request.FILES)
-            return redirect('staff_list')
-    else:
-        form = EmployeeForm(instance=employee)
-    return render(request, 'staff/staff_form.html',
-                  {'form': form, 'title': 'Редагувати дані', 'employee': employee, 'positions': positions,
-                   'departments': departments})
+    return _save_employee_form(request, employee=employee, title='Редагувати дані')
 
 
 def staff_dismiss(request, pk):
