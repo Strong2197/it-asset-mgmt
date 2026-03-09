@@ -126,10 +126,9 @@ def staff_dismiss(request, pk):
         employee.is_dismissed = True
         employee.dismissal_date = request.POST.get('dismissal_date')
         employee.dismissal_order_number = request.POST.get('dismissal_order_number')
-        order_file = request.FILES.get('dismissal_order_file')
-        if order_file:
-            employee.dismissal_order_file = order_file
-            employee.dismissal_order_original_name = order_file.name
+        if 'dismissal_order_file' in request.FILES:
+            employee.dismissal_order_file = request.FILES['dismissal_order_file']
+        _attach_order_original_names(employee, request.FILES)
         employee.save()
     return redirect('staff_list')
 
