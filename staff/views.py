@@ -5,6 +5,8 @@ from django.http import FileResponse, Http404
 from urllib.parse import quote
 from django.core.paginator import Paginator
 import os
+from config.view_helpers import delete_on_post
+from config.search_helpers import filter_by_text_query
 
 
 # Допоміжні функції залишаємо без змін
@@ -31,6 +33,18 @@ def get_all_departments():
     return list(filter(None, all_depts))
 
 
+def _attach_order_original_names(employee, files):
+    if 'appointment_order_file' in files:
+        employee.appointment_order_original_name = files['appointment_order_file'].name
+    if 'dismissal_order_file' in files:
+        employee.dismissal_order_original_name = files['dismissal_order_file'].name
+
+
+def _save_kep_certificates(employee, files):
+    for f in files.getlist('kep_files'):
+        KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
+
+
 # --- СПИСОК ПРАЦІВНИКІВ (БЕЗ ПАГІНАЦІЇ ТА З ПОШУКОМ БЕЗ РЕГІСТРУ) ---
 def staff_list(request):
     query = request.GET.get('q', '').strip().lower()
@@ -42,11 +56,11 @@ def staff_list(request):
         employees_qs = Employee.objects.filter(is_dismissed=False).prefetch_related('certificates')
 
     if query:
-        emp_list = []
-        for emp in employees_qs:
-            content = f"{emp.full_name} {emp.position} {emp.department} {emp.rnokpp or ''}".lower()
-            if query in content:
-                emp_list.append(emp)
+        emp_list = filter_by_text_query(
+            employees_qs,
+            query,
+            lambda emp: f"{emp.full_name} {emp.position} {emp.department} {emp.rnokpp or ''}",
+        )
     else:
         emp_list = list(employees_qs)
 
@@ -71,14 +85,9 @@ def staff_create(request):
         form = EmployeeForm(request.POST, request.FILES)
         if form.is_valid():
             employee = form.save(commit=False)
-            if 'appointment_order_file' in request.FILES:
-                employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
-            if 'dismissal_order_file' in request.FILES:
-                employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
+            _attach_order_original_names(employee, request.FILES)
             employee.save()
-            files = request.FILES.getlist('kep_files')
-            for f in files:
-                KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
+            _save_kep_certificates(employee, request.FILES)
             return redirect('staff_list')
     else:
         form = EmployeeForm()
@@ -102,14 +111,9 @@ def staff_update(request, pk):
                     previous_department=old_department, new_department=updated_employee.department,
                     notes="Зміна кадрових даних"
                 )
-            if 'appointment_order_file' in request.FILES:
-                updated_employee.appointment_order_original_name = request.FILES['appointment_order_file'].name
-            if 'dismissal_order_file' in request.FILES:
-                updated_employee.dismissal_order_original_name = request.FILES['dismissal_order_file'].name
+            _attach_order_original_names(updated_employee, request.FILES)
             updated_employee.save()
-            files = request.FILES.getlist('kep_files')
-            for f in files:
-                KepCertificate.objects.create(employee=employee, file=f, original_name=f.name)
+            _save_kep_certificates(employee, request.FILES)
             return redirect('staff_list')
     else:
         form = EmployeeForm(instance=employee)
@@ -124,25 +128,22 @@ def staff_dismiss(request, pk):
         employee.is_dismissed = True
         employee.dismissal_date = request.POST.get('dismissal_date')
         employee.dismissal_order_number = request.POST.get('dismissal_order_number')
-        order_file = request.FILES.get('dismissal_order_file')
-        if order_file:
-            employee.dismissal_order_file = order_file
-            employee.dismissal_order_original_name = order_file.name
+        if 'dismissal_order_file' in request.FILES:
+            employee.dismissal_order_file = request.FILES['dismissal_order_file']
+        _attach_order_original_names(employee, request.FILES)
         employee.save()
     return redirect('staff_list')
 
 
 def staff_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
-    if request.method == 'POST': employee.delete()
-    return redirect('staff_list')
+    return delete_on_post(request, obj=employee, success_url='staff_list')
 
 
 def cert_delete(request, pk):
     cert = get_object_or_404(KepCertificate, pk=pk)
     employee_id = cert.employee.id
-    cert.delete()
-    return redirect('staff_update', pk=employee_id)
+    return delete_on_post(request, obj=cert, success_url='staff_update', pk=employee_id)
 
 
 def open_order_file(request, pk, order_type):
