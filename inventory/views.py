@@ -9,6 +9,8 @@ from django.utils import timezone
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from config.view_helpers import save_model_form
+from config.search_helpers import filter_by_text_query
 
 
 def export_assets_xlsx(request):
@@ -155,7 +157,7 @@ def asset_clone(request, pk):
 
 # --- 1. Список майна (Цієї функції не вистачало) ---
 def asset_list(request):
-    search_query = request.GET.get('search', '').strip().lower()
+    search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
 
@@ -169,12 +171,14 @@ def asset_list(request):
 
     # Пошук через Python
     if search_query:
-        assets_list = []
-        for asset in assets_queryset:
-            acc = asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)
-            content = f"{asset.name} {asset.inventory_number} {asset.barcode} {asset.location} {acc}".lower()
-            if search_query in content:
-                assets_list.append(asset)
+        assets_list = filter_by_text_query(
+            assets_queryset,
+            search_query,
+            lambda asset: (
+                f"{asset.name} {asset.inventory_number} {asset.barcode} "
+                f"{asset.location} {asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)}"
+            ),
+        )
     else:
         assets_list = list(assets_queryset)
 
@@ -214,28 +218,24 @@ def asset_archive(request, pk):
 # --- 2. Створення майна ---
 def asset_create(request):
     """Створення нового майна"""
-    if request.method == 'POST':
-        form = AssetForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')  # Повертаємось до списку
-    else:
-        form = AssetForm()
-
-    return render(request, 'inventory/asset_form.html', {'form': form, 'title': 'Додати майно'})
+    return save_model_form(
+        request,
+        form_class=AssetForm,
+        template_name='inventory/asset_form.html',
+        success_url='asset_list',
+        title='Додати майно',
+    )
 
 
 # --- 3. Редагування майна ---
 def asset_update(request, pk):
     """Редагування існуючого майна"""
     asset = get_object_or_404(Asset, pk=pk)  # Шукаємо запис по ID (pk)
-
-    if request.method == 'POST':
-        form = AssetForm(request.POST, instance=asset)  # Передаємо існуючий об'єкт у форму
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')
-    else:
-        form = AssetForm(instance=asset)  # Заповнюємо форму даними з бази
-
-    return render(request, 'inventory/asset_form.html', {'form': form, 'title': 'Редагувати майно'})
+    return save_model_form(
+        request,
+        form_class=AssetForm,
+        template_name='inventory/asset_form.html',
+        success_url='asset_list',
+        instance=asset,
+        title='Редагувати майно',
+    )
