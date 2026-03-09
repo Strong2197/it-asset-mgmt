@@ -211,31 +211,26 @@ def asset_archive(request, pk):
     return redirect('asset_list')
 
 
+def _save_asset_form(request, *, instance=None, title=''):
+    if request.method == 'POST':
+        form = AssetForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect('asset_list')
+    else:
+        form = AssetForm(instance=instance)
+
+    return render(request, 'inventory/asset_form.html', {'form': form, 'title': title})
+
+
 # --- 2. Створення майна ---
 def asset_create(request):
     """Створення нового майна"""
-    if request.method == 'POST':
-        form = AssetForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')  # Повертаємось до списку
-    else:
-        form = AssetForm()
-
-    return render(request, 'inventory/asset_form.html', {'form': form, 'title': 'Додати майно'})
+    return _save_asset_form(request, title='Додати майно')
 
 
 # --- 3. Редагування майна ---
 def asset_update(request, pk):
     """Редагування існуючого майна"""
     asset = get_object_or_404(Asset, pk=pk)  # Шукаємо запис по ID (pk)
-
-    if request.method == 'POST':
-        form = AssetForm(request.POST, instance=asset)  # Передаємо існуючий об'єкт у форму
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')
-    else:
-        form = AssetForm(instance=asset)  # Заповнюємо форму даними з бази
-
-    return render(request, 'inventory/asset_form.html', {'form': form, 'title': 'Редагувати майно'})
+    return _save_asset_form(request, instance=asset, title='Редагувати майно')
