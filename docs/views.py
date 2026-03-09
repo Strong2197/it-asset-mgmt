@@ -53,9 +53,12 @@ def doc_update(request, pk):
     return _save_document_form(request, instance=doc, title='Редагувати посилання')
 
 
-def doc_delete(request, pk):
-    doc = get_object_or_404(Document, pk=pk)
+def _delete_document(request, doc):
     if request.method == 'POST':
         doc.delete()
-        return redirect('doc_list')
     return redirect('doc_list')
+
+
+def doc_delete(request, pk):
+    doc = get_object_or_404(Document, pk=pk)
+    return _delete_document(request, doc)

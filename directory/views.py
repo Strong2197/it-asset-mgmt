@@ -74,7 +74,12 @@ def directory_update(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
     return _save_directory_form(request, instance=entry, title='Редагувати відділ')
 
+def _delete_directory_entry(request, entry):
+    if request.method == 'POST':
+        entry.delete()
+    return redirect('directory_list')
+
+
 def directory_delete(request, pk):
     entry = get_object_or_404(PhonebookEntry, pk=pk)
-    if request.method == 'POST': entry.delete()
-    return redirect('directory_list')
+    return _delete_directory_entry(request, entry)
