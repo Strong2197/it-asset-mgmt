@@ -119,7 +119,7 @@ class ServiceReportAdmin(admin.ModelAdmin):
 # Реєструємо окремі картриджі теж, якщо треба знайти конкретний картридж без заявки
 @admin.register(ServiceTaskItem)
 class ServiceTaskItemAdmin(admin.ModelAdmin):
-    list_display = ('item_name', 'quantity', 'task_department', 'status_colored')
+    list_display = ('id', 'item_name', 'quantity', 'task_department', 'status_colored')
     search_fields = ('item_name', 'custom_name', 'task__department')
     list_filter = ('item_name',)
 

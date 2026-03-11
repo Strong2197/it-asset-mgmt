@@ -42,6 +42,11 @@ class ServiceTask(models.Model):
     def __str__(self):
         return f"{self.department} ({self.date_received})"
 
+    class Meta:
+        verbose_name = "Заявки"
+        verbose_name_plural = "Заявки"
+        ordering = ['-id']
+
 
 class ServiceTaskItem(models.Model):
     task = models.ForeignKey(ServiceTask, on_delete=models.CASCADE, related_name='items')
@@ -57,6 +62,11 @@ class ServiceTaskItem(models.Model):
 
     def __str__(self):
         return f"{self.item_name} ({self.quantity} шт.)"
+
+    class Meta:
+        verbose_name = "Картриджі"
+        verbose_name_plural = "Картриджі на заправку"
+        ordering = ['-id']
 
 
 class ServiceReport(models.Model):
@@ -77,3 +87,7 @@ class ServiceReport(models.Model):
             date_returned_to_user__isnull=True
         ).exists()
         return not has_unissued_items
+    class Meta:
+        verbose_name = "Акти"
+        verbose_name_plural = "Акти"
+        ordering = ['-id']
