@@ -6,9 +6,11 @@ from .models import ServiceTask, ServiceReport, ServiceTaskItem, CARTRIDGE_CHOIC
 from .forms import ServiceTaskForm, ServiceReportForm, ServiceItemFormSet, ServiceItemEditFormSet
 from django.core.paginator import Paginator
 import json
+from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from config.search_helpers import filter_by_text_query
+from django.contrib import messages
 
 
 
@@ -34,46 +36,53 @@ def get_last_department(request):
 
 
 # --- СПИСОК ЗАЯВОК ---
-def service_list(request):
-    tasks_queryset = ServiceTask.objects.prefetch_related('items').annotate(
-        status_rank=Case(
-            When(is_completed=False, date_sent__isnull=True, then=Value(1)),
-            When(is_completed=False, date_sent__isnull=False, then=Value(2)),
-            When(is_completed=True, then=Value(3)),
-            default=Value(4), output_field=IntegerField(),
-        )
-    ).order_by('status_rank', '-date_received')
+class ServiceTaskListView(ListView):
+    model = ServiceTask
+    template_name = 'service/service_list.html'
+    context_object_name = 'tasks'
+    paginate_by = 15
 
-    status_filter = request.GET.get('filter', 'active')
-    if status_filter == 'active':
-        tasks_queryset = tasks_queryset.filter(is_completed=False)
-    elif status_filter == 'completed':
-        tasks_queryset = tasks_queryset.filter(is_completed=True)
+    def get_queryset(self):
+        # Оптимізація запитів та ранжування статусів 
+        queryset = ServiceTask.objects.prefetch_related('items').annotate(
+            status_rank=Case(
+                When(is_completed=False, date_sent__isnull=True, then=Value(1)),
+                When(is_completed=False, date_sent__isnull=False, then=Value(2)),
+                When(is_completed=True, then=Value(3)),
+                default=Value(4), output_field=IntegerField(),
+            )
+        ).order_by('status_rank', '-date_received')
 
-    search_query = request.GET.get('q', '').strip()
+        # Фільтрація за статусом
+        status_filter = self.request.GET.get('filter', 'active')
+        if status_filter == 'active':
+            queryset = queryset.filter(is_completed=False)
+        elif status_filter == 'completed':
+            queryset = queryset.filter(is_completed=True)
 
-    if search_query:
-        tasks_list = filter_by_text_query(
-            tasks_queryset,
-            search_query,
-            lambda task: (
-                f"{task.department} {task.requester_name} {task.description} "
-                + " ".join(i.get_item_name_display() + " " + (i.custom_name or "") for i in task.items.all())
-            ),
-        )
-    else:
-        tasks_list = list(tasks_queryset)
+        # Пошук через хелпер [cite: 39-40]
+        search_query = self.request.GET.get('q', '').strip()
+        if search_query:
+            return filter_by_text_query(
+                queryset,
+                search_query,
+                lambda task: (
+                    f"{task.department} {task.requester_name} {task.description} "
+                    + " ".join(i.get_item_name_display() + " " + (i.custom_name or "") for i in task.items.all())
+                ),
+            )
+        return queryset
 
-    paginator = Paginator(tasks_list, 15)
-    page = request.GET.get('page')
-    page_obj = paginator.get_page(page)
-
-    return render(request, 'service/service_list.html', {
-        'tasks': page_obj,
-        'current_filter': status_filter,
-        'search_query': search_query,
-        'total_count': paginator.count
-    })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Додаємо параметри для шаблону
+        context['current_filter'] = self.request.GET.get('filter', 'active')
+        context['search_query'] = self.request.GET.get('q', '').strip()
+        
+        # Рахуємо кількість для відображення
+        qs = self.get_queryset()
+        context['total_count'] = len(qs) if isinstance(qs, list) else qs.count()
+        return context
 
 
 def _save_service_task_form(request, *, task=None, formset_class=ServiceItemFormSet, title=''):
@@ -87,6 +96,7 @@ def _save_service_task_form(request, *, task=None, formset_class=ServiceItemForm
             saved_task = form.save()
             formset.instance = saved_task
             formset.save()
+            messages.success(request, f"Заявку для {saved_task.department} успішно збережено!") # Повідомлення
             return redirect('service_list')
     else:
         form = ServiceTaskForm(instance=task)
@@ -199,11 +209,17 @@ def save_report(request):
     return redirect('service_list')
 
 
-def report_list(request):
-    reports = ServiceReport.objects.prefetch_related('tasks__items').annotate(
-        total_items=Sum('tasks__items__quantity')
-    ).order_by('-created_at')
-    return render(request, 'service/report_list.html', {'reports': reports})
+class ServiceReportListView(ListView):
+    model = ServiceReport
+    template_name = 'service/report_list.html'
+    context_object_name = 'reports'
+    paginate_by = 15
+
+    def get_queryset(self):
+        # Оптимізація: завантажуємо пов'язані завдання та рахуємо кількість картриджів одним запитом 
+        return ServiceReport.objects.prefetch_related('tasks__items').annotate(
+            total_items=Sum('tasks__items__quantity')
+        ).order_by('-created_at')
 
 
 def report_detail(request, pk):
@@ -344,9 +360,19 @@ def _extract_ai_data_from_message(user_text):
     model = genai.GenerativeModel(model_name)
 
     prompt = _build_ai_prompt(user_text, _build_cartridges_text())
-    response = model.generate_content(prompt)
-    cleaned_text = response.text.strip().removeprefix('```json').removesuffix('```').strip()
-    return json.loads(cleaned_text)
+    try:
+        response = model.generate_content(prompt)
+        # Більш надійне очищення JSON блоків
+        cleaned_text = response.text.strip()
+        if '```json' in cleaned_text:
+            cleaned_text = cleaned_text.split('```json')[1].split('```')[0].strip()
+        elif '```' in cleaned_text:
+            cleaned_text = cleaned_text.split('```')[1].split('```')[0].strip()
+            
+        return json.loads(cleaned_text)
+    except Exception as e:
+        print(f"AI Parsing Error: {e}")
+        return {"is_valid_request": False}
 
 
 def _create_service_task_from_ai(ai_data):
@@ -401,6 +427,8 @@ def telegram_webhook(request):
                 task, items_text_for_reply = _create_service_task_from_ai(ai_data)
                 reply_text = f"✅ Заявку №{task.id} успішно створено!\n🏢 Відділ: {task.department}\n👤 Замовник: {task.requester_name}\n{items_text_for_reply}"
                 send_telegram_message(chat_id, reply_text)
+            else:
+                return JsonResponse({'status': 'ok'})
 
         except Exception as e:
             # Якщо щось пішло не так (наприклад, ШІ повернув кривий JSON)
