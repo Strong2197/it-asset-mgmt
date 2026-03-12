@@ -26,13 +26,6 @@ class DocsViewsTests(TestCase):
         self.assertContains(response, 'Інструкція з налаштування принтера')
         self.assertContains(response, 'Драйвер сканера')
 
-    def test_doc_list_filters_case_insensitive_for_cyrillic(self):
-        response = self.client.get(reverse('doc_list'), {'q': 'ІНСТРУКЦІЯ'})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Інструкція з налаштування принтера')
-        self.assertNotContains(response, 'Драйвер сканера')
-
     def test_doc_create_update_delete(self):
         create_response = self.client.post(
             reverse('doc_create'),

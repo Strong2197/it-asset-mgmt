@@ -133,10 +133,11 @@ def export_assets_xlsx(request):
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
 
+    # ДОДАНО select_related('category') для оптимізації
     if show_archived == 'true':
-        assets = Asset.objects.filter(is_archived=True)
+        assets = Asset.objects.filter(is_archived=True).select_related('category')
     else:
-        assets = Asset.objects.filter(is_archived=False)
+        assets = Asset.objects.filter(is_archived=False).select_related('category')
 
     if category_id and category_id != 'all':
         assets = assets.filter(category_id=category_id)
@@ -216,6 +217,7 @@ def export_assets_xlsx(request):
 
     wb.save(response)
     return response
+
 def home_view(request):
     # 1. Майно
     assets_count = Asset.objects.filter(is_archived=False).count()

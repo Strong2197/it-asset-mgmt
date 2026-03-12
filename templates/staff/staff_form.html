@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+          rel="stylesheet" />
+    <style>
     /* Стилізація Select2 (зменшена) */
     .select2-container .select2-selection--single {
-        height: 31px !important; /* SM size */
+        height: 31px !important;
         border: 1px solid #dee2e6 !important;
         display: flex; align-items: center;
         font-size: 0.875rem;
@@ -43,272 +43,324 @@
         display: flex;
         align-items: center;
     }
-</style>
-
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <a href="{% url 'staff_list' %}" class="text-decoration-none text-muted small hover-link">
-                <i class="bi bi-arrow-left me-1"></i>Назад
-            </a>
-            <h5 class="fw-bold text-dark mb-0">
-                {% if 'update' in request.path %}
-                    <i class="bi bi-pencil-square text-primary me-2"></i>Редагування
-                {% else %}
-                    <i class="bi bi-person-plus-fill text-success me-2"></i>Новий працівник
-                {% endif %}
-            </h5>
-            <div style="width: 60px;"></div>
-        </div>
-
-        <form method="post" enctype="multipart/form-data" novalidate id="staffForm">
-            {% csrf_token %}
-
-            <div class="row g-3">
-                <div class="col-lg-8">
-                    <div class="card border-0 shadow-sm rounded-3 h-100">
-                        <div class="card-body p-4">
-
-                            <div class="section-title text-secondary">
-                                <i class="bi bi-person-vcard me-2"></i>Основні дані
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label-small">ПІБ (Повністю)</label>
-                                {{ form.full_name }} </div>
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label-small">Посада</label>
-                                    <select name="position" id="id_position_select" class="form-control form-control-sm" style="width: 100%;">
-                                        {% if form.position.value %}
-                                            <option value="{{ form.position.value }}" selected>{{ form.position.value }}</option>
-                                        {% endif %}
-                                        <option></option>
-                                        {% for pos in positions %}
-                                            {% if pos != form.position.value %}<option value="{{ pos }}">{{ pos }}</option>{% endif %}
-                                        {% endfor %}
-                                    </select>
+    </style>
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a href="{% url 'staff_list' %}"
+                   class="text-decoration-none text-muted small hover-link">
+                    <i class="bi bi-arrow-left me-1"></i>Назад
+                </a>
+                <h5 class="fw-bold text-dark mb-0">
+                    {% if employee %}
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Редагування
+                    {% else %}
+                        <i class="bi bi-person-plus-fill text-success me-2"></i>Новий працівник
+                    {% endif %}
+                </h5>
+                <div style="width: 60px;"></div>
+            </div>
+            <form method="post" enctype="multipart/form-data" novalidate id="staffForm">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm rounded-3 h-100">
+                            <div class="card-body p-4">
+                                <div class="section-title text-secondary">
+                                    <i class="bi bi-person-vcard me-2"></i>Основні дані
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label-small">Відділ</label>
-                                    <select name="department" id="id_department_select" class="form-control form-control-sm" style="width: 100%;">
-                                        {% if form.department.value %}
-                                            <option value="{{ form.department.value }}" selected>{{ form.department.value }}</option>
-                                        {% endif %}
-                                        <option></option>
-                                        {% for dep in departments %}
-                                            {% if dep != form.department.value %}<option value="{{ dep }}">{{ dep }}</option>{% endif %}
-                                        {% endfor %}
-                                    </select>
+                                <div class="mb-3">
+                                    <label class="form-label-small">ПІБ (Повністю)</label>
+                                    {{ form.full_name }}
                                 </div>
-                            </div>
-
-                            <div class="row g-2 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label-small">Телефон</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
-                                        <input type="text" name="phone" id="phone-mask" class="form-control border-start-0 ps-1"
-                                               value="{{ form.phone.value|default:'' }}" placeholder="___-___-__-__">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label-small">Посада</label>
+                                        <select name="position"
+                                                id="id_position_select"
+                                                class="form-control form-control-sm"
+                                                style="width: 100%">
+                                            {% if form.position.value %}
+                                                <option value="{{ form.position.value }}" selected>{{ form.position.value }}</option>
+                                            {% endif %}
+                                            <option></option>
+                                            {% for pos in positions %}
+                                                {% if pos != form.position.value %}<option value="{{ pos }}">{{ pos }}</option>{% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-small">Відділ</label>
+                                        <select name="department"
+                                                id="id_department_select"
+                                                class="form-control form-control-sm"
+                                                style="width: 100%">
+                                            {% if form.department.value %}
+                                                <option value="{{ form.department.value }}" selected>{{ form.department.value }}</option>
+                                            {% endif %}
+                                            <option></option>
+                                            {% for dep in departments %}
+                                                {% if dep != form.department.value %}<option value="{{ dep }}">{{ dep }}</option>{% endif %}
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label-small">РНОКПП (ІПН)</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-123"></i></span>
-                                        {{ form.rnokpp }}
-                                    </div>
-                                    {% if form.rnokpp.errors %}
-                                        <div class="text-danger x-small mt-1">{{ form.rnokpp.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="section-title text-success mt-2">
-                                <i class="bi bi-file-earmark-check me-2"></i>Призначення
-                            </div>
-
-                            <div class="bg-light bg-opacity-50 p-3 rounded-3 border mb-3">
-                                <div class="row g-2 mb-2">
-                                    <div class="col-md-4">
-                                        <label class="form-label-small text-muted">Дата</label>
-                                        {{ form.appointment_date }}
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label-small text-muted">Наказ (№ та дата)</label>
+                                <div class="row g-2 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label-small">Телефон</label>
                                         <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-white text-secondary">№</span>
-                                            <input type="text" class="form-control order-num-input" id="appt_num_visual" placeholder="000" maxlength="4" inputmode="numeric">
-                                            <span class="input-group-text bg-white text-secondary small">-к/тр від</span>
-                                            <input type="date" class="form-control" id="appt_date_visual">
+                                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+                                            <input type="text"
+                                                   name="phone"
+                                                   id="phone-mask"
+                                                   class="form-control border-start-0 ps-1"
+                                                   value="{{ form.phone.value|default:'' }}"
+                                                   placeholder="___-___-__-__">
                                         </div>
-                                        <input type="hidden" name="appointment_order_number" id="id_appointment_order_number" value="{{ form.appointment_order_number.value|default:'' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label-small">РНОКПП (ІПН)</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-123"></i></span>
+                                            {{ form.rnokpp }}
+                                        </div>
+                                        {% if form.rnokpp.errors %}<div class="text-danger x-small mt-1">{{ form.rnokpp.errors.0 }}</div>{% endif %}
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="form-label-small text-muted">Скан наказу</label>
-                                    <div class="input-group input-group-sm">
-                                        {{ form.appointment_order_file }}
-                                        {% if employee.appointment_order_file %}
-                                            <a href="{% url 'open_order_file' employee.pk 'appointment' %}"
-                                               target="_blank" class="btn btn-outline-primary"
-                                               title="Переглянути файл">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        {% endif %}
+                                <div class="section-title text-success mt-2">
+                                    <i class="bi bi-file-earmark-check me-2"></i>Призначення
+                                </div>
+                                <div class="bg-light bg-opacity-50 p-3 rounded-3 border mb-3">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label-small text-muted">Дата</label>
+                                            {{ form.appointment_date }}
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label-small text-muted">Наказ (№ та дата)</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-white text-secondary">№</span>
+                                                <input type="text"
+                                                       class="form-control order-num-input"
+                                                       id="appt_num_visual"
+                                                       placeholder="000"
+                                                       maxlength="4"
+                                                       inputmode="numeric">
+                                                <span class="input-group-text bg-white text-secondary small">-к/тр від</span>
+                                                <input type="date" class="form-control" id="appt_date_visual">
+                                            </div>
+                                            <input type="hidden"
+                                                   name="appointment_order_number"
+                                                   id="id_appointment_order_number"
+                                                   value="{{ form.appointment_order_number.value|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="form-label-small text-muted">Скан наказу</label>
+                                        <div class="input-group input-group-sm">
+                                            {{ form.appointment_order_file }}
+                                            {% if employee.appointment_order_file %}
+                                                <a href="{% url 'open_order_file' employee.pk 'appointment' %}"
+                                                   target="_blank"
+                                                   class="btn btn-outline-primary"
+                                                   title="Переглянути файл">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="d-flex align-items-center mb-2 mt-4" style="padding-left: 0.2rem;">
-                                <div class="form-check form-switch m-0 d-flex align-items-center">
+                                <div class="form-check form-switch mb-2 mt-4" style="padding-left: 2.5rem">
                                     {{ form.is_dismissed }}
-                                    <label class="form-check-label fw-bold small ms-2 text-danger text-uppercase" for="is_dismissed_check" style="cursor: pointer; letter-spacing: 0.5px;">
+                                    <label class="form-check-label fw-bold small ms-2 text-danger text-uppercase"
+                                           for="is_dismissed_check"
+                                           style="cursor: pointer;
+                                                  letter-spacing: 0.5px">
                                         <i class="bi bi-person-x me-1"></i> Звільнення
                                     </label>
                                 </div>
-                            </div>
-
-                            <div id="dismissal-block" class="p-3 bg-danger bg-opacity-10 rounded-3 border border-danger border-opacity-25 mb-4" style="display: none;">
-                                <div class="row g-2 mb-2">
-                                    <div class="col-md-4">
-                                        <label class="form-label-small text-danger-emphasis">Дата звільнення</label>
-                                        {{ form.dismissal_date }}
+                                <div id="dismissal-block"
+                                     class="p-3 bg-danger bg-opacity-10 rounded-3 border border-danger border-opacity-25 mb-4"
+                                     style="display: none">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label-small text-danger-emphasis">Дата звільнення</label>
+                                            {{ form.dismissal_date }}
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label-small text-danger-emphasis">Наказ про звільнення</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-white text-danger fw-bold">№</span>
+                                                <input type="text"
+                                                       class="form-control order-num-input"
+                                                       id="dismiss_num_visual"
+                                                       placeholder="000"
+                                                       maxlength="4"
+                                                       inputmode="numeric">
+                                                <span class="input-group-text bg-white text-secondary small">-к/тр від</span>
+                                                <input type="date" class="form-control" id="dismiss_date_visual">
+                                            </div>
+                                            <input type="hidden"
+                                                   name="dismissal_order_number"
+                                                   id="id_dismissal_order_number"
+                                                   value="{{ form.dismissal_order_number.value|default:'' }}">
+                                        </div>
                                     </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label-small text-danger-emphasis">Наказ про звільнення</label>
+                                    <div>
+                                        <label class="form-label-small text-danger-emphasis">Скан наказу</label>
                                         <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-white text-danger fw-bold">№</span>
-                                            <input type="text" class="form-control order-num-input" id="dismiss_num_visual" placeholder="000" maxlength="4" inputmode="numeric">
-                                            <span class="input-group-text bg-white text-secondary small">-к/тр від</span>
-                                            <input type="date" class="form-control" id="dismiss_date_visual">
+                                            {{ form.dismissal_order_file }}
+                                            {% if employee.dismissal_order_file %}
+                                                <a href="{% url 'open_order_file' employee.pk 'dismissal' %}"
+                                                   target="_blank"
+                                                   class="btn btn-outline-danger"
+                                                   title="Переглянути файл">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            {% endif %}
                                         </div>
-                                        <input type="hidden" name="dismissal_order_number" id="id_dismissal_order_number" value="{{ form.dismissal_order_number.value|default:'' }}">
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="form-label-small text-danger-emphasis">Скан наказу</label>
-                                    <div class="input-group input-group-sm">
-                                        {{ form.dismissal_order_file }}
-                                        {% if employee.dismissal_order_file %}
-                                            <a href="{% url 'open_order_file' employee.pk 'dismissal' %}"
-                                               target="_blank" class="btn btn-outline-danger"
-                                               title="Переглянути файл">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                        {% endif %}
+                                <div class="section-title text-warning mt-2">
+                                    <i class="bi bi-key me-2"></i>Ключі КЕП
+                                </div>
+                                <div class="mb-2">
+                                    <div class="p-2 border rounded bg-light">
+                                        {{ form.kep_files }}
+                                        <div class="form-text x-small mt-1 text-muted">Оберіть файли сертифікатів (.cer, .crt)</div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="section-title text-warning mt-2">
-                                <i class="bi bi-key me-2"></i>Ключі КЕП
-                            </div>
-
-                            <div class="mb-2">
-                                <div class="p-2 border rounded bg-light">
-                                    {{ form.kep_files }}
-                                    <div class="form-text x-small mt-1 text-muted">Оберіть файли сертифікатів (.cer, .crt)</div>
-                                </div>
-                            </div>
-
-                            {% if employee and employee.certificates.all %}
-                                <div class="list-group list-group-flush border rounded-2 mb-3">
-                                    {% for cert in employee.certificates.all %}
-                                    <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 bg-white small">
-                                        <div class="text-truncate d-flex align-items-center">
-                                            <i class="bi bi-file-earmark-lock2 text-warning me-2"></i>
-                                            <a href="{{ cert.file.url }}" download="{{ cert.original_name }}" class="text-decoration-none text-dark">{{ cert.filename }}</a>
+                                {% for fs_form in formset %}<div class="d-none">{{ fs_form }}</div>{% endfor %}
+                                {% if employee and employee.certificates.all %}
+                                    <div class="list-group list-group-flush border rounded-2 mb-3">
+                                        {% for cert in employee.certificates.all %}
+                                            <div class="list-group-item d-flex justify-content-between align-items-center py-1 px-2 bg-white small">
+                                                <div class="text-truncate d-flex align-items-center">
+                                                    <i class="bi bi-file-earmark-lock2 text-warning me-2"></i>
+                                                    <a href="{{ cert.file.url }}"
+                                                       download="{{ cert.original_name }}"
+                                                       class="text-decoration-none text-dark">{{ cert.filename }}</a>
+                                                </div>
+                                                <a href="{% url 'cert_delete' cert.pk %}"
+                                                   class="btn btn-sm text-danger p-0"
+                                                   onclick="return confirm('Видалити?')"><i class="bi bi-x"></i></a>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if employee.career_history.exists %}
+                                    <div class="mt-4 pt-2 border-top">
+                                        <div class="section-title text-primary mb-2 border-0">
+                                            <i class="bi bi-clock-history me-2"></i>Історія
                                         </div>
-                                        <a href="{% url 'cert_delete' cert.pk %}" class="btn btn-sm text-danger p-0" onclick="return confirm('Видалити?')"><i class="bi bi-x"></i></a>
+                                        <div class="table-responsive rounded border">
+                                            <table class="table table-sm table-striped mb-0 x-small"
+                                                   style="font-size: 0.8rem">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th class="ps-2">Дата</th>
+                                                        <th>Звідки</th>
+                                                        <th>Куди</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for history in employee.career_history.all %}
+                                                        <tr>
+                                                            <td class="ps-2 text-nowrap">{{ history.date_changed|date:"d.m.y" }}</td>
+                                                            <td class="text-muted">
+                                                                {{ history.previous_department }}
+                                                                <br>
+                                                                <em class="x-small">{{ history.previous_position }}</em>
+                                                            </td>
+                                                            <td class="fw-bold text-success">
+                                                                {{ history.new_department }}
+                                                                <br>
+                                                                <em class="x-small fw-normal">{{ history.new_position }}</em>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-
-                            {% if employee.career_history.exists %}
-                            <div class="mt-4 pt-2 border-top">
-                                <div class="section-title text-primary mb-2 border-0">
-                                    <i class="bi bi-clock-history me-2"></i>Історія
-                                </div>
-                                <div class="table-responsive rounded border">
-                                    <table class="table table-sm table-striped mb-0 x-small" style="font-size: 0.8rem;">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th class="ps-2">Дата</th>
-                                                <th>Звідки</th>
-                                                <th>Куди</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for history in employee.career_history.all %}
-                                            <tr>
-                                                <td class="ps-2 text-nowrap">{{ history.date_changed|date:"d.m.y" }}</td>
-                                                <td class="text-muted">
-                                                    {{ history.previous_department }}<br>
-                                                    <em class="x-small">{{ history.previous_position }}</em>
-                                                </td>
-                                                <td class="fw-bold text-success">
-                                                    {{ history.new_department }}<br>
-                                                    <em class="x-small fw-normal">{{ history.new_position }}</em>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
-
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm rounded-3 mb-3">
+                            <div class="card-header bg-white border-bottom-0 py-2 d-flex justify-content-between align-items-center">
+                                <span class="fw-bold small text-secondary"><i class="bi bi-hash me-1"></i>Коди відділів</span>
+                                <i class="bi bi-chevron-down text-muted small"></i>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm table-hover mb-0" style="font-size: 0.75rem;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3 border-0">Назва</th>
+                                            <th class="text-end pe-3 border-0">Код</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="ps-3">Івано-Франківський</td>
+                                            <td class="text-end pe-3 fw-bold">2610</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Яремчанський</td>
+                                            <td class="text-end pe-3 fw-bold">2612</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Городенківський</td>
+                                            <td class="text-end pe-3 fw-bold">2616</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Долинський</td>
+                                            <td class="text-end pe-3 fw-bold">2617</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Коломийський</td>
+                                            <td class="text-end pe-3 fw-bold">2619</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Косівський</td>
+                                            <td class="text-end pe-3 fw-bold">2620</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Надвірнянський</td>
+                                            <td class="text-end pe-3 fw-bold">2621</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Рогатинський</td>
+                                            <td class="text-end pe-3 fw-bold">2622</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-3">Тисменицький</td>
+                                            <td class="text-end pe-3 fw-bold">2626</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 sticky-top" style="top: 20px;">
+                            <button type="submit" class="btn btn-primary fw-semibold shadow-sm">
+                                <i class="bi bi-check-lg me-1"></i> Зберегти
+                            </button>
+                            <a href="{% url 'staff_list' %}"
+                               class="btn btn-outline-secondary btn-sm border-0">Скасувати</a>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-lg-4">
-                    <div class="card border-0 shadow-sm rounded-3 mb-3">
-                        <div class="card-header bg-white border-bottom-0 py-2 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold small text-secondary"><i class="bi bi-hash me-1"></i>Коди відділів</span>
-                            <i class="bi bi-chevron-down text-muted small"></i>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-sm table-hover mb-0" style="font-size: 0.75rem;">
-                                <thead class="table-light"><tr><th class="ps-3 border-0">Назва</th><th class="text-end pe-3 border-0">Код</th></tr></thead>
-                                <tbody>
-                                    <tr><td class="ps-3">Івано-Франківський</td><td class="text-end pe-3 fw-bold">2610</td></tr>
-                                    <tr><td class="ps-3">Яремчанський</td><td class="text-end pe-3 fw-bold">2612</td></tr>
-                                    <tr><td class="ps-3">Городенківський</td><td class="text-end pe-3 fw-bold">2616</td></tr>
-                                    <tr><td class="ps-3">Долинський</td><td class="text-end pe-3 fw-bold">2617</td></tr>
-                                    <tr><td class="ps-3">Коломийський</td><td class="text-end pe-3 fw-bold">2619</td></tr>
-                                    <tr><td class="ps-3">Косівський</td><td class="text-end pe-3 fw-bold">2620</td></tr>
-                                    <tr><td class="ps-3">Надвірнянський</td><td class="text-end pe-3 fw-bold">2621</td></tr>
-                                    <tr><td class="ps-3">Рогатинський</td><td class="text-end pe-3 fw-bold">2622</td></tr>
-                                    <tr><td class="ps-3">Тисменицький</td><td class="text-end pe-3 fw-bold">2626</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="d-grid gap-2 sticky-top" style="top: 20px;">
-                        <button type="submit" class="btn btn-primary fw-semibold shadow-sm">
-                            <i class="bi bi-check-lg me-1"></i> Зберегти
-                        </button>
-                        <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary btn-sm border-0">Скасувати</a>
-                    </div>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
-
-<script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+    <script>
 $(document).ready(function() {
-    // Стилізація (робимо інпути маленькими)
+    // Стилізація
     $('input[type="text"], input[type="date"], select, textarea, input[type="file"]').not('.select2-hidden-accessible, .form-check-input, .order-num-input').addClass('form-control form-control-sm');
 
     // 1. SELECT2
@@ -316,12 +368,10 @@ $(document).ready(function() {
         tags: true, placeholder: "Оберіть або введіть...", allowClear: true,
         language: { noResults: () => "Введіть нову назву..." }
     });
-
     $('#id_department_select').select2({
         tags: true, placeholder: "Оберіть або введіть...", allowClear: true,
         language: { noResults: () => "Введіть нову назву..." }
     });
-
     $(document).on('select2:open', function(e) {
         document.querySelector('.select2-search__field').focus();
     });
@@ -329,12 +379,8 @@ $(document).ready(function() {
     // 2. МАСКА
     $('#phone-mask').inputmask({ mask: "999-999-99-99", placeholder: "___-___-__-__", showMaskOnHover: false, showMaskOnFocus: true });
 
-    // 3. ВАЛІДАЦІЯ РНОКПП (БЕЗ ЗМІН ЛОГІКИ)
-    const rnokppInput = document.getElementById('rnokpp-input'); // У вашому коді було getElementById('rnokpp-input'), але зазвичай це id_rnokpp. Перевірте ID.
-    // Якщо ID у форми 'id_rnokpp', то треба так: const rnokppInput = document.getElementById('id_rnokpp');
-    // Я залишаю як у вашому прикладі, але додаю fallback
+    // 3. ВАЛІДАЦІЯ РНОКПП
     const rnokppReal = document.querySelector('input[name="rnokpp"]');
-
     if (rnokppReal) {
         rnokppReal.addEventListener('input', function(e) {
             let value = this.value.replace(/\D/g, '');
@@ -360,9 +406,14 @@ $(document).ready(function() {
                 rnokppReal.classList.add('is-invalid');
             }
         }
+        // Очищення телефону від дефісів перед відправкою для RegexValidator
+        const phoneInput = document.getElementById('phone-mask');
+        if (phoneInput) {
+            phoneInput.value = phoneInput.value.replace(/\D/g, '');
+        }
     });
 
-    // 4. КОНСТРУКТОР НОМЕРА НАКАЗУ (БЕЗ ЗМІН ЛОГІКИ)
+    // 4. КОНСТРУКТОР НОМЕРА НАКАЗУ
     function initOrderNumberBuilder(hiddenInputId, numInputId, dateInputId) {
         const hiddenInput = document.getElementById(hiddenInputId);
         const numInput = document.getElementById(numInputId);
@@ -379,13 +430,6 @@ $(document).ready(function() {
             }
         }
 
-        numInput.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '');
-            updateHiddenField();
-        });
-
-        dateInput.addEventListener('input', updateHiddenField);
-
         function updateHiddenField() {
             const num = numInput.value;
             const dateVal = dateInput.value;
@@ -397,13 +441,18 @@ $(document).ready(function() {
                 hiddenInput.value = '';
             }
         }
+
+        numInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+            updateHiddenField();
+        });
+        dateInput.addEventListener('input', updateHiddenField);
     }
 
     initOrderNumberBuilder('id_appointment_order_number', 'appt_num_visual', 'appt_date_visual');
     initOrderNumberBuilder('id_dismissal_order_number', 'dismiss_num_visual', 'dismiss_date_visual');
 
-    // 5. ЛОГІКА ЗВІЛЬНЕННЯ (БЕЗ ЗМІН ЛОГІКИ)
-    // Шукаємо чекбокс по імені, бо ID може бути динамічним
+    // 5. ЛОГІКА ЗВІЛЬНЕННЯ
     const dismissCheck = document.querySelector('input[name="is_dismissed"]');
     const dismissBlock = document.getElementById('dismissal-block');
 
@@ -418,5 +467,5 @@ $(document).ready(function() {
         dismissCheck.addEventListener('change', toggleDismissBlock);
     }
 });
-</script>
+    </script>
 {% endblock %}

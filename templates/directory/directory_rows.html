@@ -1,108 +1,126 @@
 {% for item in entries %}
-<tr>
-    <td class="ps-4" data-label="Відділ">
-        <div class="d-flex align-items-start">
-            <div class="dept-icon-box d-none d-lg-flex">
-                <i class="bi bi-building"></i>
+    <tr>
+        <td class="ps-4" data-label="Відділ">
+            <div class="d-flex align-items-start">
+                <div class="dept-icon-box d-none d-lg-flex">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <span class="dept-title-mobile text-dark fw-bold" style="line-height: 1.3;">{{ item.department }}</span>
+                    <div class="mt-1 d-flex flex-column gap-1">
+                        {% if item.code %}
+                            <div>
+                                <span class="badge bg-light text-secondary border fw-normal">Код: {{ item.code }}</span>
+                            </div>
+                        {% endif %}
+                        {% if item.email %}
+                            <div>
+                                <a href="mailto:{{ item.email }}"
+                                   class="text-decoration-none small text-muted">
+                                    <i class="bi bi-envelope me-1"></i>{{ item.email }}
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <div>
-                <span class="dept-title-mobile text-dark fw-bold" style="line-height: 1.3;">{{ item.department }}</span>
-
-                <div class="mt-1 d-flex flex-column gap-1">
-                    {% if item.code %}
-                        <div><span class="badge bg-light text-secondary border fw-normal">Код: {{ item.code }}</span></div>
-                    {% endif %}
-                    {% if item.email %}
-                        <div>
-                            <a href="mailto:{{ item.email }}" class="text-decoration-none small text-muted">
-                                <i class="bi bi-envelope me-1"></i>{{ item.email }}
-                            </a>
+        </td>
+        <td data-label="Керівництво">
+            <div class="d-flex flex-column gap-3">
+                {% if item.chief_name %}
+                    <div class="person-block">
+                        <div class="fw-bold text-dark">{{ item.chief_name }}</div>
+                        <div class="small text-muted">{{ item.chief_position|default:"Керівник" }}</div>
+                        <div class="mobile-contacts-view mt-1">
+                            {% if item.chief_phone %}
+                                <div>
+                                    <a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.chief_phone }}</a>
+                                </div>
+                            {% endif %}
+                            {% if item.chief_ip %}
+                                <div>
+                                    <span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.chief_ip }}</span>
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </td>
-
-    <td data-label="Керівництво">
-        <div class="d-flex flex-column gap-3">
-
-            {% if item.chief_name %}
-            <div class="person-block">
-                <div class="fw-bold text-dark">{{ item.chief_name }}</div>
-                <div class="small text-muted">{{ item.chief_position|default:"Керівник" }}</div>
-
-                <div class="mobile-contacts-view mt-1">
-                    {% if item.chief_phone %}
-                        <div><a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.chief_phone }}</a></div>
-                    {% endif %}
-                    {% if item.chief_ip %}
-                        <div><span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.chief_ip }}</span></div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            {% if item.deputy_name %}
-            <div class="person-block pt-2 border-top border-light-subtle">
-                <div class="small text-muted text-uppercase fw-bold" style="font-size: 0.65rem;">Заступник</div>
-                <div class="fw-medium text-dark">{{ item.deputy_name }}</div>
-
-                <div class="mobile-contacts-view mt-1">
-                    {% if item.deputy_phone %}
-                        <div><a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.deputy_phone }}</a></div>
-                    {% endif %}
-                    {% if item.deputy_ip %}
-                        <div><span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.deputy_ip }}</span></div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </td>
-
-    <td class="desktop-contacts-view">
-        <div class="d-flex flex-column gap-3">
-            {% if item.chief_name %}
-            <div class="contact-block">
-                {% if item.chief_phone %}
-                    <div><a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.chief_phone }}</a></div>
+                    </div>
                 {% endif %}
-                {% if item.chief_ip %}
-                    <div><span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.chief_ip }}</strong></span></div>
+                {% if item.deputy_name %}
+                    <div class="person-block pt-2 border-top border-light-subtle">
+                        <div class="small text-muted text-uppercase fw-bold"
+                             style="font-size: 0.65rem">Заступник</div>
+                        <div class="fw-medium text-dark">{{ item.deputy_name }}</div>
+                        <div class="mobile-contacts-view mt-1">
+                            {% if item.deputy_phone %}
+                                <div>
+                                    <a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone-fill icon-mobile"></i> {{ item.deputy_phone }}</a>
+                                </div>
+                            {% endif %}
+                            {% if item.deputy_ip %}
+                                <div>
+                                    <span class="phone-link"><i class="bi bi-telephone-inbound-fill icon-ip"></i> IP: {{ item.deputy_ip }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 {% endif %}
             </div>
-            {% endif %}
-
-            {% if item.deputy_name %}
-            <div class="contact-block pt-2 border-top border-light-subtle">
-                {% if item.deputy_phone %}
-                    <div><a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.deputy_phone }}</a></div>
+        </td>
+        <td class="desktop-contacts-view">
+            <div class="d-flex flex-column gap-3">
+                {% if item.chief_name %}
+                    <div class="contact-block">
+                        {% if item.chief_phone %}
+                            <div>
+                                <a href="tel:{{ item.chief_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.chief_phone }}</a>
+                            </div>
+                        {% endif %}
+                        {% if item.chief_ip %}
+                            <div>
+                                <span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.chief_ip }}</strong></span>
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endif %}
-                {% if item.deputy_ip %}
-                    <div><span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.deputy_ip }}</strong></span></div>
+                {% if item.deputy_name %}
+                    <div class="contact-block pt-2 border-top border-light-subtle">
+                        {% if item.deputy_phone %}
+                            <div>
+                                <a href="tel:{{ item.deputy_phone }}" class="phone-link"><i class="bi bi-phone icon-mobile"></i> {{ item.deputy_phone }}</a>
+                            </div>
+                        {% endif %}
+                        {% if item.deputy_ip %}
+                            <div>
+                                <span class="phone-link"><i class="bi bi-telephone-inbound icon-ip"></i> IP: <strong>{{ item.deputy_ip }}</strong></span>
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
-            {% endif %}
-        </div>
-    </td>
-
-    <td class="text-end pe-4" data-label="Дії">
-        <div class="d-flex gap-2 justify-content-end w-100">
-            <a href="{% url 'directory_update' item.pk %}" class="btn-light-action text-primary flex-fill flex-lg-grow-0" title="Редагувати">
-                <i class="bi bi-pencil"></i>
-            </a>
-            <button type="button" class="btn-light-action btn-danger-hover text-danger flex-fill flex-lg-grow-0" onclick="confirmDelete('{{ item.pk }}', '{{ item.department|escapejs }}')" title="Видалити">
-                <i class="bi bi-trash3"></i>
-            </button>
-        </div>
-    </td>
-</tr>
+        </td>
+        <td class="text-end pe-4" data-label="Дії">
+            <div class="d-flex gap-2 justify-content-end w-100">
+                <a href="{% url 'directory_update' item.pk %}"
+                   class="btn-light-action text-primary flex-fill flex-lg-grow-0"
+                   title="Редагувати">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button"
+                        class="btn-light-action btn-danger-hover text-danger flex-fill flex-lg-grow-0"
+                        onclick="confirmDelete('{{ item.pk }}', '{{ item.department|escapejs }}')"
+                        title="Видалити">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
 {% empty %}
-<tr>
-    <td colspan="4" class="text-center py-5">
-        <div class="text-muted mb-2"><i class="bi bi-search fs-1 opacity-25"></i></div>
-        <span class="text-muted">Записів не знайдено.</span>
-    </td>
-</tr>
+    <tr>
+        <td colspan="4" class="text-center py-5">
+            <div class="text-muted mb-2">
+                <i class="bi bi-search fs-1 opacity-25"></i>
+            </div>
+            <span class="text-muted">Записів не знайдено.</span>
+        </td>
+    </tr>
 {% endfor %}
