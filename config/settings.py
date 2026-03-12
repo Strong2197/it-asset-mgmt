@@ -144,7 +144,7 @@ CSRF_COOKIE_SECURE = True
 # 3. Налаштування HSTS (Strict Transport Security)
 # Починайте з невеликого значення (наприклад, година), 
 # щоб переконатися, що все працює коректно.
-SECURE_HSTS_SECONDS = 3600  # 1 година
+SECURE_HSTS_SECONDS = 31536000  # 1 година
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
