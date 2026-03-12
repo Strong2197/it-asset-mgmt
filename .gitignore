@@ -16,3 +16,11 @@ __pycache__/
 .env
 
 media/
+
+.continueignore
+
+collect_context.py
+
+project_context.txt
+
+.gitignore
