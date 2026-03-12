@@ -82,11 +82,14 @@ class ServiceReport(models.Model):
 
     @property
     def is_archived(self):
-        has_unissued_items = ServiceTaskItem.objects.filter(
-            task__in=self.tasks.all(),
-            date_returned_to_user__isnull=True
-        ).exists()
-        return not has_unissued_items
+        # Замість ServiceTaskItem.objects.filter(...) перебираємо все через Python.
+        # Завдяки prefetch_related це працюватиме миттєво без жодного SQL-запиту:
+        for task in self.tasks.all():
+            for item in task.items.all():
+                if item.date_returned_to_user is None:
+                    return False
+        return True
+    
     class Meta:
         verbose_name = "Акти"
         verbose_name_plural = "Акти"

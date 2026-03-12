@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.doc_list, name='doc_list'),
-    path('new/', views.doc_create, name='doc_create'),
-    path('edit/<int:pk>/', views.doc_update, name='doc_update'),
-    path('<int:pk>/delete/', views.doc_delete, name='doc_delete'),
+    path('new/', views.DocumentCreateView.as_view(), name='doc_create'),
+    path('edit/<int:pk>/', views.DocumentUpdateView.as_view(), name='doc_update'),
+    path('<int:pk>/delete/', views.DocumentDeleteView.as_view(), name='doc_delete'),
 ]

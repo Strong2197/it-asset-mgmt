@@ -5,8 +5,23 @@ from django.http import FileResponse, Http404
 from urllib.parse import quote
 from django.core.paginator import Paginator
 import os
-from config.view_helpers import delete_on_post
 from config.search_helpers import filter_by_text_query
+
+from django.urls import reverse_lazy
+from django.views.generic import DeleteView
+
+class StaffDeleteView(DeleteView):
+    model = Employee
+    success_url = reverse_lazy('staff_list')
+    # DeleteView відхиляє GET-запити без шаблону, 
+    # він чекає саме POST, що ідеально відповідає вашій архітектурі.
+
+class CertDeleteView(DeleteView):
+    model = KepCertificate
+    
+    # success_url тут динамічний (потрібно повернутися на сторінку редагування конкретного працівника)
+    def get_success_url(self):
+        return reverse_lazy('staff_update', kwargs={'pk': self.object.employee.id})
 
 
 # Допоміжні функції залишаємо без змін
@@ -141,17 +156,6 @@ def staff_dismiss(request, pk):
         _attach_order_original_names(employee, request.FILES)
         employee.save()
     return redirect('staff_list')
-
-
-def staff_delete(request, pk):
-    employee = get_object_or_404(Employee, pk=pk)
-    return delete_on_post(request, obj=employee, success_url='staff_list')
-
-
-def cert_delete(request, pk):
-    cert = get_object_or_404(KepCertificate, pk=pk)
-    employee_id = cert.employee.id
-    return delete_on_post(request, obj=cert, success_url='staff_update', pk=employee_id)
 
 
 def open_order_file(request, pk, order_type):

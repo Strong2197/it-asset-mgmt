@@ -200,13 +200,15 @@ def save_report(request):
 
 
 def report_list(request):
-    reports = ServiceReport.objects.annotate(total_items=Sum('tasks__items__quantity')).order_by('-created_at')
+    reports = ServiceReport.objects.prefetch_related('tasks__items').annotate(
+        total_items=Sum('tasks__items__quantity')
+    ).order_by('-created_at')
     return render(request, 'service/report_list.html', {'reports': reports})
 
 
 def report_detail(request, pk):
     report = get_object_or_404(ServiceReport, pk=pk)
-    items = ServiceTaskItem.objects.filter(task__in=report.tasks.all())
+    items = ServiceTaskItem.objects.filter(task__in=report.tasks.all()).select_related('task')
     stats = {}
     sort_map = {key: index for index, (key, label) in enumerate(CARTRIDGE_CHOICES)}
 

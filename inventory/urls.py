@@ -2,10 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.asset_list, name='asset_list'),
-    path('new/', views.asset_create, name='asset_create'),
-    path('edit/<int:pk>/', views.asset_update, name='asset_update'),
-    path('export/', views.export_assets_xlsx, name='export_assets_xlsx'),
-    path('<int:pk>/clone/', views.asset_clone, name='asset_clone'),
-    path('<int:pk>/archive/', views.asset_archive, name='asset_archive'),
+    path('', views.AssetListView.as_view(), name='asset_list'),
+    path('new/', views.AssetCreateView.as_view(), name='asset_create'),
+    path('edit/<int:pk>/', views.AssetUpdateView.as_view(), name='asset_update'),
+    path('export/', views.export_assets_xlsx, name='export_assets_xlsx'), # Залишається як функція
+    path('<int:pk>/clone/', views.AssetCloneView.as_view(), name='asset_clone'),
+    path('<int:pk>/archive/', views.AssetArchiveView.as_view(), name='asset_archive'),
 ]

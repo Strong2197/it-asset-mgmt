@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
 from .models import Document
 from .forms import DocumentForm
-from config.view_helpers import save_model_form, delete_on_post
+from django.views.generic import CreateView, UpdateView, DeleteView
 from config.search_helpers import filter_by_text_query
 
 
@@ -28,29 +29,30 @@ def doc_list(request):
     })
 
 
-# Решта функцій (create, update, delete) залишаються без змін
-def doc_create(request):
-    return save_model_form(
-        request,
-        form_class=DocumentForm,
-        template_name='docs/doc_form.html',
-        success_url='doc_list',
-        title='Додати посилання',
-    )
+class DocumentCreateView(CreateView):
+    model = Document
+    form_class = DocumentForm
+    template_name = 'docs/doc_form.html'
+    success_url = reverse_lazy('doc_list')
 
+    # Передаємо додатковий контекст (заголовок), як ви це робили у своєму хелпері
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Додати посилання'
+        return context
 
-def doc_update(request, pk):
-    doc = get_object_or_404(Document, pk=pk)
-    return save_model_form(
-        request,
-        form_class=DocumentForm,
-        template_name='docs/doc_form.html',
-        success_url='doc_list',
-        instance=doc,
-        title='Редагувати посилання',
-    )
+class DocumentUpdateView(UpdateView):
+    model = Document
+    form_class = DocumentForm
+    template_name = 'docs/doc_form.html'
+    success_url = reverse_lazy('doc_list')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редагувати посилання'
+        return context
 
-def doc_delete(request, pk):
-    doc = get_object_or_404(Document, pk=pk)
-    return delete_on_post(request, obj=doc, success_url='doc_list')
+class DocumentDeleteView(DeleteView):
+    model = Document
+    success_url = reverse_lazy('doc_list')
+    # DeleteView очікує POST-запит для видалення, що ідеально збігається з вашим підходом

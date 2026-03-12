@@ -1,23 +1,134 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, View
+from django.http import HttpResponse
+from django.db.models import Q
+from django.forms.models import model_to_dict
+
+import openpyxl
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
+
+from config.search_helpers import filter_by_text_query
 from .models import Asset, Category
 from .forms import AssetForm
-from django.db.models import Q
-import openpyxl
-from django.http import HttpResponse
-from django.forms.models import model_to_dict  # Для клонування
-from django.utils import timezone
-from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
-from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТРІБЕН ДЛЯ ФІЛЬТРУ
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from config.view_helpers import save_model_form
-from config.search_helpers import filter_by_text_query
+
 from django.db.models import Sum
 from staff.models import Employee
 from service.models import ServiceTaskItem
 
 
+# --- 1. СПИСОК МАЙНА (ListView) ---
+class AssetListView(ListView):
+    model = Asset
+    template_name = 'inventory/asset_list.html'
+    paginate_by = 30
+    
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '').strip()
+        category_id = self.request.GET.get('category', 'all')
+        show_archived = self.request.GET.get('archived', 'false')
+
+        # Фільтр по архіву
+        assets_queryset = Asset.objects.filter(is_archived=(show_archived == 'true')).select_related('category')
+
+        # Фільтр по категорії
+        if category_id != 'all':
+            assets_queryset = assets_queryset.filter(category_id=category_id).select_related('category')
+
+        # Пошук через Python (збережено вашу логіку)
+        if search_query:
+            return filter_by_text_query(
+                assets_queryset,
+                search_query,
+                lambda asset: f"{asset.name} {asset.inventory_number} {asset.barcode} {asset.location} {asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)}"
+            )
+        return assets_queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # У вашому шаблоні очікується, що 'assets' - це об'єкт сторінки пагінації
+        if context.get('page_obj'):
+            context['assets'] = context['page_obj']
+            
+        context['categories'] = Category.objects.all()
+        context['show_archived'] = self.request.GET.get('archived', 'false')
+        context['search_query'] = self.request.GET.get('search', '')
+        context['current_category'] = self.request.GET.get('category', 'all')
+        
+        qs = self.get_queryset()
+        context['total_count'] = len(qs) if isinstance(qs, list) else qs.count()
+        return context
+
+
+# --- 2. СТВОРЕННЯ (CreateView) ---
+class AssetCreateView(CreateView):
+    model = Asset
+    form_class = AssetForm
+    template_name = 'inventory/asset_form.html'
+    success_url = reverse_lazy('asset_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Додати майно'
+        return context
+
+
+# --- 3. РЕДАГУВАННЯ (UpdateView) ---
+class AssetUpdateView(UpdateView):
+    model = Asset
+    form_class = AssetForm
+    template_name = 'inventory/asset_form.html'
+    success_url = reverse_lazy('asset_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Редагувати майно'
+        return context
+
+
+# --- 4. КЛОНУВАННЯ (Custom View) ---
+class AssetCloneView(View):
+    def get(self, request, pk):
+        original_asset = get_object_or_404(Asset, pk=pk)
+        initial_data = model_to_dict(original_asset)
+        
+        initial_data.pop('id', None)
+        initial_data.pop('inventory_number', None)
+        initial_data.pop('barcode', None)
+
+        form = AssetForm(initial=initial_data)
+        return render(request, 'inventory/asset_form.html', {
+            'form': form,
+            'title': f'Створення копії: {original_asset.name}'
+        })
+
+    def post(self, request, pk):
+        form = AssetForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('asset_list')
+        return render(request, 'inventory/asset_form.html', {'form': form})
+
+
+# --- 5. АРХІВУВАННЯ (Custom View) ---
+class AssetArchiveView(View):
+    def post(self, request, pk):
+        asset = get_object_or_404(Asset, pk=pk)
+        reason = request.POST.get('archive_reason')
+        date = request.POST.get('archive_date')
+
+        if reason and date:
+            asset.is_archived = True
+            asset.archive_reason = reason
+            asset.archive_date = date
+            asset.save()
+
+        return redirect('asset_list')
+
+
+# --- 6. ЕКСПОРТ В EXCEL (Залишається без змін) ---
 def export_assets_xlsx(request):
-    # 1. Параметри та фільтрація
     search_query = request.GET.get('search', '').strip()
     category_id = request.GET.get('category', 'all')
     show_archived = request.GET.get('archived', 'false')
@@ -40,7 +151,6 @@ def export_assets_xlsx(request):
             Q(archive_reason__icontains=search_query)
         )
 
-    # --- СТВОРЕННЯ EXCEL ---
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="inventory_export.xlsx"'
 
@@ -48,68 +158,45 @@ def export_assets_xlsx(request):
     ws = wb.active
     ws.title = 'Майно'
 
-    # --- СТИЛІ ---
-    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'),
-                         bottom=Side(style='thin'))
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
     header_font = Font(bold=True, color="FFFFFF", size=11)
     header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
     header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
     cell_align_center = Alignment(horizontal="center", vertical="center")
     cell_align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
-    # --- ЗАГОЛОВКИ ---
-    headers = ['Баркод', 'Інвентарний №', 'Назва', 'Категорія', 'Розташування', 'Відповідальний', 'Рахунок',
-               'Дата придбання']
+    headers = ['Баркод', 'Інвентарний №', 'Назва', 'Категорія', 'Розташування', 'Відповідальний', 'Рахунок', 'Дата придбання']
     if show_archived == 'true':
         headers.extend(['Причина архівування', 'Дата архівування'])
 
     ws.append(headers)
 
-    # === ВКЛЮЧАЄМО ФІЛЬТР ===
-    # Визначаємо букву останньої колонки (наприклад, "H" або "J")
     last_col_letter = get_column_letter(len(headers))
-    # Встановлюємо фільтр на перший рядок від A1 до останньої колонки
     ws.auto_filter.ref = f"A1:{last_col_letter}1"
-    # ========================
 
-    # Застосовуємо стиль до заголовка
     for cell in ws[1]:
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_align
         cell.border = thin_border
 
-    # --- ДАНІ ---
     for asset in assets:
         cat_name = asset.category.name if asset.category else ''
         account_name = asset.get_account_display() if hasattr(asset, 'get_account_display') else asset.account
-
-        row_data = [
-            asset.barcode,
-            asset.inventory_number,
-            asset.name,
-            cat_name,
-            asset.location,
-            asset.responsible_person,
-            account_name,
-            asset.purchase_date,
-        ]
-
+        row_data = [asset.barcode, asset.inventory_number, asset.name, cat_name, asset.location, asset.responsible_person, account_name, asset.purchase_date]
         if show_archived == 'true':
             row_data.extend([asset.archive_reason, asset.archive_date])
 
         ws.append(row_data)
 
-        # Стилізація рядка даних
         current_row = ws[ws.max_row]
         for cell in current_row:
             cell.border = thin_border
-            if cell.column == 3:  # Колонка "Назва"
+            if cell.column == 3:
                 cell.alignment = cell_align_left
             else:
                 cell.alignment = cell_align_center
 
-    # --- АВТОШИРИНА ---
     ws.column_dimensions['C'].width = 50
     for col in ws.columns:
         column_letter = col[0].column_letter
@@ -125,123 +212,10 @@ def export_assets_xlsx(request):
         adjusted_width = (max_length + 4)
         if adjusted_width < 10: adjusted_width = 10
         if adjusted_width > 30: adjusted_width = 30
-
         ws.column_dimensions[column_letter].width = adjusted_width
 
     wb.save(response)
     return response
-
-# --- 2. КЛОНУВАННЯ МАЙНА ---
-def asset_clone(request, pk):
-    original_asset = get_object_or_404(Asset, pk=pk)
-
-    if request.method == 'POST':
-        form = AssetForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('asset_list')
-    else:
-        # Беремо дані з оригінала
-        initial_data = model_to_dict(original_asset)
-
-        # Очищаємо унікальні поля (щоб не було помилок)
-        initial_data.pop('id', None)
-        initial_data.pop('inventory_number', None)  # Треба ввести новий
-        initial_data.pop('barcode', None)  # Треба ввести новий
-
-        # Створюємо форму з цими даними
-        form = AssetForm(initial=initial_data)
-
-    return render(request, 'inventory/asset_form.html', {
-        'form': form,
-        'title': f'Створення копії: {original_asset.name}'
-    })
-
-
-# --- 1. Список майна (Цієї функції не вистачало) ---
-def asset_list(request):
-    search_query = request.GET.get('search', '').strip()
-    category_id = request.GET.get('category', 'all')
-    show_archived = request.GET.get('archived', 'false')
-
-    if show_archived == 'true':
-        assets_queryset = Asset.objects.filter(is_archived=True)
-    else:
-        assets_queryset = Asset.objects.filter(is_archived=False)
-
-    if category_id != 'all':
-        assets_queryset = assets_queryset.filter(category_id=category_id)
-
-    # Пошук через Python
-    if search_query:
-        assets_list = filter_by_text_query(
-            assets_queryset,
-            search_query,
-            lambda asset: (
-                f"{asset.name} {asset.inventory_number} {asset.barcode} "
-                f"{asset.location} {asset.get_account_display() if hasattr(asset, 'get_account_display') else str(asset.account)}"
-            ),
-        )
-    else:
-        assets_list = list(assets_queryset)
-
-    # ПАГІНАЦІЯ (30 на сторінку)
-    paginator = Paginator(assets_list, 30)
-    page = request.GET.get('page')
-    assets_page = paginator.get_page(page)
-
-    categories = Category.objects.all()
-    return render(request, 'inventory/asset_list.html', {
-        'assets': assets_page, # Тепер об'єкт сторінки
-        'categories': categories,
-        'show_archived': show_archived,
-        'search_query': search_query,
-        'current_category': category_id,
-        'total_count': paginator.count
-    })
-
-
-# --- НОВА ФУНКЦІЯ АРХІВУВАННЯ ---
-def asset_archive(request, pk):
-    asset = get_object_or_404(Asset, pk=pk)
-
-    if request.method == 'POST':
-        reason = request.POST.get('archive_reason')
-        date = request.POST.get('archive_date')
-
-        if reason and date:
-            asset.is_archived = True
-            asset.archive_reason = reason
-            asset.archive_date = date
-            asset.save()
-
-    return redirect('asset_list')
-
-
-# --- 2. Створення майна ---
-def asset_create(request):
-    """Створення нового майна"""
-    return save_model_form(
-        request,
-        form_class=AssetForm,
-        template_name='inventory/asset_form.html',
-        success_url='asset_list',
-        title='Додати майно',
-    )
-
-
-# --- 3. Редагування майна ---
-def asset_update(request, pk):
-    """Редагування існуючого майна"""
-    asset = get_object_or_404(Asset, pk=pk)  # Шукаємо запис по ID (pk)
-    return save_model_form(
-        request,
-        form_class=AssetForm,
-        template_name='inventory/asset_form.html',
-        success_url='asset_list',
-        instance=asset,
-        title='Редагувати майно',
-    )
 def home_view(request):
     # 1. Майно
     assets_count = Asset.objects.filter(is_archived=False).count()
