@@ -24,3 +24,5 @@ collect_context.py
 project_context.txt
 
 .gitignore
+
+django_cache/

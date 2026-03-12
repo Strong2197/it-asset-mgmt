@@ -11,6 +11,9 @@ from openpyxl.utils import get_column_letter # <--- ЦЕЙ ІМПОРТ ПОТР
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from config.view_helpers import save_model_form
 from config.search_helpers import filter_by_text_query
+from django.db.models import Sum
+from staff.models import Employee
+from service.models import ServiceTaskItem
 
 
 def export_assets_xlsx(request):
@@ -239,3 +242,37 @@ def asset_update(request, pk):
         instance=asset,
         title='Редагувати майно',
     )
+def home_view(request):
+    # 1. Майно
+    assets_count = Asset.objects.filter(is_archived=False).count()
+
+    # 2. Працівники
+    employees_count = Employee.objects.count()
+
+    # Очікують (Заявка ще не відправлена в сервіс)
+    waiting_data = ServiceTaskItem.objects.filter(
+        task__date_sent__isnull=True
+    ).aggregate(total=Sum('quantity'))
+    waiting_for_repair = waiting_data['total'] or 0
+
+    # В ремонті (Заявка відправлена, картридж ще не повернувся)
+    in_repair_data = ServiceTaskItem.objects.filter(
+        task__date_sent__isnull=False,
+        date_back_from_service__isnull=True
+    ).aggregate(total=Sum('quantity'))
+    in_repair_process = in_repair_data['total'] or 0
+
+    # Готові на складі (Повернувся, але ще не виданий)
+    ready_data = ServiceTaskItem.objects.filter(
+        date_back_from_service__isnull=False,
+        date_returned_to_user__isnull=True
+    ).aggregate(total=Sum('quantity'))
+    ready_on_stock = ready_data['total'] or 0
+
+    return render(request, 'index.html', {
+        'assets_count': assets_count,
+        'waiting_for_repair': waiting_for_repair,
+        'in_repair_process': in_repair_process,
+        'ready_on_stock': ready_on_stock,
+        'employees_count': employees_count
+    })
