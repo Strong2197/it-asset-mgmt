@@ -134,20 +134,16 @@ USE_I18N = True
 USE_TZ = True
 # settings.py
 
-# 1. Перенаправлення з HTTP на HTTPS
-SECURE_SSL_REDIRECT = True
 
-# 2. Налаштування безпеки сесій та CSRF (тільки через HTTPS)
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 
-# 3. Налаштування HSTS (Strict Transport Security)
-# Починайте з невеликого значення (наприклад, година), 
-# щоб переконатися, що все працює коректно.
-SECURE_HSTS_SECONDS = 31536000  # 1 година
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-
+if not DEBUG:
+    # Ці налаштування увімкнуться ТІЛЬКИ на робочому сервері (PythonAnywhere)
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000  # Можна вже ставити на рік
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
