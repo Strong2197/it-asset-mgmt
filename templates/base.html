@@ -184,10 +184,14 @@
                             </span>
                         </div>
                         <div class="progress" style="height: 6px; background-color: #e9ecef;" title="Вільно: {{ disk_usage.free }} МБ">
-                            <div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar"
-                                 style="width: {{ disk_usage.percent }}%; border-radius: 10px;"
-                                 aria-valuenow="{{ disk_usage.percent }}" aria-valuemin="0" aria-valuemax="100">
-                            </div>
+                           {% load l10n %}
+{% localize off %}
+<div class="progress-bar bg-{{ disk_usage.color }}" role="progressbar"
+     style="width: {{ disk_usage.percent }}%; border-radius: 10px;"
+     aria-valuenow="{{ disk_usage.percent }}" 
+     aria-valuemin="0" aria-valuemax="100">
+</div>
+{% endlocalize %}
                         </div>
                     </div>
                     {% endif %}
