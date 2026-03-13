@@ -272,7 +272,7 @@ html[data-bs-theme="dark"] .offcanvas-header.bg-primary {
     color: #f8fafc !important;
 }
 /* Перефарбовуємо поле вводу та кнопку "Додати" */
-html[data-bs-theme="dark"] #todo-input,
+
 html[data-bs-theme="dark"] .offcanvas-body .btn-white {
     background-color: #0f172a !important;
     border-color: #334155 !important;
@@ -484,14 +484,34 @@ html[data-bs-theme="dark"] .dept-icon-box {
     .todo-item.completed .task-text {
         text-decoration: line-through;
     }
+/* === РАМКА ДЛЯ TODO INPUT (СВІТЛА ТЕМА) === */
+    #todo-input {
+        border: 1px solid #dee2e6 !important; /* Стандартна світла рамка Bootstrap */
+        border-right: none !important;
+    }
+    
+    #todo-add-btn {
+        border: 1px solid #dee2e6 !important;
+        border-left: none !important;
+    }
 
+    /* Ефект при кліку (фокусі) на поле вводу */
+    #todo-input:focus {
+        border-color: #86b7fe !important; /* Світло-синій колір фокусу */
+        box-shadow: none !important;
+    }
+    
+    /* Фарбуємо також рамку кнопки, коли поле вводу активне */
+    #todo-input:focus + #todo-add-btn {
+        border-color: #86b7fe !important;
+    }
     /* === ТЕМНА ТЕМА ДЛЯ ПАНЕЛІ TODO === */
     html[data-bs-theme="dark"] .offcanvas-header.bg-primary {
         background-color: #1e293b !important;
         border-bottom: 1px solid #334155 !important;
         color: #f8fafc !important;
     }
-    html[data-bs-theme="dark"] #todo-input,
+
     html[data-bs-theme="dark"] #todo-add-btn {
         background-color: #0f172a !important;
         border-color: #334155 !important;
@@ -509,6 +529,30 @@ html[data-bs-theme="dark"] .dept-icon-box {
     html[data-bs-theme="dark"] #todo-empty,
     html[data-bs-theme="dark"] #todo-empty i {
         color: #64748b !important;
+    }
+    /* === ФІКС ВИДИМОСТІ TODO INPUT === */
+    /* 1. Робимо видимим текст підказки (placeholder) */
+    html[data-bs-theme="dark"] #todo-input::placeholder {
+        color: #94a3b8 !important; /* Світло-сірий колір */
+        opacity: 1 !important;
+    }
+    
+    /* 2. Колір тексту, який вводить користувач */
+html[data-bs-theme="dark"] #todo-input {
+        background-color: #0f172a !important;
+        color: #f8fafc !important;
+        border: 1px solid #475569 !important; /* Примусово задаємо товщину і колір (світліший сірий) */
+        border-right: none !important; /* Прибираємо праву частину рамки, щоб злитися з кнопкою */
+    }
+
+    /* 3. Робимо яскравим плюсик на кнопці "Додати" */
+   html[data-bs-theme="dark"] #todo-add-btn {
+        background-color: #0f172a !important;
+        border: 1px solid #475569 !important; 
+        border-left: none !important; /* Прибираємо ліву частину рамки */
+    }
+    html[data-bs-theme="dark"] #todo-add-btn i {
+        color: #60a5fa !important; /* Світло-синій (адаптований primary) */
     }
     </style>
     <script>
