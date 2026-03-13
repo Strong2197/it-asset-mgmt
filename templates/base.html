@@ -128,168 +128,6 @@
             .card { border: none !important; box-shadow: none !important; }
             .table-responsive { border: 1px solid #000; }
         }
-
-/* =========================================
-   ТЕМНА ТЕМА ДЛЯ ЕКРАНІВ (base.html)
-   ========================================= */
-html[data-bs-theme="dark"] body {
-    background-color: #0f172a !important;
-        color: rgb(255 255 255 / 75%) !important;
-}
-
-/* ФУТЕР, КАРТКИ ТА ПАНЕЛІ */
-html[data-bs-theme="dark"] .footer,
-html[data-bs-theme="dark"] .card,
-html[data-bs-theme="dark"] .card-header,
-html[data-bs-theme="dark"] .card-footer,
-html[data-bs-theme="dark"] .navbar,
-html[data-bs-theme="dark"] .bg-white,
-html[data-bs-theme="dark"] .modal-content {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
-}
-
-/* ВНУТРІШНІ БЛОКИ ТА РЯДКИ ТАБЛИЦЬ */
-html[data-bs-theme="dark"] .bg-light,
-html[data-bs-theme="dark"] .table-light th,
-html[data-bs-theme="dark"] .table thead th,
-html[data-bs-theme="dark"] .mobile-table tr,
-html[data-bs-theme="dark"] .total-row td,
-html[data-bs-theme="dark"] .order-num-input,
-html[data-bs-theme="dark"] .bg-contact-group {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
-    color: #e2e8f0 !important;
-}
-
-/* === ФІКС БІЛИХ ПЛЯМ У ТАБЛИЦЯХ === */
-/* Робимо контейнер прозорим, щоб він показував темний фон картки */
-html[data-bs-theme="dark"] .table-responsive,
-html[data-bs-theme="dark"] .mobile-table td[data-label="Дії"] {
-    border-color: #334155 !important;
-    background-color: transparent !important;
-}
-
-/* РАМКИ */
-html[data-bs-theme="dark"] td,
-html[data-bs-theme="dark"] th,
-html[data-bs-theme="dark"] .border,
-html[data-bs-theme="dark"] .border-bottom,
-html[data-bs-theme="dark"] .border-top,
-html[data-bs-theme="dark"] .border-light
-html[data-bs-theme="dark"] .table-responsive {
-    border-color: #334155 !important;
-    background-color: #00000000 !important;
-}
-
-/* === ТЕКСТИ === */
-/* М'який "майже білий" колір для тексту, щоб не різало очі */
-html[data-bs-theme="dark"] .text-dark,
-html[data-bs-theme="dark"] .stat-value {
-    color: #e2e8f0d6 !important
-}
-html[data-bs-theme="dark"] .text-muted,
-html[data-bs-theme="dark"] .text-secondary,
-html[data-bs-theme="dark"] .stat-label {
-    color: #94a3b8 !important;
-}
-
-/* Робимо всі жирні шрифти майже білими, АЛЕ виключаємо кольорові (щоб цифри працювали) */
-html[data-bs-theme="dark"] .fw-bold:not(.text-primary):not(.text-success):not(.text-danger):not(.text-warning):not(.text-info) {
-    color: #e2e8f0d6 !important
-}
-/* === КОЛЬОРОВІ ЦИФРИ (СЕРВІС) ТА БЕДЖІ === */
-/* Яскраві кольори спеціально для темного фону */
-html[data-bs-theme="dark"] .text-primary { color: #60a5fa !important; } /* Синій */
-html[data-bs-theme="dark"] .text-success { color: #4ade80 !important; } /* Зелений */
-html[data-bs-theme="dark"] .text-danger { color: #f87171 !important; }  /* Червоний */
-html[data-bs-theme="dark"] .text-warning { color: #facc15 !important; }
-
-html[data-bs-theme="dark"] .bg-primary-subtle { background-color: rgba(59, 130, 246, 0.2) !important; color: #93c5fd !important; }
-html[data-bs-theme="dark"] .bg-success-subtle { background-color: rgba(34, 197, 94, 0.2) !important; color: #86efac !important; }
-html[data-bs-theme="dark"] .bg-warning-subtle { background-color: rgba(234, 179, 8, 0.2) !important; color: #fde047 !important; }
-html[data-bs-theme="dark"] .bg-danger-subtle { background-color: rgba(239, 68, 68, 0.2) !important; color: #fca5a5 !important; }
-html[data-bs-theme="dark"] .bg-info-subtle { background-color: rgba(6, 182, 212, 0.2) !important; color: #67e8f9 !important; }
-
-/* === ФОРМИ, ПЕРЕМИКАЧІ ТА SELECT2 === */
-html[data-bs-theme="dark"] .form-control,
-html[data-bs-theme="dark"] .form-select,
-html[data-bs-theme="dark"] .input-group-text,
-html[data-bs-theme="dark"] .select2-selection,
-html[data-bs-theme="dark"] .select2-dropdown,
-html[data-bs-theme="dark"] .select2-search__field {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
-    color: #e2e8f0 !important;
-}
-/* Перемикачі (Світч-кнопки і чекбокси) */
-html[data-bs-theme="dark"] .form-check-input {
-    background-color: #1e293b !important;
-    border-color: #475569 !important;
-}
-html[data-bs-theme="dark"] .form-check-input:checked {
-    background-color: var(--bs-primary) !important;
-    border-color: var(--bs-primary) !important;
-}
-
-
-/* === КНОПКИ ДІЙ === */
-html[data-bs-theme="dark"] .btn-light,
-html[data-bs-theme="dark"] .btn-white,
-html[data-bs-theme="dark"] .btn-light-action { /* Додано клас btn-light-action */
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #334155 !important;
-    color: #e2e8f0 !important;
-}
-html[data-bs-theme="dark"] .btn-light:hover,
-html[data-bs-theme="dark"] .btn-white:hover,
-html[data-bs-theme="dark"] .btn-light-action:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
-}
-/* === ГОЛОВНА СТОРІНКА (index.html) === */
-html[data-bs-theme="dark"] .stat-value { 
-    color: #ffffff !important; /* Робимо великі цифри ідеально білими */
-}
-html[data-bs-theme="dark"] .stat-label { 
-    color: #94a3b8 !important; /* Світло-сірий для підписів під цифрами */
-}
-/* Адаптація фонів для іконок карток на головній */
-/* Адаптація фонів для іконок карток на головній */
-html[data-bs-theme="dark"] .bg-blue-subtle { background-color: rgba(59, 130, 246, 0.15) !important; color: #93c5fd !important; }
-html[data-bs-theme="dark"] .bg-orange-subtle { background-color: rgba(249, 115, 22, 0.15) !important; color: #fdba74 !important; }
-html[data-bs-theme="dark"] .bg-purple-subtle { background-color: rgba(168, 85, 247, 0.15) !important; color: #d8b4fe !important; }
-html[data-bs-theme="dark"] .bg-teal-subtle { background-color: rgba(20, 184, 166, 0.15) !important; color: #5eead4 !important; }
-html[data-bs-theme="dark"] .bg-green-subtle { background-color: rgba(34, 197, 94, 0.15) !important; color: #86efac !important; }
-/* Фікс для сірої іконки архіву */
-
-
-
-/* === ПАНЕЛЬ ЗАВДАНЬ (TODO Offcanvas) === */
-/* Перефарбовуємо синю шапку */
-html[data-bs-theme="dark"] .offcanvas-header.bg-primary {
-    background-color: #1e293b !important;
-    border-bottom: 1px solid #334155;
-    color: #f8fafc !important;
-}
-/* Перефарбовуємо поле вводу та кнопку "Додати" */
-html[data-bs-theme="dark"] #todo-input,
-html[data-bs-theme="dark"] .offcanvas-body .btn-white {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
-}
-
-/* Повідомлення "Все зроблено!" */
-html[data-bs-theme="dark"] #todo-empty {
-    color: #64748b !important;
-}
-/* Іконки в списках (Файлове сховище, Довідник) */
-html[data-bs-theme="dark"] .file-icon-box,
-html[data-bs-theme="dark"] .dept-icon-box {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #334155 !important;
-}
         </style>
     </head>
     <body class="d-flex flex-column min-vh-100">
@@ -335,16 +173,6 @@ html[data-bs-theme="dark"] .dept-icon-box {
                                 </li>
                             </ul>
                         </li>
-                        <li class="nav-item d-flex align-items-center ms-lg-3">
-                            <button class="btn btn-link nav-link px-2 d-flex align-items-center"
-                                    id="theme-toggle"
-                                    type="button"
-                                    aria-label="Змінити тему"
-                                    style="outline: none">
-                                <i class="bi bi-moon-stars-fill fs-5 d-none" id="theme-icon-dark"></i>
-                                <i class="bi bi-sun-fill fs-5 d-none" id="theme-icon-light"></i>
-                            </button>
-                        </li>
                     </ul>
                 </div>
             </div>
@@ -384,6 +212,8 @@ html[data-bs-theme="dark"] .dept-icon-box {
                                      style="height: 6px;
                                             background-color: #e9ecef"
                                      title="Вільно: {{ disk_usage.free }} МБ">
+                                    {% load l10n %}
+                                    {% localize off %}
                                     <div class="progress-bar bg-{{ disk_usage.color }}"
                                          role="progressbar"
                                          style="width: {{ disk_usage.percent }}%;
@@ -391,15 +221,16 @@ html[data-bs-theme="dark"] .dept-icon-box {
                                          aria-valuenow="{{ disk_usage.percent }}"
                                          aria-valuemin="0"
                                          aria-valuemax="100"></div>
-                                </div>
+                                {% endlocalize %}
                             </div>
-                        {% endif %}
-                    </div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        </footer>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
         document.addEventListener("DOMContentLoaded", function() {
             const currentPath = window.location.pathname;
             document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
@@ -413,60 +244,60 @@ html[data-bs-theme="dark"] .dept-icon-box {
                 }
             });
         });
-        </script>
-        <button class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center d-print-none"
-                type="button"
-                data-bs-toggle="offcanvas"
-                data-bs-target="#todoOffcanvas"
-                style="position: fixed;
-                       bottom: 30px;
-                       right: 30px;
-                       width: 60px;
-                       height: 60px;
-                       z-index: 1050">
-            <i class="bi bi-check2-square fs-3"></i>
-            <span id="todo-badge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
-                  style="display: none;
-                         font-size: 0.75rem">0</span>
-        </button>
-        <div class="offcanvas offcanvas-end border-0 shadow-lg"
-             tabindex="-1"
-             id="todoOffcanvas"
-             style="width: 350px">
-            <div class="offcanvas-header bg-primary text-white">
-                <h5 class="offcanvas-title fw-bold">
-                    <i class="bi bi-list-check me-2"></i>Завдання
-                </h5>
-                <button type="button"
-                        class="btn-close btn-close-white"
-                        data-bs-dismiss="offcanvas"></button>
-            </div>
-            <div class="offcanvas-body bg-light">
-                <div class="input-group mb-3 shadow-sm">
-                    <input type="text"
-                           id="todo-input"
-                           class="form-control border-0"
-                           placeholder="Що зробити?">
-                    <button class="btn btn-white bg-white border-0 text-primary"
-                            type="button"
-                            id="todo-add-btn">
-                        <i class="bi bi-plus-lg fw-bold"></i>
-                    </button>
-                </div>
-                <div id="todo-container">
-                    <div id="todo-empty"
-                         class="text-center text-muted mt-5"
-                         style="display:none">
-                        <i class="bi bi-clipboard-check display-1 opacity-25"></i>
-                        <p class="mt-2">Все зроблено!</p>
-                    </div>
-                    <div id="todo-wrapper"></div>
-                </div>
-            </div>
-            {% csrf_token %}
+    </script>
+    <button class="btn btn-primary rounded-circle shadow-lg d-flex align-items-center justify-content-center d-print-none"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#todoOffcanvas"
+            style="position: fixed;
+                   bottom: 30px;
+                   right: 30px;
+                   width: 60px;
+                   height: 60px;
+                   z-index: 1050">
+        <i class="bi bi-check2-square fs-3"></i>
+        <span id="todo-badge"
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
+              style="display: none;
+                     font-size: 0.75rem">0</span>
+    </button>
+    <div class="offcanvas offcanvas-end border-0 shadow-lg"
+         tabindex="-1"
+         id="todoOffcanvas"
+         style="width: 350px">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title fw-bold">
+                <i class="bi bi-list-check me-2"></i>Завдання
+            </h5>
+            <button type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="offcanvas"></button>
         </div>
-        <style>
+        <div class="offcanvas-body bg-light">
+            <div class="input-group mb-3 shadow-sm">
+                <input type="text"
+                       id="todo-input"
+                       class="form-control border-0"
+                       placeholder="Що зробити?">
+                <button class="btn btn-white bg-white border-0 text-primary"
+                        type="button"
+                        id="todo-add-btn">
+                    <i class="bi bi-plus-lg fw-bold"></i>
+                </button>
+            </div>
+            <div id="todo-container">
+                <div id="todo-empty"
+                     class="text-center text-muted mt-5"
+                     style="display:none">
+                    <i class="bi bi-clipboard-check display-1 opacity-25"></i>
+                    <p class="mt-2">Все зроблено!</p>
+                </div>
+                <div id="todo-wrapper"></div>
+            </div>
+        </div>
+        {% csrf_token %}
+    </div>
+    <style>
     /* Додамо стилі для елементів, щоб вони виглядали гарно */
     .todo-item {
         background-color: #fff;
@@ -507,8 +338,8 @@ html[data-bs-theme="dark"] .dept-icon-box {
     html[data-bs-theme="dark"] #todo-empty i {
         color: #64748b !important;
     }
-        </style>
-        <script>
+    </style>
+    <script>
     document.addEventListener("DOMContentLoaded", function() {
         const input = document.getElementById('todo-input');
         const addBtn = document.getElementById('todo-add-btn');
@@ -600,8 +431,8 @@ html[data-bs-theme="dark"] .dept-icon-box {
         loadTasks();
 
     });
-        </script>
-        <script>
+    </script>
+    <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Перевіряємо, чи підключено jQuery (Select2 працює на ньому)
         if (typeof $ !== 'undefined') {
@@ -621,8 +452,8 @@ html[data-bs-theme="dark"] .dept-icon-box {
             });
         }
     });
-        </script>
-        <script>
+    </script>
+    <script>
 document.addEventListener('DOMContentLoaded', () => {
     const toggleBtn = document.getElementById('theme-toggle');
     const darkIcon = document.getElementById('theme-icon-dark');
@@ -652,6 +483,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateIcon(newTheme);
     });
 });
-        </script>
-    </body>
+    </script>
+</body>
 </html>
