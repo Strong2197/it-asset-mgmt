@@ -48,7 +48,7 @@ def disk_usage_monitor(request):
             percent = 100
         else:
             free_mb = round((LIMIT_BYTES - total_size) / (1024 * 1024), 1)
-            percent = f"{total_size * 100 / LIMIT_BYTES:.1f}"
+            percent = round((total_size / LIMIT_BYTES) * 100, 1)
         
         color = 'success'
         if percent > 70: color = 'warning'
