@@ -125,12 +125,13 @@ def open_order_file(request, pk, order_type):
 class StaffDeleteView(DeleteView):
     model = Employee
     success_url = reverse_lazy('staff_list')
-    def get(self, request, *args, **kwargs):
-        return self.post(request, *args, **kwargs)
 
 class CertDeleteView(DeleteView):
     model = KepCertificate
     def get_success_url(self):
         return reverse_lazy('staff_update', kwargs={'pk': self.object.employee.id})
     def get(self, request, *args, **kwargs):
-        return self.post(request, *args, **kwargs)
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.delete()
+        return redirect(success_url)
