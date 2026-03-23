@@ -19,10 +19,10 @@ class ServiceTaskForm(forms.ModelForm):
                   'description', 'is_completed']
         widgets = {
             'department': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'off'}),
-            'date_back_from_service': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'date_received': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'date_sent': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'date_returned': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'date_back_from_service': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'date_received': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'date_sent': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
+            'date_returned': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'is_completed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
