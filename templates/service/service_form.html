@@ -355,7 +355,7 @@ $(document).ready(function() {
         if(customWrapper) customWrapper.style.display = 'none';
         if(customInput) customInput.required = false;
 
-        newRow.querySelectorAll('.text-danger').forEach(div => div.remove());
+        newRow.querySelectorAll('div.text-danger').forEach(div => div.remove());
 
         newRow.style.display = 'block';
         container.appendChild(newRow);
