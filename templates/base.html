@@ -302,6 +302,40 @@ html[data-bs-theme="dark"] .select2-container--default .select2-selection--singl
 html[data-bs-theme="dark"] .phone-link {
     color: #e4e4e7 !important;
 }
+/* === ПОЛЯ ЗАВАНТАЖЕННЯ ФАЙЛІВ === */
+/* Змінюємо колір тексту "Файл не вибрано" */
+html[data-bs-theme="dark"] .form-control[type="file"] {
+    color: #a1a1aa !important; 
+}
+
+/* Стилізуємо саму кнопку "Вибрати файл" */
+html[data-bs-theme="dark"] .form-control[type="file"]::file-selector-button {
+    background-color: #27272a !important; /* Солідний темний фон */
+    color: #e4e4e7 !important; /* Світлий текст */
+    border: none !important;
+    border-right: 1px solid #3f3f46 !important; /* Відділяємо кнопку від тексту лінією */
+    margin-right: 15px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Ефект при наведенні мишкою на кнопку файлу */
+html[data-bs-theme="dark"] .form-control[type="file"]:hover::file-selector-button {
+    background-color: #3f3f46 !important;
+    color: #ffffff !important;
+}
+
+
+/* === ВИДИМІСТЬ ПЕРЕМИКАЧІВ (СВІТЧІВ) === */
+/* Робимо вимкнений перемикач світлішим, щоб він гарно виділявся на фоні картки */
+html[data-bs-theme="dark"] .form-check-input {
+    background-color: #3f3f46 !important; /* Був занадто темний, робимо світліше */
+    border-color: #52525b !important;
+}
+
+/* Прибираємо чорну рамку фокусу (якщо клікнути на світч) */
+html[data-bs-theme="dark"] .form-check-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(248, 113, 113, 0.25) !important; /* Легке червонувате світіння для звільнення */
+}
         </style>
     </head>
     <body class="d-flex flex-column min-vh-100">
