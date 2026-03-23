@@ -289,8 +289,15 @@ html[data-bs-theme="dark"] .dept-icon-box {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border-color: #334155 !important;
 }
-html[data-bs-theme="dark"] .select2-container--defaut .select2-selection--single .select2-selection__rendered {
+/* Перебиваємо колір тексту вибраного елемента Select2 */
+html[data-bs-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered,
+html[data-bs-theme="dark"] .select2-container--default .select2-selection--multiple .select2-selection__choice {
     color: #e4e4e7 !important;
+}
+
+/* Колір хрестика очищення (якщо використовується allowClear) */
+html[data-bs-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__clear {
+    color: #a1a1aa !important;
 }
         </style>
     </head>
